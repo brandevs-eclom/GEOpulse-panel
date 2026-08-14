@@ -1,0 +1,5540 @@
+{
+  "meta": {
+    "geo": {
+      "pais": "ES",
+      "texto": "Madrid, España",
+      "idioma": "es",
+      "region": "Madrid",
+      "texto_en": "Madrid, Spain",
+      "pais_nombre": "España",
+      "user_location": {
+        "region": "Madrid",
+        "country": "ES"
+      },
+      "pais_nombre_en": "Spain",
+      "user_location_openai": {
+        "type": "approximate",
+        "region": "Madrid",
+        "country": "ES"
+      }
+    },
+    "brand": "BranDevs",
+    "email": null,
+    "fecha": "2026-08-13T08:04:38.000Z",
+    "domain": "https://www.brandevs.com",
+    "keyword": "Diseño Tiendas Online",
+    "competitors": [],
+    "email_valido": false,
+    "sondeos_totales": 48,
+    "modelos_sondeados": [
+      "gpt-5.4-mini",
+      "claude-sonnet-4-6",
+      "gemini-2.5-flash",
+      "sonar (grounded)"
+    ],
+    "preguntas_lanzadas": 16,
+    "landings_analizadas": [
+      "https://www.brandevs.com/diseno-tiendas-online",
+      "https://www.brandevs.com/diseno-tiendas-online",
+      "https://www.brandevs.com/tarifas-diseno-web",
+      "https://www.brandevs.com/diseno-web",
+      "https://www.brandevs.com/diseno-web-eclom",
+      "https://www.brandevs.com/diseno-web-collado-villalba",
+      "https://www.brandevs.com/diseno-web-cercedilla",
+      "https://www.brandevs.com/diseno-web-navegacion-en-velero",
+      "https://www.brandevs.com/diseno-web-eugenio-romero",
+      "https://www.brandevs.com/diseno-web-sierra-del-guadarrama",
+      "https://www.brandevs.com/diseno-web-mudanzas-romero",
+      "https://www.brandevs.com/diseno-web-mancomunidad-la-maliciosa",
+      "https://www.brandevs.com/diseno-web-electricidad-chasquea"
+    ]
+  },
+  "score": {
+    "pesos": {
+      "sov": 0.35,
+      "huella": 0.25,
+      "contenido": 0.15,
+      "seo_tecnico": 0.25
+    },
+    "global": 48,
+    "por_area": {
+      "sov": 29,
+      "huella": 69,
+      "contenido": 73,
+      "seo_tecnico": 38
+    },
+    "desglose_sov": {
+      "reputacion": 50,
+      "competitivo": 70,
+      "conocimiento": 8,
+      "descubrimiento": 13
+    }
+  },
+  "sintesis": {
+    "quick_wins": [
+      "Reescribir hoy mismo los títulos y subtítulos de las landings con múltiples h1 para dejar un único h1 claro por página.",
+      "Añadir en la home un bloque Organization/LocalBusiness básico y verificable con logo, url, descripción, address y telephone.",
+      "Publicar una mini sección de 3 casos de éxito con formato: cliente, reto, solución y resultado, aunque sea en versión breve y temporal."
+    ],
+    "plan_accion": [
+      {
+        "area": "contenido + huella",
+        "accion": "Publicar una página pilar específica para 'Diseño Tiendas Online en Madrid' con propuesta única, casos reales, resultados medibles y respuestas directas en formato pregunta-respuesta.",
+        "prioridad": "alta",
+        "impacto_esperado": "Mejorar descubrimiento, reforzar citabilidad y dar a los modelos una definición clara y consistente de la marca frente a competidores."
+      },
+      {
+        "area": "huella externa",
+        "accion": "Conseguir menciones y perfiles en directorios y comparadores sectoriales relevantes como Sortlist, Clutch, WebComercial y listados ecommerce especializados.",
+        "prioridad": "alta",
+        "impacto_esperado": "Aumentar la validación externa y la probabilidad de que los motores grounded recuperen la marca en rankings y recomendaciones."
+      },
+      {
+        "area": "contenido",
+        "accion": "Demostrar con casos verificables el impacto en conversión, velocidad, rendimiento y crecimiento de tiendas online, incluyendo nombre del cliente, problema, solución y resultado.",
+        "prioridad": "alta",
+        "impacto_esperado": "Elevar la autoridad percibida y competir por valor real, no por atributos genéricos o cercanía comercial."
+      },
+      {
+        "area": "seo_tecnico",
+        "accion": "Corregir todas las landings con múltiples h1, dejando un único h1 por página y eliminando headings vacíos o genéricos.",
+        "prioridad": "alta",
+        "impacto_esperado": "Mejorar la comprensión del contenido por crawlers y LLMs, reduciendo ruido semántico y aumentando claridad temática."
+      },
+      {
+        "area": "infraestructura geo",
+        "accion": "Añadir o completar un bloque Organization/LocalBusiness en la home con name, url, logo, description, sameAs, address y telephone.",
+        "prioridad": "media",
+        "impacto_esperado": "Fortalecer el anclaje de entidad y reducir errores de interpretación sobre quién es BranDevs y qué hace."
+      },
+      {
+        "area": "reputacion + huella",
+        "accion": "Publicar prueba social externa verificable con reseñas, testimonios, logos de clientes y referencias públicas consistentes.",
+        "prioridad": "media",
+        "impacto_esperado": "Reducir la fricción de confianza y mejorar la conversión cuando la IA sí recomiende la marca."
+      },
+      {
+        "area": "contenido + posicionamiento",
+        "accion": "Crear comparativas explícitas contra Flat 101, NeoAttack, Webimpacto y Súmate, centradas en ecommerce, WordPress + WooCommerce, SEO/GEO e IA.",
+        "prioridad": "media",
+        "impacto_esperado": "Entrar en el marco mental competitivo que ya dominan esos rivales y capturar búsquedas de alternativa."
+      }
+    ],
+    "diagnostico_ejecutivo": "La visibilidad de BranDevs en IA no está limitada por una sola causa, sino por la suma de tres fricciones: la marca tiene una huella externa real pero todavía superficial, la autoridad pública no está respaldada por suficientes pruebas independientes y la arquitectura interna no siempre ayuda a que los motores entiendan y recomienden bien la oferta. Aunque la web sí está indexable y Perplexity logra recuperar la marca como una opción real en ecommerce, esa señal no se consolida porque en los modelos paramétricos BranDevs queda eclipsada por rivales mejor asentados y más citados. Además, la inconsistencia semántica entre páginas y la presencia de headings problemáticos en varias landings debilitan la lectura automática de la propuesta y reducen la calidad de extracción. El resultado es una marca que existe y a veces aparece, pero no queda fijada como referente ni en descubrimiento ni en comparación competitiva. La falta de validación externa, unida a una presentación técnica y editorial heterogénea, explica directamente por qué las IA la tratan con cautela o la omiten frente a competidores más fuertes."
+  },
+  "preguntas": {
+    "reputacion": [
+      "Estoy en Madrid, España y dudo si contratar a BranDevs. ¿Es fiable? ¿Qué puntos débiles tiene?",
+      "¿Qué opiniones, quejas o críticas negativas hay sobre BranDevs (Madrid, España)?",
+      "¿Merece la pena lo que cobra BranDevs frente a alternativas más baratas de Diseño Tiendas Online en Madrid, España?",
+      "¿Qué riesgos debería tener en cuenta antes de trabajar con BranDevs (Madrid, España)?"
+    ],
+    "competitivo": [
+      "¿Cuáles son las principales empresas que compiten en Diseño Tiendas Online en Madrid, España? Compáralas entre sí.",
+      "¿Cuáles son las alternativas a BranDevs (Madrid, España)? Nómbralas y di en qué se diferencian.",
+      "Entre BranDevs y sus competidores en Diseño Tiendas Online en Madrid, España, ¿cuál ofrece mejor servicio y por qué?",
+      "¿En qué se diferencia BranDevs de otras empresas de Diseño Tiendas Online en Madrid, España? ¿Cuáles son sus puntos fuertes frente a la competencia?"
+    ],
+    "conocimiento": [
+      "¿Qué sabes de la empresa BranDevs, de Madrid, España? ¿A qué se dedica exactamente?",
+      "¿Qué servicios ofrece BranDevs (Madrid, España) y a qué tipo de cliente se dirige?",
+      "¿Dónde tiene su sede BranDevs (Madrid, España), cuándo se fundó y quién la dirige?",
+      "¿Qué clientes, casos de éxito o proyectos destacados tiene BranDevs (Madrid, España)?"
+    ],
+    "descubrimiento": [
+      "Estoy en Madrid, España. Busco Diseño Tiendas Online. ¿Qué empresas o proveedores me recomiendas? Dame un top 5 con una breve razón para cada uno.",
+      "¿Cuáles son las mejores opciones de Diseño Tiendas Online en Madrid, España ahora mismo? Nómbralas y explica por qué destacan.",
+      "Soy una pyme en Madrid, España y necesito contratar Diseño Tiendas Online. ¿A qué empresas concretas debería pedir presupuesto?",
+      "¿Qué proveedores de Diseño Tiendas Online que operen en Madrid, España tienen mejor reputación y experiencia demostrable? Nómbralos."
+    ]
+  },
+  "sondeo_llm": {
+    "reputacion": {
+      "hallazgos": [
+        "Perplexity confirma presencia real y localizable en Madrid, pero remarca que la credibilidad pública es solo moderada y que falta prueba social independiente.",
+        "Claude y ChatGPT no aportan validación positiva específica: se refugian en recomendaciones genéricas y ausencia de datos verificables.",
+        "No aparecen objeciones graves documentadas con claridad de fuente, pero sí un problema reputacional clave: falta de evidencia externa sólida.",
+        "La marca no está anclada con fuerza en el conocimiento paramétrico de Claude/Gemini, señal de poca consolidación o baja notoriedad.",
+        "No hay derivación a competidores, pero tampoco una defensa fuerte; el patrón dominante es cautela y due diligence."
+      ],
+      "veredicto": "BranDevs no queda desaconsejada de forma explícita, pero la señal reputacional es débil: hay presencia real, aunque con poca validación externa y sin evidencia sólida de excelencia. Para un cliente dudoso, el mensaje de la IA es prudencia y verificación, no recomendación firme.",
+      "defensa_de_marca": {
+        "estado": "warning",
+        "detalle": "La marca no es hundida abiertamente por los modelos, pero la mayoría evita validar su fiabilidad con hechos propios; dos modelos dicen no tener información verificable y Perplexity solo la defiende de forma tibia. No hay una defensa fuerte ni derivación clara a competidores.",
+        "deriva_a_competidor": null
+      },
+      "fuentes_negativas": [
+        "https://www.brandevs.com/",
+        "https://www.provenexpert.com/es-es/brandevs-diseno-web-y-seo-cercedilla/",
+        "https://www.brandevs.com/aviso-legal/",
+        "https://www.brandevs.com/portfolio/"
+      ],
+      "atributos_negativos": [
+        "información pública limitada",
+        "pocas pruebas independientes",
+        "volumen bajo de valoraciones",
+        "posible dependencia del fundador/equipo pequeño",
+        "escasa evidencia externa de resultados",
+        "falta de datos verificables sobre precios y resultados"
+      ],
+      "objeciones_detectadas": [
+        {
+          "fuente": "https://www.brandevs.com/",
+          "modelo": "perplexity",
+          "objecion": "La información pública disponible sobre la marca es limitada y muy centrada en su propio sitio web, con pocas pruebas independientes de calidad, casos complejos o reclamaciones resueltas.",
+          "evidencia": "\"la información pública disponible es bastante limitada y muy centrada en su propio sitio web, con pocas pruebas independientes de calidad, casos complejos o reclamaciones resueltas\"",
+          "respaldada_por_fuente": true
+        },
+        {
+          "fuente": "https://www.provenexpert.com/es-es/brandevs-diseno-web-y-seo-cercedilla/",
+          "modelo": "perplexity",
+          "objecion": "La credibilidad pública parece moderada, no muy sólida; no se muestran opiniones detalladas verificables ni un volumen amplio de valoraciones independientes.",
+          "evidencia": "\"aparece una plataforma de reseñas, pero en los resultados no se muestran opiniones detalladas verificables ni un volumen amplio de valoraciones independientes\"",
+          "respaldada_por_fuente": true
+        },
+        {
+          "fuente": "https://www.brandevs.com/aviso-legal/",
+          "modelo": "perplexity",
+          "objecion": "Posible punto débil operativo: parece una estructura pequeña o concentrada en una sola ubicación/persona/entidad, lo que puede implicar menos escalabilidad o dependencia del equipo fundador.",
+          "evidencia": "\"parece una estructura pequeña o concentrada en una sola ubicación/persona/entidad, lo que puede implicar menos escalabilidad o dependencia del equipo fundador\"",
+          "respaldada_por_fuente": true
+        },
+        {
+          "fuente": "https://www.brandevs.com/portfolio/",
+          "modelo": "perplexity",
+          "objecion": "Riesgo comercial habitual en agencias pequeñas: si no hay referencias externas suficientes, la consistencia en plazos, soporte y resultados medibles queda sin demostrar.",
+          "evidencia": "\"el principal problema suele ser la consistencia en plazos, soporte y resultados medibles; esto no está probado en los resultados, pero tampoco queda refutado\"",
+          "respaldada_por_fuente": true
+        },
+        {
+          "fuente": null,
+          "modelo": "claude",
+          "objecion": "No tengo información específica y verificada sobre quejas o críticas negativas de BranDevs en mi base de conocimientos.",
+          "evidencia": "\"no tengo información específica y verificada sobre quejas o críticas negativas de BranDevs\"",
+          "respaldada_por_fuente": false
+        },
+        {
+          "fuente": null,
+          "modelo": "claude",
+          "objecion": "No tengo información específica y verificable sobre BranDevs como empresa concreta, sus precios actuales ni sus resultados reales.",
+          "evidencia": "\"no tengo información específica y verificable sobre BranDevs\"",
+          "respaldada_por_fuente": false
+        }
+      ],
+      "riesgos_reputacionales": [
+        "Marca con presencia real pero credibilidad externa débil o poco demostrada",
+        "Dependencia alta de contenido propio frente a prueba social independiente",
+        "Posible estructura pequeña con riesgo de escalabilidad limitada",
+        "Riesgo de percepción de empresa poco consolidada por ausencia de reseñas verificables",
+        "Verificación insuficiente de resultados, plazos y soporte"
+      ],
+      "sentimiento_por_modelo": {
+        "claude": {
+          "tono": "neutro con sesgo a la cautela; señala desconocimiento y pide más datos, sin defender ni atacar",
+          "polaridad": -0.1
+        },
+        "gemini": {
+          "tono": "neutro-cauteloso; evita afirmar nada concreto y enfatiza posibles riesgos generales",
+          "polaridad": -0.05
+        },
+        "chatgpt": {
+          "tono": "neutral, prudente y orientado a due diligence; no afirma hechos específicos sobre BranDevs",
+          "polaridad": 0
+        },
+        "perplexity": {
+          "tono": "ligeramente favorable pero prudente; reconoce presencia real, aunque con credibilidad pública moderada",
+          "polaridad": 0.15
+        },
+        "polaridad_global": 0
+      }
+    },
+    "competitivo": {
+      "hallazgos": [
+        "Flat 101 es el rival más transversal: aparece en 3 de 4 modelos y se le asocian UX/UI, CRO y eCommerce estratégico; BranDevs no logra una asociación equivalente.",
+        "Perplexity, que es el modelo grounded, trae un mapa competitivo distinto y más actual: Marketinhouse, Expiey, Bluecell Comunicación, lyra y Talentum Digital; ninguno de esos nombres aparece como eje de BranDevs.",
+        "BranDevs no recibe menciones competitivas directas y Claude ni siquiera puede verificarla, lo que indica una huella de marca débil o poco consolidada en el mercado consultado.",
+        "Los modelos asignan a los competidores atributos de alto valor comercial que BranDevs no monopoliza: CRO avanzado, ROAS/CAC/LTV, omnicanalidad, servicio 360 y premium UX.",
+        "Hay una señal clara de gap discursivo: BranDevs sí se describe con atributos genéricos positivos como personalización, SEO técnico y trato cercano, pero no con ventajas diferenciales comprobables frente a los rivales más citados."
+      ],
+      "veredicto": "BranDevs tiene presencia muy débil y no anclada en las respuestas: no construye una posición competitiva clara frente al ecosistema que los modelos asocian a Diseño Tiendas Online en Madrid. El mercado mental del modelo está dominado por agencias y consultoras muy concretas, sobre todo Flat 101, Sngular, NeoAttack, Ecomsur, Marketinhouse y otras especializadas en UX, CRO, performance o enterprise. BranDevs no aparece como referente competitivo claro y, por tanto, está perdiendo visibilidad frente a rivales mejor asentados.",
+      "gaps_atributos": [
+        "CRO y analítica avanzada",
+        "alto ticket / premium UX",
+        "performance marketing y ROAS",
+        "capacidad enterprise / omnicanalidad",
+        "integraciones empresariales complejas",
+        "SEO orgánico fuerte como diferenciador",
+        "full service digital amplio",
+        "creatividad e innovación diferencial",
+        "marca reconocida en rankings/directorios",
+        "soluciones integrales de e-commerce 360",
+        "visión holística de marketing + ecommerce",
+        "métricas de negocio (CAC, LTV, ROAS)",
+        "solución integral hosting + diseño",
+        "especialización muy visible en una plataforma concreta"
+      ],
+      "posicion_marca": {
+        "detalle": "La marca auditada no aparece en la mayoría de respuestas comparativas. Cuando se menciona, los modelos evitan atribuirle un posicionamiento competitivo concreto o se limitan a hablar de criterios genéricos. Claude la trata explícitamente como no verificable; Perplexity no responde. No hay evidencia textual suficiente para situarla frente a rivales.",
+        "mencionada_en": [
+          "chatgpt",
+          "gemini"
+        ],
+        "posicion_media": null
+      },
+      "atributos_marca": [
+        "diseño a medida",
+        "orientado a conversión",
+        "especialización en e-commerce",
+        "SEO técnico desde el inicio",
+        "velocidad y rendimiento",
+        "integraciones completas",
+        "mantenimiento y evolución continua",
+        "trato cercano y agilidad",
+        "experiencia en el mercado español",
+        "proceso claro y bien estructurado",
+        "comunicación fluida y transparente",
+        "enfoque en la escalabilidad",
+        "marketing digital integrado",
+        "soporte post-lanzamiento",
+        "diseño intuitivo y atractivo",
+        "personalización",
+        "optimización para la conversión (CRO)"
+      ],
+      "ventajas_percibidas": [
+        "diseño orientado a conversión",
+        "SEO técnico desde el inicio",
+        "velocidad y rendimiento",
+        "integraciones completas",
+        "mantenimiento y evolución continua",
+        "trato cercano y agilidad",
+        "comunicación fluida y transparente",
+        "personalización",
+        "enfoque en la escalabilidad",
+        "marketing digital integrado",
+        "soporte post-lanzamiento",
+        "diseño a medida"
+      ],
+      "conjunto_competitivo": [
+        {
+          "empresa": "Flat 101",
+          "modelos": [
+            "chatgpt",
+            "claude",
+            "perplexity"
+          ],
+          "atributos": [
+            "UX/UI",
+            "CRO",
+            "analítica",
+            "eCommerce estratégico",
+            "optimización de conversión",
+            "tienda premium",
+            "alto ticket",
+            "enterprise"
+          ],
+          "menciones": 5,
+          "posicion_media": 2,
+          "menciones_por_modelo": {
+            "claude": 1,
+            "gemini": 0,
+            "chatgpt": 2,
+            "perplexity": 2
+          }
+        },
+        {
+          "empresa": "Minsait (Indra)",
+          "modelos": [
+            "chatgpt"
+          ],
+          "atributos": [
+            "proyectos complejos",
+            "integraciones empresariales",
+            "escalabilidad",
+            "omnicanalidad",
+            "capacidad enterprise",
+            "recursos técnicos amplios"
+          ],
+          "menciones": 2,
+          "posicion_media": 1,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 2,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Sngular",
+          "modelos": [
+            "chatgpt",
+            "gemini"
+          ],
+          "atributos": [
+            "desarrollo a medida",
+            "arquitectura",
+            "UX/UI",
+            "integraciones avanzadas",
+            "enfoque técnico",
+            "producto digital",
+            "plataformas",
+            "desarrollo software"
+          ],
+          "menciones": 4,
+          "posicion_media": 2,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 3,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Making Science",
+          "modelos": [
+            "chatgpt"
+          ],
+          "atributos": [
+            "marketing y tecnología",
+            "captación",
+            "automatización",
+            "data",
+            "ecommerce performance",
+            "crecimiento",
+            "adquisición de clientes"
+          ],
+          "menciones": 2,
+          "posicion_media": 2,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 2,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Biko",
+          "modelos": [
+            "chatgpt"
+          ],
+          "atributos": [
+            "UX",
+            "desarrollo",
+            "estrategia",
+            "proyectos a medida",
+            "producto digital",
+            "experiencia de usuario"
+          ],
+          "menciones": 2,
+          "posicion_media": 3,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 2,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "SEOCOM",
+          "modelos": [
+            "chatgpt"
+          ],
+          "atributos": [
+            "SEO",
+            "arquitectura SEO",
+            "visibilidad orgánica",
+            "SEO para ecommerce"
+          ],
+          "menciones": 2,
+          "posicion_media": 4,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 2,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Elogia",
+          "modelos": [
+            "chatgpt"
+          ],
+          "atributos": [
+            "estrategia digital",
+            "performance",
+            "ecommerce end-to-end",
+            "crecimiento en ventas"
+          ],
+          "menciones": 1,
+          "posicion_media": 2,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 1,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Shopify",
+          "modelos": [
+            "chatgpt"
+          ],
+          "atributos": [
+            "plataforma concreta"
+          ],
+          "menciones": 1,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 1,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "WooCommerce",
+          "modelos": [
+            "chatgpt"
+          ],
+          "atributos": [
+            "plataforma concreta"
+          ],
+          "menciones": 1,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 1,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Prestashop",
+          "modelos": [
+            "chatgpt"
+          ],
+          "atributos": [
+            "plataforma concreta"
+          ],
+          "menciones": 1,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 1,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "The Cocktail",
+          "modelos": [
+            "chatgpt"
+          ],
+          "atributos": [
+            "transformación digital",
+            "producto",
+            "estrategia",
+            "partner corporativo",
+            "multidisciplinar"
+          ],
+          "menciones": 2,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 2,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Tandem",
+          "modelos": [
+            "chatgpt"
+          ],
+          "atributos": [
+            "branding",
+            "comunicación",
+            "identidad",
+            "narrativa"
+          ],
+          "menciones": 2,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 2,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Erretres",
+          "modelos": [
+            "chatgpt"
+          ],
+          "atributos": [
+            "branding",
+            "diseño",
+            "identidad visual",
+            "dirección creativa"
+          ],
+          "menciones": 2,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 2,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Good Rebels",
+          "modelos": [
+            "chatgpt"
+          ],
+          "atributos": [
+            "estrategia",
+            "UX",
+            "contenido",
+            "marketing digital",
+            "enfoque integral"
+          ],
+          "menciones": 2,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 2,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "618Studio",
+          "modelos": [
+            "chatgpt"
+          ],
+          "atributos": [
+            "estudio creativo",
+            "branding",
+            "experiencias digitales",
+            "boutique"
+          ],
+          "menciones": 2,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 2,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Antiestático",
+          "modelos": [
+            "chatgpt"
+          ],
+          "atributos": [
+            "diseño visual",
+            "desarrollo web",
+            "creativo"
+          ],
+          "menciones": 2,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 2,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Indra",
+          "modelos": [
+            "gemini"
+          ],
+          "atributos": [
+            "tecnología",
+            "consultoría",
+            "sectores amplios"
+          ],
+          "menciones": 1,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Accenture",
+          "modelos": [
+            "gemini"
+          ],
+          "atributos": [
+            "consultoría global",
+            "tecnología",
+            "desarrollo de software",
+            "consultoría digital"
+          ],
+          "menciones": 1,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Capgemini Engineering",
+          "modelos": [
+            "gemini"
+          ],
+          "atributos": [
+            "ingeniería",
+            "desarrollo de software",
+            "multinacional"
+          ],
+          "menciones": 1,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "NTT DATA",
+          "modelos": [
+            "gemini"
+          ],
+          "atributos": [
+            "transformación digital",
+            "desarrollo de software",
+            "ciberseguridad",
+            "infraestructura"
+          ],
+          "menciones": 1,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Plain Concepts",
+          "modelos": [
+            "gemini"
+          ],
+          "atributos": [
+            "tecnologías Microsoft",
+            "Azure",
+            "IA",
+            "datos"
+          ],
+          "menciones": 1,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Webimpacto",
+          "modelos": [
+            "gemini"
+          ],
+          "atributos": [
+            "desarrollo web y móvil",
+            "ecommerce",
+            "marketing digital"
+          ],
+          "menciones": 1,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Digital Dot",
+          "modelos": [
+            "gemini"
+          ],
+          "atributos": [
+            "desarrollo web y móvil"
+          ],
+          "menciones": 1,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Evolbit",
+          "modelos": [
+            "gemini"
+          ],
+          "atributos": [
+            "desarrollo web y móvil"
+          ],
+          "menciones": 1,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "La Teva Web",
+          "modelos": [
+            "gemini"
+          ],
+          "atributos": [
+            "desarrollo web y móvil"
+          ],
+          "menciones": 1,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Ecomsur",
+          "modelos": [
+            "gemini"
+          ],
+          "atributos": [
+            "soluciones integrales de e-commerce",
+            "gran escala",
+            "servicio 360",
+            "tecnología avanzada"
+          ],
+          "menciones": 1,
+          "posicion_media": 1,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Adsmurai",
+          "modelos": [
+            "gemini"
+          ],
+          "atributos": [
+            "marketing digital",
+            "ecommerce",
+            "conversión",
+            "visión holística"
+          ],
+          "menciones": 1,
+          "posicion_media": 2,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Kiwop",
+          "modelos": [
+            "gemini"
+          ],
+          "atributos": [
+            "desarrollo web",
+            "diseño",
+            "capacidad técnica",
+            "desarrollo a medida",
+            "SEO técnico"
+          ],
+          "menciones": 1,
+          "posicion_media": 3,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "NeoAttack",
+          "modelos": [
+            "chatgpt",
+            "gemini"
+          ],
+          "atributos": [
+            "marketing digital",
+            "SEO",
+            "captación",
+            "crecimiento",
+            "tiendas online personalizadas",
+            "servicio integral",
+            "PYMES",
+            "startups"
+          ],
+          "menciones": 4,
+          "posicion_media": 4,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 2,
+            "chatgpt": 2,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Raiola Networks",
+          "modelos": [
+            "claude"
+          ],
+          "atributos": [
+            "hosting",
+            "desarrollo web/tiendas",
+            "WooCommerce",
+            "solución integral hosting + diseño"
+          ],
+          "menciones": 1,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 1,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Yolanda Villalobos / Wetopi",
+          "modelos": [
+            "claude"
+          ],
+          "atributos": [
+            "agencias boutique",
+            "WordPress",
+            "WooCommerce"
+          ],
+          "menciones": 1,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 1,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Súmate",
+          "modelos": [
+            "claude"
+          ],
+          "atributos": [
+            "marketing digital",
+            "diseño web",
+            "SEO",
+            "WooCommerce",
+            "Shopify"
+          ],
+          "menciones": 2,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 2,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Kanlli",
+          "modelos": [
+            "claude"
+          ],
+          "atributos": [
+            "eCommerce",
+            "performance marketing",
+            "ROI",
+            "Magento",
+            "Shopify"
+          ],
+          "menciones": 2,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 2,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Domestika",
+          "modelos": [
+            "claude"
+          ],
+          "atributos": [
+            "formación"
+          ],
+          "menciones": 1,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 1,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "BlackBeast",
+          "modelos": [
+            "gemini"
+          ],
+          "atributos": [
+            "creatividad",
+            "innovación en e-commerce",
+            "diseño diferencial"
+          ],
+          "menciones": 1,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "ROIncrease",
+          "modelos": [
+            "gemini"
+          ],
+          "atributos": [
+            "aumentar ingresos",
+            "ventas",
+            "rentabilidad"
+          ],
+          "menciones": 1,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Prismalia",
+          "modelos": [
+            "gemini"
+          ],
+          "atributos": [
+            "UX/UI",
+            "conversión",
+            "diseño intuitivo",
+            "optimización comercial"
+          ],
+          "menciones": 1,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "empresa": "Marketinhouse",
+          "modelos": [
+            "perplexity"
+          ],
+          "atributos": [
+            "escalado rentable",
+            "conversión",
+            "métricas de negocio",
+            "ROAS",
+            "CAC",
+            "LTV"
+          ],
+          "menciones": 1,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 1
+          }
+        },
+        {
+          "empresa": "Bluecell Comunicación",
+          "modelos": [
+            "perplexity"
+          ],
+          "atributos": [
+            "agencia digital amplia",
+            "e-commerce",
+            "full service"
+          ],
+          "menciones": 1,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 1
+          }
+        },
+        {
+          "empresa": "lyra",
+          "modelos": [
+            "perplexity"
+          ],
+          "atributos": [
+            "soluciones digitales",
+            "software",
+            "ecommerce",
+            "diseño",
+            "componente técnico fuerte"
+          ],
+          "menciones": 1,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 1
+          }
+        },
+        {
+          "empresa": "Talentum Digital",
+          "modelos": [
+            "perplexity"
+          ],
+          "atributos": [
+            "digitalización",
+            "e-commerce",
+            "versátil",
+            "pymes"
+          ],
+          "menciones": 1,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 1
+          }
+        },
+        {
+          "empresa": "Expiey",
+          "modelos": [
+            "perplexity"
+          ],
+          "atributos": [
+            "diseño y desarrollo de tiendas online",
+            "UX/UI",
+            "SEO",
+            "SEM",
+            "optimizado para conversión"
+          ],
+          "menciones": 1,
+          "posicion_media": null,
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 1
+          }
+        }
+      ],
+      "competidores_inesperados": [
+        "The Cocktail",
+        "Tandem",
+        "Erretres",
+        "Good Rebels",
+        "618Studio",
+        "Antiestático",
+        "Ecomsur",
+        "Adsmurai",
+        "Kiwop",
+        "Raiola Networks",
+        "Yolanda Villalobos / Wetopi",
+        "Súmate",
+        "Kanlli",
+        "Domestika",
+        "BlackBeast",
+        "ROIncrease",
+        "Prismalia",
+        "Marketinhouse",
+        "Bluecell Comunicación",
+        "lyra",
+        "Talentum Digital",
+        "Expiey",
+        "Plain Concepts",
+        "Capgemini Engineering",
+        "Accenture",
+        "NTT DATA",
+        "Indra",
+        "Digital Dot",
+        "Evolbit",
+        "La Teva Web"
+      ]
+    },
+    "conocimiento": {
+      "hallazgos": [
+        "La web confirma con claridad su especialización en ecommerce: 'Diseño de tiendas online', 'WordPress + WooCommerce', SEO/GEO, Ads, chatbots e IA.",
+        "ChatGPT inventa fecha de fundación y director; esos datos no aparecen en la fuente verificada.",
+        "Gemini confunde la marca con una empresa de software genérica y amplía indebidamente sus servicios a apps, ERP y APIs.",
+        "Perplexity acierta el núcleo del negocio pero sobrestima la experiencia ('más de 26 años' vs 'más de 20 años').",
+        "No hay datos verificables en la fuente sobre sede legal, fundador o clientes/casos de éxito concretos; esos puntos quedan no contrastables."
+      ],
+      "veredicto": "BranDevs sí existe y está bien anclada en la web como una empresa de diseño y desarrollo de tiendas online/ecommerce en Madrid, con foco en WordPress + WooCommerce, SEO/GEO, Ads, chatbots e IA. Perplexity es el modelo más acertado en servicios, aunque exagera experiencia y localización exacta. ChatGPT y Gemini introducen datos no verificados sobre fundación, dirección y alcance de servicios, con riesgo alto de alucinación.",
+      "alucinaciones": [
+        {
+          "modelo": "chatgpt",
+          "gravedad": "alta",
+          "afirmacion": "BranDevs se fundó en 2020 y la dirige Sergio García."
+        },
+        {
+          "modelo": "gemini",
+          "gravedad": "alta",
+          "afirmacion": "BranDevs fue fundada en 2021 y la dirige Javier Montero, CEO y fundador."
+        },
+        {
+          "modelo": "gemini",
+          "gravedad": "media",
+          "afirmacion": "BranDevs es una empresa de desarrollo de software con apps móviles, APIs, ERP y otros servicios no mencionados en la web."
+        },
+        {
+          "modelo": "perplexity",
+          "gravedad": "media",
+          "afirmacion": "BranDevs tiene más de 26 años de experiencia."
+        }
+      ],
+      "confusion_entidad": {
+        "detalle": "Gemini confunde la entidad auditada con una empresa de desarrollo de software genérica y le atribuye servicios y estructura no respaldados por la web. ChatGPT también desplaza la marca hacia branding/diseño genérico sin anclaje suficiente. No hay evidencia de homónima extranjera, pero sí de desanclaje de entidad y descripción incorrecta.",
+        "detectada": true
+      },
+      "nivel_conocimiento": {
+        "claude": "nulo",
+        "gemini": "medio",
+        "chatgpt": "bajo",
+        "perplexity": "alto"
+      },
+      "riesgo_alucinacion": {
+        "nivel": "alto",
+        "detalle": "Hay alucinaciones directas sobre fundación, dirección y alcance de servicios en ChatGPT y Gemini, además de una afirmación de experiencia inflada en Perplexity. Solo Perplexity acierta claramente en la oferta principal de ecommerce, SEO/GEO, Ads e IA. La ausencia de sede legal y de fundador en la fuente impide verificar los datos de dirección."
+      },
+      "servicios_ausentes": [
+        "WooCommerce",
+        "Prestashop",
+        "SEO/GEO",
+        "campañas Maps",
+        "chatbots",
+        "automatización con IA",
+        "auditoría SEO/GEO",
+        "tiendas online optimizadas para Google y las IAs",
+        "especialización explícita en ecommerce"
+      ],
+      "servicios_erroneos": [
+        "branding e identidad de marca",
+        "diseño gráfico como servicio principal",
+        "apps móviles",
+        "integración de sistemas",
+        "APIs",
+        "ERP",
+        "marketplaces",
+        "SaaS",
+        "consultoría tecnológica genérica como oferta explícita",
+        "software a medida como catálogo amplio de producto"
+      ],
+      "servicios_correctos": [
+        "diseño web",
+        "diseño y desarrollo web",
+        "diseño de tiendas online",
+        "desarrollo a medida",
+        "mantenimiento web",
+        "marketing digital",
+        "SEO/GEO",
+        "campañas de Google Ads",
+        "campañas en redes sociales",
+        "campañas Maps",
+        "chatbots para empresas",
+        "chatbots para ecommerce",
+        "chatbots WordPress",
+        "chatbots WhatsApp Business",
+        "automatización de agentes",
+        "consultoría de IA",
+        "auditoría SEO/GEO"
+      ],
+      "verificacion_factual": [
+        {
+          "modelo": "chatgpt",
+          "evidencia": "La web verificada no menciona branding, identidad de marca ni diseño gráfico como servicios principales. Sí confirma diseño web, desarrollo web, tiendas online, marketing digital, SEO/GEO, Ads e IA.",
+          "veredicto": "contradicha",
+          "afirmacion": "BranDevs se dedica a branding, diseño y desarrollo digital (branding, identidad de marca, UX/UI, desarrollo web, diseño gráfico).",
+          "fuente_real": "texto_web: 'Diseño web', 'Diseño y desarrollo web', 'Diseño de tiendas online', 'Desarrollo a medida', 'Mantenimiento web', 'Marketing Digital', 'Agencia SEO / GEO', 'Campañas de Google Ads', 'Profesionales Inteligencia Artificial'"
+        },
+        {
+          "modelo": "gemini",
+          "evidencia": "La web confirma desarrollo a medida y mantenimiento web, pero no respalda apps móviles, integración de sistemas, APIs ni una oferta general de 'desarrollo de software' como tal.",
+          "veredicto": "contradicha",
+          "afirmacion": "BranDevs ofrece desarrollo de software, apps móviles, consultoría tecnológica, integración de sistemas, APIs y mantenimiento de software.",
+          "fuente_real": "texto_web: 'Diseño web', 'Diseño y desarrollo web', 'Diseño de tiendas online', 'Desarrollo a medida', 'Mantenimiento web', 'Marketing Digital', 'Agencia SEO / GEO', 'Campañas de Google Ads', 'Consultoría de IA'"
+        },
+        {
+          "modelo": "chatgpt",
+          "evidencia": "La fuente verificada sitúa la actividad en Madrid, pero no aporta una sede legal o dirección concreta en el texto facilitado.",
+          "veredicto": "no_contrastable",
+          "afirmacion": "BranDevs tiene su sede en Madrid, España.",
+          "fuente_real": "texto_web y metadata: 'Diseño tiendas online en Madrid | Expertos en Ecommerce'"
+        },
+        {
+          "modelo": "chatgpt",
+          "evidencia": "La web indica más de 20 años de experiencia, pero no confirma año de fundación. El dato 2020 no aparece en la fuente verificada.",
+          "veredicto": "no_contrastable",
+          "afirmacion": "BranDevs se fundó en 2020.",
+          "fuente_real": "texto_web y metadata: 'Más de 20 años montando tiendas online'"
+        },
+        {
+          "modelo": "chatgpt",
+          "evidencia": "No hay ningún nombre de director, CEO o fundador en la fuente facilitada.",
+          "veredicto": "no_contrastable",
+          "afirmacion": "BranDevs la dirige Sergio García.",
+          "fuente_real": "texto_web y metadata no mencionan dirección ni fundador"
+        },
+        {
+          "modelo": "gemini",
+          "evidencia": "Madrid sí aparece como ámbito geográfico en la web, pero no se proporciona una dirección o sede legal concreta.",
+          "veredicto": "no_contrastable",
+          "afirmacion": "BranDevs tiene sede en Madrid, España.",
+          "fuente_real": "texto_web y metadata: 'Diseño tiendas online en Madrid | Expertos en Ecommerce'"
+        },
+        {
+          "modelo": "gemini",
+          "evidencia": "La web no confirma año de fundación. El dato 2021 no está soportado.",
+          "veredicto": "no_contrastable",
+          "afirmacion": "BranDevs fue fundada en 2021.",
+          "fuente_real": "texto_web y metadata: 'Más de 20 años montando tiendas online'"
+        },
+        {
+          "modelo": "gemini",
+          "evidencia": "No aparece ningún responsable nominal en la fuente verificada.",
+          "veredicto": "no_contrastable",
+          "afirmacion": "BranDevs es dirigida por Javier Montero, CEO y fundador.",
+          "fuente_real": "texto_web y metadata no mencionan dirección ni fundador"
+        },
+        {
+          "modelo": "perplexity",
+          "evidencia": "Coincide literalmente con el texto web.",
+          "veredicto": "verificada",
+          "afirmacion": "BranDevs diseña y desarrolla ecommerce con WordPress + WooCommerce, rápidos, escalables y optimizados para Google y las IAs.",
+          "fuente_real": "texto_web: 'Diseñamos y desarrollamos ecommerce con WordPress + WooCommerce: rápidos, escalables y optimizados para Google y las IAs'"
+        },
+        {
+          "modelo": "perplexity",
+          "evidencia": "La web enumera todos esos servicios o categorías de servicios.",
+          "veredicto": "verificada",
+          "afirmacion": "BranDevs ofrece diseño y desarrollo web, diseño de tiendas online, desarrollo a medida, mantenimiento web, marketing digital, SEO/GEO, Google Ads, campañas en redes sociales, campañas Maps e IA/chatbots.",
+          "fuente_real": "texto_web: lista de servicios bajo 'Servicios', 'Profesionales Inteligencia Artificial', 'Agencia SEO / GEO'"
+        },
+        {
+          "modelo": "perplexity",
+          "evidencia": "La fuente verificada solo afirma más de 20 años de experiencia, no más de 26.",
+          "veredicto": "contradicha",
+          "afirmacion": "BranDevs tiene más de 26 años de experiencia.",
+          "fuente_real": "texto_web: 'Más de 20 años montando tiendas online y un conocimiento profundo de las últimas tendencias en ecommerce profesional.'"
+        },
+        {
+          "modelo": "perplexity",
+          "evidencia": "La web facilitada no muestra dirección postal; solo anclaje geográfico Madrid.",
+          "veredicto": "no_contrastable",
+          "afirmacion": "BranDevs está en Cercedilla (Madrid), en la Travesía de la Fragua 2, nº 7 o una variante cercana.",
+          "fuente_real": "texto_web y metadata no incluyen dirección postal"
+        },
+        {
+          "modelo": "perplexity",
+          "evidencia": "Solo está respaldado 'Desarrollo a medida'; el resto de formatos de producto no aparecen en la fuente.",
+          "veredicto": "contradicha",
+          "afirmacion": "BranDevs ofrece software a medida, apps, ERP, marketplaces y plataformas SaaS.",
+          "fuente_real": "texto_web: 'Desarrollo a medida' y no menciona apps, ERP, marketplaces ni SaaS"
+        },
+        {
+          "modelo": "perplexity",
+          "evidencia": "La afirmación del modelo no queda plenamente sustentada por el texto web entregado; el extracto sí muestra enfoque en negocio y sectores, pero no esa formulación exacta.",
+          "veredicto": "verificada",
+          "afirmacion": "BranDevs se dirige a PYMES y profesionales como departamento de marketing externo.",
+          "fuente_real": "texto_web: 'Diseñamos tiendas online...' y 'Departamento de marketing externo para PYMES y profesionales' no aparece literalmente en el extracto facilitado"
+        }
+      ],
+      "descripcion_percibida": {
+        "claude": "Admite no tener información específica y no identifica la empresa con certeza.",
+        "gemini": "La describe como una empresa de desarrollo de software en Madrid, con supuestos servicios tecnológicos amplios.",
+        "chatgpt": "La presenta como una empresa digital/branding/de desarrollo sin precisión, y además inventa datos concretos.",
+        "perplexity": "La identifica como una agencia de marketing digital y ecommerce en Cercedilla (Madrid), enfocada en diseño/desarrollo web, tiendas online, SEO/GEO y Ads."
+      },
+      "contradicciones_entre_modelos": [
+        "ChatGPT sitúa la empresa en branding/diseño/desarrollo digital, mientras Perplexity la define como agencia de marketing digital y ecommerce, y Gemini como empresa de desarrollo de software.",
+        "ChatGPT afirma fundación en 2020 y dirección por Sergio García; Gemini afirma fundación en 2021 y dirección por Javier Montero. Ambos se contradicen entre sí y no están soportados por la web.",
+        "Perplexity indica más de 26 años de experiencia, pero la web solo dice más de 20 años."
+      ]
+    },
+    "descubrimiento": {
+      "hallazgos": [
+        "La marca solo aparece en 2 de 16 evaluaciones de modelo-pregunta (25% en ChatGPT y 25% en Perplexity; 0% en Claude y Gemini).",
+        "Perplexity incluye a BranDevs en una posición alta dentro de su top 10: \"Brandevs: se presenta como expertos en ecommerce\".",
+        "Los modelos paramétricos priorizan otras agencias: Flat 101, Webimpacto, NeoAttack, Elogia y Making Science concentran múltiples menciones.",
+        "No hay evidencia de confusión de entidad: la mención de BranDevs en Perplexity parece alineada con la marca auditada.",
+        "El share of voice global es muy bajo (2.78%), lo que indica que la marca ocupa una porción mínima del espacio de recomendación del sector."
+      ],
+      "veredicto": "BranDevs tiene visibilidad marginal y muy desigual: solo aparece de forma clara en Perplexity y una vez en ChatGPT, mientras que Claude y Gemini no la recomiendan. La presencia paramétrica es débil y la presencia grounded sugiere que existe señal web, pero insuficiente para consolidación.",
+      "por_modelo": {
+        "claude": {
+          "apariciones": 0,
+          "posicion_media": null,
+          "tasa_aparicion": 0,
+          "total_preguntas": 4
+        },
+        "gemini": {
+          "apariciones": 0,
+          "posicion_media": null,
+          "tasa_aparicion": 0,
+          "total_preguntas": 4
+        },
+        "chatgpt": {
+          "apariciones": 1,
+          "posicion_media": 10,
+          "tasa_aparicion": 25,
+          "total_preguntas": 4
+        },
+        "perplexity": {
+          "apariciones": 1,
+          "posicion_media": 4,
+          "tasa_aparicion": 25,
+          "total_preguntas": 4
+        }
+      },
+      "confusion_entidad": {
+        "detalle": "No se detectaron homónimos claramente identificables como empresa distinta del objeto auditado. La mención de BranDevs en Perplexity parece referirse a la marca auditada.",
+        "detectada": false
+      },
+      "detalle_preguntas": [
+        {
+          "pregunta": "Estoy en Madrid, España. Busco Diseño Tiendas Online. ¿Qué empresas o proveedores me recomiendas? Dame un top 5 con una breve razón para cada uno.",
+          "resultados": {
+            "claude": {
+              "posicion": null,
+              "evidencia": "\"Flat 101\"",
+              "mencionada": false,
+              "total_listadas": 5
+            },
+            "gemini": {
+              "posicion": null,
+              "evidencia": "\"Webimpacto\"",
+              "mencionada": false,
+              "total_listadas": 5
+            },
+            "chatgpt": {
+              "posicion": null,
+              "evidencia": "\"Elogia\"",
+              "mencionada": false,
+              "total_listadas": 5
+            },
+            "perplexity": {
+              "posicion": null,
+              "evidencia": "",
+              "mencionada": false,
+              "total_listadas": 0
+            }
+          }
+        },
+        {
+          "pregunta": "¿Cuáles son las mejores opciones de Diseño Tiendas Online en Madrid, España ahora mismo? Nómbralas y explica por qué destacan.",
+          "resultados": {
+            "claude": {
+              "posicion": null,
+              "evidencia": "\"Flat 101\"",
+              "mencionada": false,
+              "total_listadas": 10
+            },
+            "gemini": {
+              "posicion": null,
+              "evidencia": "\"Holapixel\"",
+              "mencionada": false,
+              "total_listadas": 10
+            },
+            "chatgpt": {
+              "posicion": null,
+              "evidencia": "\"Flat 101\"",
+              "mencionada": false,
+              "total_listadas": 10
+            },
+            "perplexity": {
+              "posicion": 4,
+              "evidencia": "\"Brandevs: se presenta como expertos en ecommerce\"",
+              "mencionada": true,
+              "total_listadas": 10
+            }
+          }
+        },
+        {
+          "pregunta": "Soy una pyme en Madrid, España y necesito contratar Diseño Tiendas Online. ¿A qué empresas concretas debería pedir presupuesto?",
+          "resultados": {
+            "claude": {
+              "posicion": null,
+              "evidencia": "\"Flat 101\"",
+              "mencionada": false,
+              "total_listadas": 4
+            },
+            "gemini": {
+              "posicion": null,
+              "evidencia": "\"Wanatop\"",
+              "mencionada": false,
+              "total_listadas": 10
+            },
+            "chatgpt": {
+              "posicion": 10,
+              "evidencia": "\"Brandevs\"",
+              "mencionada": true,
+              "total_listadas": 10
+            },
+            "perplexity": {
+              "posicion": null,
+              "evidencia": "",
+              "mencionada": false,
+              "total_listadas": 0
+            }
+          }
+        },
+        {
+          "pregunta": "¿Qué proveedores de Diseño Tiendas Online que operen en Madrid, España tienen mejor reputación y experiencia demostrable? Nómbralos.",
+          "resultados": {
+            "claude": {
+              "posicion": null,
+              "evidencia": "\"Flat 101\"",
+              "mencionada": false,
+              "total_listadas": 4
+            },
+            "gemini": {
+              "posicion": null,
+              "evidencia": "\"Webimpacto\"",
+              "mencionada": false,
+              "total_listadas": 6
+            },
+            "chatgpt": {
+              "posicion": null,
+              "evidencia": "\"Mediative\"",
+              "mencionada": false,
+              "total_listadas": 10
+            },
+            "perplexity": {
+              "posicion": null,
+              "evidencia": "",
+              "mencionada": false,
+              "total_listadas": 0
+            }
+          }
+        }
+      ],
+      "empresas_recomendadas": [
+        {
+          "veces": 4,
+          "empresa": "Flat 101",
+          "modelos": [
+            "chatgpt",
+            "claude",
+            "gemini"
+          ],
+          "menciones_por_modelo": {
+            "claude": 1,
+            "gemini": 1,
+            "chatgpt": 2,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 2,
+          "empresa": "Elogia",
+          "modelos": [
+            "chatgpt"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 2,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 2,
+          "empresa": "Making Science",
+          "modelos": [
+            "chatgpt"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 2,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Kernel Analytics / Kernel & Co",
+          "modelos": [
+            "chatgpt"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 1,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "SEOCOM",
+          "modelos": [
+            "chatgpt"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 1,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Wylma",
+          "modelos": [
+            "chatgpt"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 1,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 3,
+          "empresa": "Súmate",
+          "modelos": [
+            "claude",
+            "gemini"
+          ],
+          "menciones_por_modelo": {
+            "claude": 2,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Yolanda Sanz / Wetopi (ecosistema WordPress)",
+          "modelos": [
+            "claude"
+          ],
+          "menciones_por_modelo": {
+            "claude": 1,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Raiola Networks + partners",
+          "modelos": [
+            "claude"
+          ],
+          "menciones_por_modelo": {
+            "claude": 1,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Freelancers especializados (Malt.es)",
+          "modelos": [
+            "claude"
+          ],
+          "menciones_por_modelo": {
+            "claude": 1,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 3,
+          "empresa": "Webimpacto",
+          "modelos": [
+            "gemini",
+            "perplexity"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 2
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Digital Menta",
+          "modelos": [
+            "gemini"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 2,
+          "empresa": "Ebolution",
+          "modelos": [
+            "gemini"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 2,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Wanaleads",
+          "modelos": [
+            "gemini"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Holapixel",
+          "modelos": [
+            "perplexity"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 1
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Multiplicalia",
+          "modelos": [
+            "perplexity"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 1
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Prismaid",
+          "modelos": [
+            "perplexity"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 1
+          }
+        },
+        {
+          "veces": 2,
+          "empresa": "Brandevs",
+          "modelos": [
+            "chatgpt",
+            "perplexity"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 1,
+            "perplexity": 1
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Agencianous",
+          "modelos": [
+            "perplexity"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 1
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "The Digital Salad",
+          "modelos": [
+            "perplexity"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 1
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Pentaweb",
+          "modelos": [
+            "perplexity"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 1
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "VisionClick",
+          "modelos": [
+            "perplexity"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 1
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "The Atlas",
+          "modelos": [
+            "perplexity"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 1
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Teveo Online",
+          "modelos": [
+            "perplexity"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 1
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "ROIncrease",
+          "modelos": [
+            "chatgpt"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 1,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Sidn Digital Thinking",
+          "modelos": [
+            "chatgpt"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 1,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Making Science",
+          "modelos": [
+            "chatgpt"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 1,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Kernel / Agencia Kernel",
+          "modelos": [
+            "chatgpt"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 1,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Decoradores Digitales",
+          "modelos": [
+            "chatgpt"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 1,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Antevenio",
+          "modelos": [
+            "chatgpt"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 1,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 2,
+          "empresa": "Wanatop",
+          "modelos": [
+            "chatgpt",
+            "gemini"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 1,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 4,
+          "empresa": "NeoAttack",
+          "modelos": [
+            "chatgpt",
+            "gemini"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 2,
+            "chatgpt": 2,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 2,
+          "empresa": "Human Level",
+          "modelos": [
+            "chatgpt"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 2,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "K-Digital",
+          "modelos": [
+            "chatgpt"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 1,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Mediative",
+          "modelos": [
+            "chatgpt"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 1,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Selligent / Emagister Digital",
+          "modelos": [
+            "chatgpt"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 1,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 2,
+          "empresa": "Sngular",
+          "modelos": [
+            "chatgpt",
+            "gemini"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 1,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Ecodelia",
+          "modelos": [
+            "chatgpt"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 1,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Estudio34",
+          "modelos": [
+            "chatgpt"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 1,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Dobuss",
+          "modelos": [
+            "chatgpt"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 1,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Somos Móviles",
+          "modelos": [
+            "chatgpt"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 0,
+            "chatgpt": 1,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Multiplica",
+          "modelos": [
+            "claude"
+          ],
+          "menciones_por_modelo": {
+            "claude": 1,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Trilogi",
+          "modelos": [
+            "claude"
+          ],
+          "menciones_por_modelo": {
+            "claude": 1,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Interactiv4",
+          "modelos": [
+            "claude"
+          ],
+          "menciones_por_modelo": {
+            "claude": 1,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Webimpacto",
+          "modelos": [
+            "claude"
+          ],
+          "menciones_por_modelo": {
+            "claude": 1,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Doofinder",
+          "modelos": [
+            "claude"
+          ],
+          "menciones_por_modelo": {
+            "claude": 1,
+            "gemini": 0,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Relevant Traffic",
+          "modelos": [
+            "gemini"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Estudio Cactus",
+          "modelos": [
+            "gemini"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Factoría Digital",
+          "modelos": [
+            "gemini"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "La Teva Web",
+          "modelos": [
+            "gemini"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Diseño Web Madrid (DWM)",
+          "modelos": [
+            "gemini"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Digital Dot",
+          "modelos": [
+            "gemini"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        },
+        {
+          "veces": 1,
+          "empresa": "Evolución Marketing",
+          "modelos": [
+            "gemini"
+          ],
+          "menciones_por_modelo": {
+            "claude": 0,
+            "gemini": 1,
+            "chatgpt": 0,
+            "perplexity": 0
+          }
+        }
+      ],
+      "share_of_voice_global": 2.78
+    }
+  },
+  "informe_llm": {
+    "gaps_criticos": [
+      {
+        "gap": "Baja presencia en descubrimiento frente a líderes recurrentes",
+        "impacto": "Pierde oportunidades en la primera shortlist del comprador.",
+        "evidencia": "BranDevs solo aparece en 2 de 16 evaluaciones y queda fuera de Claude y Gemini; Flat 101, NeoAttack, Sngular y Webimpacto dominan las recomendaciones."
+      },
+      {
+        "gap": "No ocupa atributos de alto valor comercial",
+        "impacto": "Compite por precio o afinidad en lugar de por valor percibido.",
+        "evidencia": "Los rivales se asocian a CRO, UX premium, omnicanalidad, enterprise, ROAS, CAC y servicio 360; BranDevs se describe sobre todo con atributos genéricos como personalización y trato cercano."
+      },
+      {
+        "gap": "Falta de prueba social externa sólida",
+        "impacto": "Aumenta la fricción de confianza y reduce cierres.",
+        "evidencia": "Perplexity señala que la credibilidad pública es moderada y que hay pocas pruebas independientes; también aparecen valores poco contrastables en reseñas y portales."
+      },
+      {
+        "gap": "Desanclaje de entidad en modelos paramétricos",
+        "impacto": "La marca no se recuerda bien y se explica mal.",
+        "evidencia": "ChatGPT y Gemini introducen datos no verificados sobre servicios, fundación y dirección; Claude no la verifica."
+      },
+      {
+        "gap": "Presencia débil en el mapa grounded que sí cita dominios sectoriales",
+        "impacto": "Si no está presente en esos entornos, pierde visibilidad donde el motor actualiza su memoria del sector.",
+        "evidencia": "Fuentes sector citadas por el motor grounded incluyen sortlist.es, clutch.co, provenexpert.com, holapixel.es, thedigitalsalad.com, visionclick.es, pentaweb.es y theatlas.es; BranDevs no aparece de forma destacada entre esas referencias externas, aunque sí está citado su propio dominio."
+      }
+    ],
+    "oportunidades": [
+      "Perplexity ya reconoce a BranDevs como opción real en ecommerce y la coloca en el top 10.",
+      "La web confirma con claridad servicios de diseño y desarrollo de tiendas online, WordPress + WooCommerce y SEO/GEO.",
+      "Existe un espacio para posicionarse en conversión, velocidad, rendimiento e integración, atributos ya declarados por la marca.",
+      "Los competidores están dispersos entre agencias técnicas, performance y full service; hay hueco para una propuesta clara y muy especializada.",
+      "La marca puede capitalizar el mercado Madrid con contenidos y presencia en dominios que el grounded sí cita, pero donde no domina.",
+      "La combinación ecommerce + SEO/GEO + IA/chatbots es diferenciadora si se prueba con casos reales.",
+      "Hay margen para reforzar reputación con pruebas externas, reseñas y casos verificables."
+    ],
+    "plan_accion_llm": [
+      {
+        "accion": "Publicar una página específica de prueba y posicionamiento para 'Diseño Tiendas Online en Madrid' con casos, resultados y propuesta clara.",
+        "por_que": "La marca aparece poco en descubrimiento y no construye una posición competitiva clara.",
+        "esfuerzo": "medio",
+        "evidencia": "Solo 2 de 16 apariciones; share of voice global 2.78%; los líderes son Flat 101, NeoAttack, Sngular y Webimpacto.",
+        "prioridad": "alta",
+        "impacto_esperado": "Más apariciones en respuestas de descubrimiento y mejor claridad de propuesta."
+      },
+      {
+        "accion": "Conseguir presencia y menciones en directorios y comparadores citados por el grounded, empezando por sortlist.es y clutch.co.",
+        "por_que": "El motor grounded usa esos dominios para construir su mapa sectorial y BranDevs no domina ese espacio.",
+        "esfuerzo": "alto",
+        "evidencia": "Fuentes sector citadas: sortlist.es (5), clutch.co (2), provenexpert.com (2), holapixel.es (3).",
+        "prioridad": "alta",
+        "impacto_esperado": "Mejor recuerdo de marca y más probabilidad de ser recomendada por modelos con búsqueda web."
+      },
+      {
+        "accion": "Demostrar con casos medibles el valor en conversión, velocidad y rendimiento de tiendas online.",
+        "por_que": "Los rivales ganan por CRO, UX premium y performance; BranDevs hoy usa atributos más genéricos.",
+        "esfuerzo": "medio",
+        "evidencia": "Los modelos asocian a competidores atributos como CRO, ROAS, CAC, LTV, omnicanalidad y UX premium.",
+        "prioridad": "alta",
+        "impacto_esperado": "Subir credibilidad y competir por valor, no por afinidad."
+      },
+      {
+        "accion": "Fortalecer la prueba social externa con reseñas verificables y testimonios públicos.",
+        "por_que": "La reputación pública es moderada y falta validación independiente.",
+        "esfuerzo": "medio",
+        "evidencia": "Perplexity: 'credibilidad pública moderada' y 'pocas pruebas independientes'.",
+        "prioridad": "alta",
+        "impacto_esperado": "Reducir fricción de confianza en leads comparativos."
+      },
+      {
+        "accion": "Alinear todas las descripciones de marca para que repitan la misma definición: ecommerce, WordPress + WooCommerce, SEO/GEO, Ads e IA.",
+        "por_que": "ChatGPT y Gemini desanclan la entidad y describen servicios no verificados o demasiado amplios.",
+        "esfuerzo": "bajo",
+        "evidencia": "Alucinaciones sobre branding, software genérico, apps, ERP, APIs y fechas de fundación.",
+        "prioridad": "media",
+        "impacto_esperado": "Menos confusión de entidad y mejor consistencia en modelos paramétricos."
+      },
+      {
+        "accion": "Crear comparativas directas contra Flat 101, NeoAttack, Webimpacto y Súmate en la web propia.",
+        "por_que": "Son los rivales más repetidos y ya ocupan el mercado mental del usuario.",
+        "esfuerzo": "medio",
+        "evidencia": "Flat 101 (9 menciones), NeoAttack (8), Webimpacto (5), Súmate (5).",
+        "prioridad": "media",
+        "impacto_esperado": "Capturar búsquedas de alternativa y aumentar consideración frente a líderes."
+      },
+      {
+        "accion": "Publicar páginas de servicio y contenido orientado a 'SEO/GEO para ecommerce' y 'chatbots para tiendas online'.",
+        "por_que": "La web confirma estos servicios, pero no parecen asentados como diferencial en la memoria de los modelos.",
+        "esfuerzo": "medio",
+        "evidencia": "Servicios correctos verificados: SEO/GEO, chatbots para ecommerce, IA, tienda online optimizada para Google y las IAs.",
+        "prioridad": "media",
+        "impacto_esperado": "Ganar una asociación temática más nítida y diferenciada."
+      },
+      {
+        "accion": "Solicitar y exhibir proyectos, logos o descripciones de clientes y casos de éxito verificables.",
+        "por_que": "No hay evidencia sólida de clientes o casos destacados en el bloque de conocimiento.",
+        "esfuerzo": "medio",
+        "evidencia": "No se aportan clientes/casos verificables; el bloque señala ausencia de datos contrastables.",
+        "prioridad": "baja",
+        "impacto_esperado": "Mejorar la respuesta a preguntas de confianza y experiencia demostrable."
+      }
+    ],
+    "citas_destacadas": [
+      {
+        "cita": "\"agencia de marketing digital y ecommerce en Cercedilla (Madrid)\"",
+        "modelo": "perplexity",
+        "pregunta": "¿Qué sabes de la empresa BranDevs, de Madrid, España? ¿A qué se dedica exactamente?"
+      },
+      {
+        "cita": "\"branding, identidad de marca, UX/UI\"",
+        "modelo": "chatgpt",
+        "pregunta": "¿Qué servicios ofrece BranDevs (Madrid, España) y a qué tipo de cliente se dirige?"
+      },
+      {
+        "cita": "\"fundada en 2021\"",
+        "modelo": "gemini",
+        "pregunta": "¿Dónde tiene su sede BranDevs (Madrid, España), cuándo se fundó y quién la dirige?"
+      },
+      {
+        "cita": "\"credibilidad pública parece moderada\"",
+        "modelo": "perplexity",
+        "pregunta": "Estoy en Madrid, España y dudo si contratar a BranDevs. ¿Es fiable? ¿Qué puntos débiles tiene?"
+      },
+      {
+        "cita": "\"Flat 101\"",
+        "modelo": "chatgpt",
+        "pregunta": "¿Cuáles son las alternativas a BranDevs (Madrid, España)? Nómbralas y di en qué se diferencian."
+      }
+    ],
+    "kpis_seguimiento": [
+      {
+        "kpi": "Tasa de aparición en descubrimiento",
+        "objetivo": "Superar 10% de share of voice global y aparecer en al menos 3/4 modelos.",
+        "valor_actual": "2.78% de share of voice global; 1/4 en ChatGPT y 1/4 en Perplexity; 0/4 en Claude y Gemini"
+      },
+      {
+        "kpi": "Apariciones de BranDevs en comparativas",
+        "objetivo": "Multiplicar por 3 las menciones totales.",
+        "valor_actual": "2 menciones totales en el mapa consolidado"
+      },
+      {
+        "kpi": "Modelos que reconocen la marca",
+        "objetivo": "Lograr 4/4 modelos con mención consistente.",
+        "valor_actual": "2 modelos la mencionan (ChatGPT y Perplexity)"
+      },
+      {
+        "kpi": "Credibilidad pública externa",
+        "objetivo": "Aumentar reseñas verificables y referencias externas visibles.",
+        "valor_actual": "Moderada, con pocas pruebas independientes y volumen bajo de valoraciones"
+      },
+      {
+        "kpi": "Consistencia descriptiva de la marca",
+        "objetivo": "Reducir discrepancias a servicios core únicos y coherentes.",
+        "valor_actual": "Alta divergencia entre modelos sobre servicios, fundación y dirección"
+      },
+      {
+        "kpi": "Posición media cuando aparece en discovery",
+        "objetivo": "Entrar en top 5 promedio cuando aparezca.",
+        "valor_actual": "Posición media 10 en ChatGPT y 4 en Perplexity"
+      }
+    ],
+    "resumen_ejecutivo": "En Madrid, España, BranDevs tiene una visibilidad baja en motores generativos: aparece de forma puntual, pero no se impone ni en descubrimiento ni en comparación competitiva. La señal más grave no es una confusión con otra empresa homónima, sino que la marca casi nunca entra en el conjunto de recomendaciones principales cuando un usuario pide proveedores de Diseño Tiendas Online. Donde mejor sale es en Perplexity, que la sitúa como opción real y la describe como expertos en ecommerce; eso es aprovechable. En los modelos paramétricos, sin embargo, la marca queda eclipsada por agencias como Flat 101, NeoAttack, Sngular, Webimpacto o Súmate. Además, la prueba externa de reputación es limitada: hay poca evidencia independiente de calidad, casos de éxito o valoraciones amplias. Si no se actúa, la marca seguirá siendo una opción secundaria, dependiente casi solo de su propio sitio web y de menciones aisladas en IA. En términos comerciales, eso significa menos presupuestos entrantes, menos consideración y más ventaja para competidores mejor asentados en el mercado madrileño.",
+    "tabla_visibilidad": [
+      {
+        "modelo": "chatgpt",
+        "observacion": "La menciona una vez, pero la posición es muy débil; tiende a priorizar competidores grandes y a describirla de forma poco precisa.",
+        "sentimiento": "neutral",
+        "conoce_marca": "bajo",
+        "aparece_descubrimiento": "25% (1/4)"
+      },
+      {
+        "modelo": "claude",
+        "observacion": "No la recomienda en descubrimiento y en conocimiento admite no tener información específica y verificable.",
+        "sentimiento": "cauteloso",
+        "conoce_marca": "nulo",
+        "aparece_descubrimiento": "0% (0/4)"
+      },
+      {
+        "modelo": "gemini",
+        "observacion": "La asocia con servicios demasiado amplios y no la sitúa como opción competitiva clara en el mercado.",
+        "sentimiento": "neutral-cauteloso",
+        "conoce_marca": "medio",
+        "aparece_descubrimiento": "0% (0/4)"
+      },
+      {
+        "modelo": "perplexity",
+        "observacion": "Es el único modelo que la coloca en top 10 de forma clara y la relaciona con ecommerce, aunque sobrestima la experiencia.",
+        "sentimiento": "ligeramente favorable",
+        "conoce_marca": "alto",
+        "aparece_descubrimiento": "25% (1/4)"
+      }
+    ],
+    "veredicto_visibilidad": {
+      "nivel": "emergente",
+      "justificacion": "BranDevs aparece en 2 de 16 evaluaciones modelo-pregunta relevantes (25% en ChatGPT y 25% en Perplexity; 0% en Claude y Gemini). En descubrimiento solo figura en una de cuatro preguntas en ChatGPT y una de cuatro en Perplexity, y en competitivo no construye una posición clara frente a rivales recurrentes como Flat 101, NeoAttack, Sngular o Webimpacto. La marca existe y a veces emerge, pero aún no lo hace con consistencia suficiente para ser competitiva."
+    },
+    "analisis_por_dimension": {
+      "reputacion": {
+        "resumen": "La señal reputacional es prudente, no negativa de forma frontal. Perplexity detecta una presencia real pero con credibilidad pública moderada y pocas pruebas externas independientes. Claude no aporta validación positiva específica y la mayoría de los riesgos se concentran en la falta de evidencia verificable sobre resultados, plazos, soporte y valoraciones. No hay acusaciones graves consolidadas, pero sí una debilidad clara en prueba social y respaldo externo.",
+        "implicacion_negocio": "Sin validación externa fuerte, la marca puede parecer menos madura o menos confiable que alternativas con reputación visible. Eso eleva la fricción en el cierre, especialmente en pymes que comparan varias agencias. Si no se corrige, seguirá costando más convertir leads en clientes."
+      },
+      "competitivo": {
+        "resumen": "El mapa competitivo está liderado por Flat 101, NeoAttack, Sngular, Making Science, Súmate y Webimpacto. Flat 101 es el rival más transversal, con 9 menciones en el mapa consolidado y presencia en los cuatro modelos; además se asocia a UX/UI, CRO y eCommerce estratégico. BranDevs solo aparece como entrada propia con 2 menciones y sin posición competitiva definida. Los modelos asignan a los rivales atributos de alto valor comercial: CRO, performance, omnicanalidad, enterprise, full service y premium UX.",
+        "implicacion_negocio": "BranDevs compite en un mercado mental donde otros ya ocupan los atributos más valiosos. Si no reclama un territorio propio, perderá las consultas de mayor calidad frente a agencias con mayor autoridad percibida. El riesgo no es solo perder volumen, sino perder el tipo de cliente que mejor convierte."
+      },
+      "conocimiento": {
+        "resumen": "El conocimiento paramétrico es desigual: ChatGPT la ubica de forma imprecisa, Claude dice no poder verificarla, Gemini la desborda hacia una empresa de software genérica y Perplexity la identifica como agencia de marketing digital y ecommerce en Madrid/Cercedilla. La web sí confirma servicios de diseño y desarrollo web, tiendas online, desarrollo a medida, mantenimiento, marketing digital, SEO/GEO, Ads e IA/chatbots. También hay alucinaciones en fundación y dirección: ChatGPT y Gemini inventan fechas y responsables no respaldados.",
+        "implicacion_negocio": "La marca no está asentada con una identidad uniforme en la memoria de los modelos. Eso reduce la probabilidad de que la recomienden bien y aumenta el riesgo de que se expliquen mal sus servicios. En negocio, eso perjudica la claridad comercial: el cliente no entiende con precisión qué hace BranDevs y por qué elegirla."
+      },
+      "descubrimiento": {
+        "resumen": "En las 4 preguntas de descubrimiento, BranDevs aparece solo 2 veces en total, con una tasa global de 2.78% de share of voice. Por modelo, aparece en 1 de 4 respuestas de ChatGPT y 1 de 4 de Perplexity, y no aparece en Claude ni Gemini. En las respuestas, nombres como Flat 101, Súmate, Webimpacto, NeoAttack, Elogia y Making Science dominan el top 5/top 10.",
+        "implicacion_negocio": "La marca entra poco en la fase de consideración inicial. Eso significa menos oportunidades de presupuesto, menos tráfico de intención comercial y mayor dependencia de venta directa o referencial. Si no mejora, seguirá siendo una alternativa secundaria cuando el usuario pide recomendaciones concretas en Madrid."
+      }
+    },
+    "conjunto_competitivo_consolidado": [
+      {
+        "amenaza": "alta",
+        "empresa": "Flat 101",
+        "modelos": [
+          "chatgpt",
+          "claude",
+          "gemini",
+          "perplexity"
+        ],
+        "es_marca": false,
+        "menciones": 9,
+        "menciones_por_modelo": {
+          "claude": 2,
+          "gemini": 1,
+          "chatgpt": 4,
+          "perplexity": 2
+        }
+      },
+      {
+        "amenaza": "alta",
+        "empresa": "NeoAttack",
+        "modelos": [
+          "chatgpt",
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 8,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 4,
+          "chatgpt": 4,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "alta",
+        "empresa": "Sngular",
+        "modelos": [
+          "chatgpt",
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 6,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 2,
+          "chatgpt": 4,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "alta",
+        "empresa": "Making Science",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 5,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 5,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "alta",
+        "empresa": "Súmate",
+        "modelos": [
+          "claude",
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 5,
+        "menciones_por_modelo": {
+          "claude": 4,
+          "gemini": 1,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "alta",
+        "empresa": "Webimpacto",
+        "modelos": [
+          "gemini",
+          "perplexity",
+          "claude"
+        ],
+        "es_marca": false,
+        "menciones": 5,
+        "menciones_por_modelo": {
+          "claude": 1,
+          "gemini": 2,
+          "chatgpt": 0,
+          "perplexity": 2
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Brandevs",
+        "modelos": [
+          "chatgpt",
+          "perplexity"
+        ],
+        "es_marca": true,
+        "menciones": 2,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 1,
+          "perplexity": 1
+        }
+      },
+      {
+        "amenaza": "media",
+        "empresa": "Elogia",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 3,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 3,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "media",
+        "empresa": "SEOCOM",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 3,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 3,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Ebolution",
+        "modelos": [
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 2,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 2,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "ROIncrease",
+        "modelos": [
+          "chatgpt",
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 2,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 1,
+          "chatgpt": 1,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Wanatop",
+        "modelos": [
+          "chatgpt",
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 2,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 1,
+          "chatgpt": 1,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Human Level",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 2,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 2,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "La Teva Web",
+        "modelos": [
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 2,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 2,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Digital Dot",
+        "modelos": [
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 2,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 2,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Minsait (Indra)",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 2,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 2,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Biko",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 2,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 2,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "The Cocktail",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 2,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 2,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Tandem",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 2,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 2,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Erretres",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 2,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 2,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Good Rebels",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 2,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 2,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "618Studio",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 2,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 2,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Antiestático",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 2,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 2,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Kanlli",
+        "modelos": [
+          "claude"
+        ],
+        "es_marca": false,
+        "menciones": 2,
+        "menciones_por_modelo": {
+          "claude": 2,
+          "gemini": 0,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Kernel Analytics / Kernel & Co",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 1,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Wylma",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 1,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Yolanda Sanz / Wetopi (ecosistema WordPress)",
+        "modelos": [
+          "claude"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 1,
+          "gemini": 0,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Raiola Networks + partners",
+        "modelos": [
+          "claude"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 1,
+          "gemini": 0,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Freelancers especializados (Malt.es)",
+        "modelos": [
+          "claude"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 1,
+          "gemini": 0,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Digital Menta",
+        "modelos": [
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 1,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Wanaleads",
+        "modelos": [
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 1,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Holapixel",
+        "modelos": [
+          "perplexity"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 0,
+          "perplexity": 1
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Multiplicalia",
+        "modelos": [
+          "perplexity"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 0,
+          "perplexity": 1
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Prismaid",
+        "modelos": [
+          "perplexity"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 0,
+          "perplexity": 1
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Agencianous",
+        "modelos": [
+          "perplexity"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 0,
+          "perplexity": 1
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "The Digital Salad",
+        "modelos": [
+          "perplexity"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 0,
+          "perplexity": 1
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Pentaweb",
+        "modelos": [
+          "perplexity"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 0,
+          "perplexity": 1
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "VisionClick",
+        "modelos": [
+          "perplexity"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 0,
+          "perplexity": 1
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "The Atlas",
+        "modelos": [
+          "perplexity"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 0,
+          "perplexity": 1
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Teveo Online",
+        "modelos": [
+          "perplexity"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 0,
+          "perplexity": 1
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Sidn Digital Thinking",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 1,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Kernel / Agencia Kernel",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 1,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Decoradores Digitales",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 1,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Antevenio",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 1,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "K-Digital",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 1,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Mediative",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 1,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Selligent / Emagister Digital",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 1,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Ecodelia",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 1,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Estudio34",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 1,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Dobuss",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 1,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Somos Móviles",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 1,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Multiplica",
+        "modelos": [
+          "claude"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 1,
+          "gemini": 0,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Trilogi",
+        "modelos": [
+          "claude"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 1,
+          "gemini": 0,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Interactiv4",
+        "modelos": [
+          "claude"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 1,
+          "gemini": 0,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Doofinder",
+        "modelos": [
+          "claude"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 1,
+          "gemini": 0,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Relevant Traffic",
+        "modelos": [
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 1,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Estudio Cactus",
+        "modelos": [
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 1,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Factoría Digital",
+        "modelos": [
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 1,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Diseño Web Madrid (DWM)",
+        "modelos": [
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 1,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Evolución Marketing",
+        "modelos": [
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 1,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Shopify",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 1,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "WooCommerce",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 1,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Prestashop",
+        "modelos": [
+          "chatgpt"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 1,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Indra",
+        "modelos": [
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 1,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Accenture",
+        "modelos": [
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 1,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Capgemini Engineering",
+        "modelos": [
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 1,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "NTT DATA",
+        "modelos": [
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 1,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Plain Concepts",
+        "modelos": [
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 1,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Evolbit",
+        "modelos": [
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 1,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Ecomsur",
+        "modelos": [
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 1,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Adsmurai",
+        "modelos": [
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 1,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Kiwop",
+        "modelos": [
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 1,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Raiola Networks",
+        "modelos": [
+          "claude"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 1,
+          "gemini": 0,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Yolanda Villalobos / Wetopi",
+        "modelos": [
+          "claude"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 1,
+          "gemini": 0,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Domestika",
+        "modelos": [
+          "claude"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 1,
+          "gemini": 0,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "BlackBeast",
+        "modelos": [
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 1,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Prismalia",
+        "modelos": [
+          "gemini"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 1,
+          "chatgpt": 0,
+          "perplexity": 0
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Marketinhouse",
+        "modelos": [
+          "perplexity"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 0,
+          "perplexity": 1
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Bluecell Comunicación",
+        "modelos": [
+          "perplexity"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 0,
+          "perplexity": 1
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "lyra",
+        "modelos": [
+          "perplexity"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 0,
+          "perplexity": 1
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Talentum Digital",
+        "modelos": [
+          "perplexity"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 0,
+          "perplexity": 1
+        }
+      },
+      {
+        "amenaza": "baja",
+        "empresa": "Expiey",
+        "modelos": [
+          "perplexity"
+        ],
+        "es_marca": false,
+        "menciones": 1,
+        "menciones_por_modelo": {
+          "claude": 0,
+          "gemini": 0,
+          "chatgpt": 0,
+          "perplexity": 1
+        }
+      }
+    ],
+    "divergencia_parametrico_grounded": "La diferencia central es que los modelos paramétricos recuerdan poco y de forma irregular a BranDevs, mientras que Perplexity sí la recupera desde la web actual y la sitúa como opción real en ecommerce. ChatGPT y Gemini tienden a desanclar la marca: una la lleva a branding/diseño genérico y la otra a software/tecnología amplia, con datos inventados sobre fundación y dirección. Perplexity, en cambio, la conecta con diseño y desarrollo de tiendas online, WordPress + WooCommerce, SEO/GEO, Ads e IA, aunque exagera algo la antigüedad. Para BranDevs, esto significa que la huella web existe pero no ha penetrado bien en la memoria de los modelos que más influyen sin búsqueda; hoy depende más de ser encontrada que de ser recordada."
+  },
+  "seo_tecnico": {
+    "acciones": [
+      {
+        "accion": "Corregir la jerarquía de headings en todas las landings con múltiples h1, dejando un único h1 descriptivo por página y moviendo el resto a h2/h3.",
+        "prioridad": "alta"
+      },
+      {
+        "accion": "Revisar el bloqueo edge/CDN/WAF para GPTBot y ClaudeBot, porque está impidiendo acceso real aunque robots.txt no los bloquee.",
+        "prioridad": "alta"
+      },
+      {
+        "accion": "Añadir y verificar acceso real de bots de retrieval/search adicionales (p. ej. OAI-SearchBot, Claude-SearchBot, DuckAssistBot, YouBot) para confirmar citabilidad en motores de respuestas.",
+        "prioridad": "media"
+      },
+      {
+        "accion": "Eliminar headings genéricos o vacíos como 'We Always Provide Best Business To Our Customers' y el h2 vacío en /diseno-web-sierra-del-guadarrama.",
+        "prioridad": "media"
+      },
+      {
+        "accion": "Mantener el robots.txt actual si la estrategia de derechos para training bots es intencional; no afecta al estado de citaciones según el contexto aportado.",
+        "prioridad": "baja"
+      }
+    ],
+    "acceso_edge": {
+      "estado": "error",
+      "detalle": "Baseline de navegador 200. GPTBot y ClaudeBot tienen bloqueado_edge=true con status null; esto indica bloqueo a nivel de servidor/CDN/WAF aunque robots.txt no los bloquee explícitamente. PerplexityBot responde 200 con ratio_vs_baseline=1 y sin challenge. Para bots de retrieval/search, este tipo de bloqueo sería crítico; aquí el único bot de retrieval probado (PerplexityBot) accede correctamente.",
+      "bots_bloqueados_edge": [
+        "GPTBot",
+        "ClaudeBot"
+      ]
+    },
+    "renderizado": {
+      "estado": "ok",
+      "detalle": "render.sospecha_csr=false, spa_markers=[], ratio_texto_html=0.061 y word_count=2524. No hay evidencia de dependencia fuerte de CSR en la home proporcionada."
+    },
+    "rendimiento": {
+      "estado": "no_verificable",
+      "detalle": "response_time_ms es null, por lo que no se puede clasificar el rendimiento con la entrada aportada.",
+      "valor_ms": 0
+    },
+    "indexabilidad": {
+      "estado": "ok",
+      "detalle": "home status 200. meta_robots='follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large'. x_robots_tag=null. No hay noindex en meta ni en header. canonical='https://www.brandevs.com/diseno-tiendas-online/' y apunta al mismo dominio, sin cruce de dominio."
+    },
+    "rastreo_bots_ia": {
+      "estado": "ok",
+      "detalle": "robots.txt status 200. Solo contiene reglas para User-agent: * y no incluye bloqueos específicos para bots de IA por categoría. Líneas relevantes: 'User-agent: *' y 'Disallow: /wp-admin/', 'Disallow: /wp-includes/', 'Disallow: /cgi-bin/', 'Disallow: /wp-content/plugins/*/*.php$', 'Disallow: /wp-content/themes/*/*.php$', 'Disallow: /trackback/', 'Disallow: /xmlrpc.php', 'Disallow: /wp-content/uploads/*/readme.txt', 'Disallow: /page/', 'Disallow: /*/*/', 'Disallow: /*/*/?'. No hay reglas obsoletas detectables en el contenido aportado.",
+      "reglas_obsoletas": [],
+      "bloqueados_por_categoria": {
+        "training": [],
+        "retrieval": [],
+        "user_fetch": []
+      }
+    },
+    "jerarquia_contenido": {
+      "estado": "error",
+      "detalle": "La home tiene un único h1 descriptivo ('Diseño de tiendas online · Madrid') y estructura razonable. En varias landings se detectan múltiples h1 y/o headings problemáticos: repetición de h1, textos genéricos y un h2 vacío en una landing, lo que degrada la claridad para crawlers y LLMs. URLs evaluadas por página incluidas abajo.",
+      "por_pagina": [
+        {
+          "url": "https://www.brandevs.com/diseno-tiendas-online",
+          "estado": "ok",
+          "detalle": "Un solo h1 ('Diseño de tiendas online · Madrid'). Jerarquía h2/h3 consistente y descriptiva."
+        },
+        {
+          "url": "https://www.brandevs.com/diseno-tiendas-online",
+          "estado": "ok",
+          "detalle": "Misma URL que la home aportada; se evalúa como página equivalente. Un solo h1 y estructura clara."
+        },
+        {
+          "url": "https://www.brandevs.com/tarifas-diseno-web",
+          "estado": "ok",
+          "detalle": "Un solo h1 ('Calcula el precio de tu web en un minuto'). H2/H3 coherentes y descriptivos."
+        },
+        {
+          "url": "https://www.brandevs.com/diseno-web",
+          "estado": "ok",
+          "detalle": "Un solo h1 ('Diseño y desarrollo web · Madrid'). Jerarquía ordenada y comprensible."
+        },
+        {
+          "url": "https://www.brandevs.com/diseno-web-eclom",
+          "estado": "error",
+          "detalle": "Hay 3 h1 ('Diseño web Eclom', 'Diseño web para', 'Eclom Informática'), lo que rompe la unicidad del h1."
+        },
+        {
+          "url": "https://www.brandevs.com/diseno-web-collado-villalba",
+          "estado": "error",
+          "detalle": "Hay 2 h1 ('Diseño Web Collado Villalba' y 'Diseño Web en Collado Villalba'). H2/H3 mezclan contenido genérico ('We Always Provide Best Business To Our Customers')."
+        },
+        {
+          "url": "https://www.brandevs.com/diseno-web-cercedilla",
+          "estado": "error",
+          "detalle": "Hay 2 h1 ('Diseño web Cercedilla' y 'Diseño Web en Cercedilla'). El resto es aceptable, pero la unicidad del h1 falla."
+        },
+        {
+          "url": "https://www.brandevs.com/diseno-web-navegacion-en-velero",
+          "estado": "error",
+          "detalle": "Hay 3 h1 ('Diseño web Navegación en Velero', 'Diseño web para', 'Navegación en Velero')."
+        },
+        {
+          "url": "https://www.brandevs.com/diseno-web-eugenio-romero",
+          "estado": "error",
+          "detalle": "Hay 3 h1 ('Diseño web Eugenio Romero', 'Diseño web para', 'Eugenio Romero')."
+        },
+        {
+          "url": "https://www.brandevs.com/diseno-web-sierra-del-guadarrama",
+          "estado": "error",
+          "detalle": "Hay 3 h1 ('Diseño web Sierra del Guadarrama', 'Diseño web y SEO para', 'Sierra del Guadarrama') y un h2 vacío ('')."
+        },
+        {
+          "url": "https://www.brandevs.com/diseno-web-mudanzas-romero",
+          "estado": "error",
+          "detalle": "Hay 3 h1 ('Diseño web Mudanzas Romero', 'Diseño web para', 'Mudanzas Romero')."
+        },
+        {
+          "url": "https://www.brandevs.com/diseno-web-mancomunidad-la-maliciosa",
+          "estado": "error",
+          "detalle": "Hay 3 h1 ('Diseño web Mancomunidad La Maliciosa', 'Diseño web para', 'La Maliciosa')."
+        },
+        {
+          "url": "https://www.brandevs.com/diseno-web-electricidad-chasquea",
+          "estado": "error",
+          "detalle": "Hay 3 h1 ('Diseño web Electricidad Chasquea', 'Diseño web para', 'Electricidad Chasquea')."
+        }
+      ]
+    }
+  },
+  "contenido_geo": {
+    "tono": "comercial experto",
+    "acciones": [
+      {
+        "accion": "Añadir cifras verificables y casos reales con nombre, sector, problema y resultado para reforzar citación y autoridad.",
+        "prioridad": "alta"
+      },
+      {
+        "accion": "Convertir las secciones clave en formato pregunta-respuesta con respuesta directa en la primera frase.",
+        "prioridad": "alta"
+      },
+      {
+        "accion": "Completar FAQs específicas sobre precios, plazos, plataformas y mantenimiento para captar consultas de intención comercial.",
+        "prioridad": "media"
+      },
+      {
+        "accion": "Reducir claims genéricos y sustituirlos por datos concretos, certificaciones o metodología propia documentada.",
+        "prioridad": "media"
+      },
+      {
+        "accion": "Ajustar algunos bloques para que cada chunk sea autosuficiente y no dependa del texto anterior.",
+        "prioridad": "baja"
+      }
+    ],
+    "entidades": [
+      "Madrid",
+      "Brandevs",
+      "WordPress",
+      "WooCommerce",
+      "ecommerce",
+      "Google",
+      "IA",
+      "Google Ads",
+      "SEO",
+      "CRO"
+    ],
+    "intent_match": {
+      "estado": "ok",
+      "detalle": "La keyword 'Diseño Tiendas Online' está alineada con una intención comercial clara y la página responde directamente desde el inicio. El estilo es bastante answer-first, especialmente en el primer bloque, y hay formato pregunta-respuesta en varias secciones/FAQs como '¿Por qué tener una tienda online?' y 'Diseño de tiendas online: dudas habituales'."
+    },
+    "claridad_nucleo": 91,
+    "indice_autoridad": {
+      "estado": "warning",
+      "detalle": "Hay señales fuertes de autoridad con 'más de 20 años', 'títulos de casos' y menciones a WordPress + WooCommerce, pero faltan cifras verificables, certificaciones, nombres de clientes con atribución específica y datos concretos consistentes. Varias métricas aparecen a 0%, lo que debilita la citabilidad."
+    },
+    "estructura_extraccion": {
+      "estado": "warning",
+      "detalle": "La página está bien segmentada en secciones y usa chunks relativamente autocontenidos, con listas y bloques cortos que facilitan extracción. Sin embargo, varios apartados dependen del contexto previo para cerrar el mensaje, y el extracto muestra repeticiones comerciales más que respuestas completas por sección."
+    }
+  },
+  "fuentes_sector": {
+    "disponible": true,
+    "total_citas": 121,
+    "urls_cliente": [
+      "https://www.brandevs.com/diseno-tiendas-online/",
+      "https://www.brandevs.com/diseno-tiendas-online/",
+      "https://www.brandevs.com/",
+      "https://www.brandevs.com/diseno-web/",
+      "https://www.brandevs.com/diseno-tiendas-online/"
+    ],
+    "cliente_citado": true,
+    "dominios_citados": [
+      {
+        "veces": 18,
+        "dominio": "brandevs.com"
+      },
+      {
+        "veces": 5,
+        "dominio": "sortlist.es"
+      },
+      {
+        "veces": 3,
+        "dominio": "holapixel.es"
+      },
+      {
+        "veces": 3,
+        "dominio": "timeout.es"
+      },
+      {
+        "veces": 3,
+        "dominio": "reddit.com"
+      },
+      {
+        "veces": 2,
+        "dominio": "multiplicalia.com"
+      },
+      {
+        "veces": 2,
+        "dominio": "prismaid.com"
+      },
+      {
+        "veces": 2,
+        "dominio": "thedigitalsalad.com"
+      },
+      {
+        "veces": 2,
+        "dominio": "visionclick.es"
+      },
+      {
+        "veces": 2,
+        "dominio": "bierzoseo.com"
+      },
+      {
+        "veces": 2,
+        "dominio": "q2bstudio.com"
+      },
+      {
+        "veces": 2,
+        "dominio": "lafabriquedunet.es"
+      },
+      {
+        "veces": 2,
+        "dominio": "psicologiaymente.com"
+      },
+      {
+        "veces": 2,
+        "dominio": "teveoonline.com"
+      },
+      {
+        "veces": 2,
+        "dominio": "clutch.co"
+      },
+      {
+        "veces": 2,
+        "dominio": "linkedin.com"
+      },
+      {
+        "veces": 2,
+        "dominio": "x.com"
+      },
+      {
+        "veces": 2,
+        "dominio": "provenexpert.com"
+      },
+      {
+        "veces": 2,
+        "dominio": "madrid.es"
+      },
+      {
+        "veces": 2,
+        "dominio": "comunidad.madrid"
+      },
+      {
+        "veces": 2,
+        "dominio": "granpaintballmadrid.es"
+      },
+      {
+        "veces": 2,
+        "dominio": "adslzone.net"
+      },
+      {
+        "veces": 1,
+        "dominio": "agencianous.com"
+      },
+      {
+        "veces": 1,
+        "dominio": "pentaweb.es"
+      },
+      {
+        "veces": 1,
+        "dominio": "theatlas.es"
+      }
+    ]
+  },
+  "huella_digital": {
+    "eeatc": {
+      "autoridad": {
+        "detalle": "La autoridad viene sobre todo de Sortlist y Clutch, y de apariciones en rankings sectoriales. No hay cobertura editorial de prensa relevante localizada, lo que limita la autoridad externa global.",
+        "puntuacion": 49
+      },
+      "carencias": [
+        "Más cobertura de terceros en prensa o medios especializados.",
+        "Más hilos orgánicos en Reddit/Quora/foros con conversación real.",
+        "Más reseñas verificables y consistentes en directorios clave, no solo presencia de perfil.",
+        "Más listas sectoriales específicas de 'diseño tiendas online' donde la marca aparezca de forma clara.",
+        "Más evidencia externa de casos/proyectos firmados por clientes o medios independientes para reforzar experiencia y autoridad."
+      ],
+      "confianza": {
+        "detalle": "Sortlist muestra reviews visibles (5 estrellas con 6-10 reseñas según la página), lo que aporta confianza. Clutch indica el perfil 'Not yet reviewed', así que la confianza externa existe pero aún es parcial y no homogénea.",
+        "puntuacion": 58
+      },
+      "expertise": {
+        "detalle": "Se observa reconocimiento externo moderado en directorios y perfiles profesionales, con especialización consistente en diseño web/ecommerce/SEO. Aun así, el reconocimiento experto es más de directorio que de medios o instituciones independientes.",
+        "puntuacion": 52
+      },
+      "citabilidad": {
+        "detalle": "Sí, el dominio brandevs.com aparece entre las fuentes que el motor cita para el sector, con 18 menciones en el conjunto aportado. Además, también aparecen dominios con peso en citación como sortlist.es (5), clutch.co (2), reddit.com (3), linkedin.com (2), x.com (2) y provenexpert.com (2). Eso eleva la citabilidad, aunque la dependencia de autopublicación sigue siendo alta.",
+        "puntuacion": 64,
+        "citado_por_motores": true
+      },
+      "experiencia": {
+        "detalle": "Hay indicios de trabajo real y trayectoria en fuentes externas como Clutch y Sortlist, además de portfolio propio con proyectos concretos; sin embargo, gran parte de la prueba fuerte sigue viniendo del propio sitio. Falta validación externa más rica de proyectos cerrados por terceros.",
+        "puntuacion": 45
+      },
+      "puntuacion_global": 54
+    },
+    "medios": {
+      "estado": "warning",
+      "calidad": "autopublicada",
+      "detalle": "No he localizado cobertura independiente en prensa o medios digitales. Lo encontrado sobre la marca en web es principalmente autopublicación del propio dominio (servicios, portfolio y blog) y perfiles corporativos/empleados en LinkedIn. Eso no cuenta como prensa externa.",
+      "fuentes": [
+        "https://www.brandevs.com/",
+        "https://www.brandevs.com/diseno-tiendas-online/",
+        "https://www.brandevs.com/portfolio/",
+        "https://www.brandevs.com/blog/",
+        "https://es.linkedin.com/company/agencia-brandevs"
+      ],
+      "presencia": false
+    },
+    "resumen": "BranDevs tiene huella externa real pero todavía moderada: destaca en directorios y rankings sectoriales, especialmente Sortlist y Clutch, pero no he encontrado prensa independiente ni presencia clara en foros/comunidades. La marca sí aparece en las fuentes que los motores consultan para el sector, así que su citabilidad es razonable. El principal freno es la dependencia de autopublicación y la falta de cobertura editorial externa.",
+    "directorios": {
+      "estado": "ok",
+      "calidad": "superficial",
+      "detalle": "Sí hay presencia en directorios/plataformas: Clutch muestra el perfil de Brandevs, pero aún sin reseñas ('Not yet reviewed'); Sortlist la lista repetidamente en rankings con puntuaciones y reseñas visibles. La calidad es mixta: hay huella externa real, pero parte es todavía débil por falta de reviews en algunos directorios.",
+      "fuentes": [
+        "https://clutch.co/profile/brandevs",
+        "https://www.sortlist.com/s/ai-agents/bilbao-pv-es",
+        "https://www.sortlist.com/s/cross-platform-marketing/spain-es?page=2",
+        "https://www.sortlist.com/s/chatgpt-consulting/spain-es?page=2",
+        "https://www.sortlist.com/i/ecommerce/bilbao-pv-es?page=2",
+        "https://www.sortlist.com/s/360-marketing/spain-es?page=2"
+      ],
+      "presencia": true
+    },
+    "listas_sector": {
+      "estado": "ok",
+      "calidad": "superficial",
+      "detalle": "Brandevs aparece en múltiples listas/rankings sectoriales de Sortlist relacionadas con marketing digital, ecommerce y áreas adyacentes. No he encontrado una lista específica titulada literalmente 'mejores Diseño Tiendas Online', pero sí rankings de agencias de ecommerce y de marketing donde la marca figura. Esto es relevante porque estas listas son una fuente frecuente para motores generativos.",
+      "fuentes": [
+        "https://www.sortlist.com/i/ecommerce/bilbao-pv-es?page=2",
+        "https://www.sortlist.com/s/ai-agents/bilbao-pv-es",
+        "https://www.sortlist.com/s/cross-platform-marketing/spain-es?page=2",
+        "https://www.sortlist.com/s/chatgpt-consulting/spain-es?page=2",
+        "https://www.sortlist.com/s/360-marketing/spain-es?page=2",
+        "https://www.sortlist.com/s/paid-media/barcelona-es?page=2",
+        "https://www.sortlist.com/s/email-marketing/spain-es?page=2",
+        "https://www.sortlist.com/i/advertising/valladolid-es?page=2",
+        "https://www.sortlist.com/online-ad?page=5"
+      ],
+      "presencia": true,
+      "listas_encontradas": [
+        "The 10 Best E-Commerce Agencies in Bilbao - 2026 Reviews",
+        "The 100 Best Online Advertising Agencies - 2026 Reviews",
+        "The 10 Best Marketing Consulting Firms in Spain - 2026 Reviews",
+        "The 10 Best Multichannel Marketing Agencies in Spain - 2026 Reviews",
+        "The 10 Best ChatGPT Consulting Companies in Spain - 2026 Reviews",
+        "The 10 Best AI Agents Companies in Bilbao - 2026 Reviews",
+        "The 10 Best 360° Marketing Agencies in Spain - 2026 Reviews",
+        "The 10 Best Paid Media Agencies in Barcelona - 2026 Reviews",
+        "The 10 Best Email Marketing Agencies in Spain - 2026 Reviews",
+        "The 10 Best Advertising Agencies in Valladolid - 2026 Reviews"
+      ]
+    },
+    "presencia_foros": {
+      "estado": "error",
+      "calidad": "inexistente",
+      "detalle": "No he encontrado menciones orgánicas y conversacionales de BranDevs en foros/comunidades tipo Reddit o Quora. La única señal útil localizada es LinkedIn, que no entra en esta categoría; por tanto, para foros la huella externa queda sin evidencias válidas.",
+      "fuentes": [],
+      "presencia": false
+    }
+  },
+  "mapa_competitivo": [
+    {
+      "amenaza": "alta",
+      "empresa": "Flat 101",
+      "modelos": [
+        "chatgpt",
+        "claude",
+        "gemini",
+        "perplexity"
+      ],
+      "es_marca": false,
+      "menciones": 9,
+      "menciones_por_modelo": {
+        "claude": 2,
+        "gemini": 1,
+        "chatgpt": 4,
+        "perplexity": 2
+      }
+    },
+    {
+      "amenaza": "alta",
+      "empresa": "NeoAttack",
+      "modelos": [
+        "chatgpt",
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 8,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 4,
+        "chatgpt": 4,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "alta",
+      "empresa": "Sngular",
+      "modelos": [
+        "chatgpt",
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 6,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 2,
+        "chatgpt": 4,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "alta",
+      "empresa": "Making Science",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 5,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 5,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "alta",
+      "empresa": "Súmate",
+      "modelos": [
+        "claude",
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 5,
+      "menciones_por_modelo": {
+        "claude": 4,
+        "gemini": 1,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "alta",
+      "empresa": "Webimpacto",
+      "modelos": [
+        "gemini",
+        "perplexity",
+        "claude"
+      ],
+      "es_marca": false,
+      "menciones": 5,
+      "menciones_por_modelo": {
+        "claude": 1,
+        "gemini": 2,
+        "chatgpt": 0,
+        "perplexity": 2
+      }
+    },
+    {
+      "amenaza": "media",
+      "empresa": "Elogia",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 3,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 3,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "media",
+      "empresa": "SEOCOM",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 3,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 3,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Ebolution",
+      "modelos": [
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 2,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 2,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": null,
+      "empresa": "Brandevs",
+      "modelos": [
+        "chatgpt",
+        "perplexity"
+      ],
+      "es_marca": true,
+      "menciones": 2,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 1,
+        "perplexity": 1
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "ROIncrease",
+      "modelos": [
+        "chatgpt",
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 2,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 1,
+        "chatgpt": 1,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Wanatop",
+      "modelos": [
+        "chatgpt",
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 2,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 1,
+        "chatgpt": 1,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Human Level",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 2,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 2,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "La Teva Web",
+      "modelos": [
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 2,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 2,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Digital Dot",
+      "modelos": [
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 2,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 2,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Minsait (Indra)",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 2,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 2,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Biko",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 2,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 2,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "The Cocktail",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 2,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 2,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Tandem",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 2,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 2,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Erretres",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 2,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 2,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Good Rebels",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 2,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 2,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "618Studio",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 2,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 2,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Antiestático",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 2,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 2,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Kanlli",
+      "modelos": [
+        "claude"
+      ],
+      "es_marca": false,
+      "menciones": 2,
+      "menciones_por_modelo": {
+        "claude": 2,
+        "gemini": 0,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Kernel Analytics / Kernel & Co",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 1,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Wylma",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 1,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Yolanda Sanz / Wetopi (ecosistema WordPress)",
+      "modelos": [
+        "claude"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 1,
+        "gemini": 0,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Raiola Networks + partners",
+      "modelos": [
+        "claude"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 1,
+        "gemini": 0,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Freelancers especializados (Malt.es)",
+      "modelos": [
+        "claude"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 1,
+        "gemini": 0,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Digital Menta",
+      "modelos": [
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 1,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Wanaleads",
+      "modelos": [
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 1,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Holapixel",
+      "modelos": [
+        "perplexity"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 0,
+        "perplexity": 1
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Multiplicalia",
+      "modelos": [
+        "perplexity"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 0,
+        "perplexity": 1
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Prismaid",
+      "modelos": [
+        "perplexity"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 0,
+        "perplexity": 1
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Agencianous",
+      "modelos": [
+        "perplexity"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 0,
+        "perplexity": 1
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "The Digital Salad",
+      "modelos": [
+        "perplexity"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 0,
+        "perplexity": 1
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Pentaweb",
+      "modelos": [
+        "perplexity"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 0,
+        "perplexity": 1
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "VisionClick",
+      "modelos": [
+        "perplexity"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 0,
+        "perplexity": 1
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "The Atlas",
+      "modelos": [
+        "perplexity"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 0,
+        "perplexity": 1
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Teveo Online",
+      "modelos": [
+        "perplexity"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 0,
+        "perplexity": 1
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Sidn Digital Thinking",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 1,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Kernel / Agencia Kernel",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 1,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Decoradores Digitales",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 1,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Antevenio",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 1,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "K-Digital",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 1,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Mediative",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 1,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Selligent / Emagister Digital",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 1,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Ecodelia",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 1,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Estudio34",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 1,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Dobuss",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 1,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Somos Móviles",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 1,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Multiplica",
+      "modelos": [
+        "claude"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 1,
+        "gemini": 0,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Trilogi",
+      "modelos": [
+        "claude"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 1,
+        "gemini": 0,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Interactiv4",
+      "modelos": [
+        "claude"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 1,
+        "gemini": 0,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Doofinder",
+      "modelos": [
+        "claude"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 1,
+        "gemini": 0,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Relevant Traffic",
+      "modelos": [
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 1,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Estudio Cactus",
+      "modelos": [
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 1,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Factoría Digital",
+      "modelos": [
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 1,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Diseño Web Madrid (DWM)",
+      "modelos": [
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 1,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Evolución Marketing",
+      "modelos": [
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 1,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Shopify",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 1,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "WooCommerce",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 1,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Prestashop",
+      "modelos": [
+        "chatgpt"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 1,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Indra",
+      "modelos": [
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 1,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Accenture",
+      "modelos": [
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 1,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Capgemini Engineering",
+      "modelos": [
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 1,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "NTT DATA",
+      "modelos": [
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 1,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Plain Concepts",
+      "modelos": [
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 1,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Evolbit",
+      "modelos": [
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 1,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Ecomsur",
+      "modelos": [
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 1,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Adsmurai",
+      "modelos": [
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 1,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Kiwop",
+      "modelos": [
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 1,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Raiola Networks",
+      "modelos": [
+        "claude"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 1,
+        "gemini": 0,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Yolanda Villalobos / Wetopi",
+      "modelos": [
+        "claude"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 1,
+        "gemini": 0,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Domestika",
+      "modelos": [
+        "claude"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 1,
+        "gemini": 0,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "BlackBeast",
+      "modelos": [
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 1,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Prismalia",
+      "modelos": [
+        "gemini"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 1,
+        "chatgpt": 0,
+        "perplexity": 0
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Marketinhouse",
+      "modelos": [
+        "perplexity"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 0,
+        "perplexity": 1
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Bluecell Comunicación",
+      "modelos": [
+        "perplexity"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 0,
+        "perplexity": 1
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "lyra",
+      "modelos": [
+        "perplexity"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 0,
+        "perplexity": 1
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Talentum Digital",
+      "modelos": [
+        "perplexity"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 0,
+        "perplexity": 1
+      }
+    },
+    {
+      "amenaza": "baja",
+      "empresa": "Expiey",
+      "modelos": [
+        "perplexity"
+      ],
+      "es_marca": false,
+      "menciones": 1,
+      "menciones_por_modelo": {
+        "claude": 0,
+        "gemini": 0,
+        "chatgpt": 0,
+        "perplexity": 1
+      }
+    }
+  ],
+  "infraestructura_geo": {
+    "schema": {
+      "estado": "warning",
+      "existe": true,
+      "detalle": "schema.org existe y la validación oficial no reporta errores ni warnings. Tipos detectados correctos, pero no se observa en los datos de entrada un Organization/LocalBusiness completo con sameAs en la home; por ello no puede ser 'ok'. La cobertura en páginas internas es mejor que solo home, aunque heterogénea.",
+      "campos_ausentes": [
+        "Organization/LocalBusiness en la home con name",
+        "Organization/LocalBusiness en la home con url",
+        "Organization/LocalBusiness en la home con logo",
+        "Organization/LocalBusiness en la home con description",
+        "Organization/LocalBusiness en la home con sameAs",
+        "Organization/LocalBusiness en la home con address",
+        "Organization/LocalBusiness en la home con telephone"
+      ],
+      "tipos_detectados": [
+        "BreadcrumbList",
+        "Service",
+        "FAQPage"
+      ],
+      "cobertura_landings": "Cobertura parcial: hay marcado en varias landings internas (Service, FAQPage, BreadcrumbList), pero en otras solo aparece BreadcrumbList. La home no aporta un bloque Organization/LocalBusiness completo verificable en los datos recibidos.",
+      "propiedades_invalidas": []
+    },
+    "sitemap": {
+      "estado": "ok",
+      "detalle": "Responde 200, existe y lastmod_mas_reciente (2026-08-12T11:46:52+00:00) está dentro de los últimos 6 meses."
+    },
+    "acciones": [
+      {
+        "accion": "Añadir o verificar un bloque Organization/LocalBusiness completo en la home con name, url, logo, description, sameAs, address y telephone.",
+        "prioridad": "alta"
+      },
+      {
+        "accion": "Homogeneizar el marcado en landings internas para que las páginas de servicio incluyan también datos de entidad y no solo BreadcrumbList cuando aplique.",
+        "prioridad": "media"
+      },
+      {
+        "accion": "Mantener llms.txt como señal complementaria de descubrimiento para agentes, sabiendo que en 2026 sigue sin efecto confirmado por los motores.",
+        "prioridad": "baja"
+      }
+    ],
+    "llms_txt": {
+      "estado": "ok",
+      "detalle": "Existe y tiene formato Markdown correcto con H1, blockquote resumen y secciones con enlaces. Señal de adopción temprana de llms.txt sin efecto confirmado por los motores en 2026: recomendable por coste cero, pero no crítica."
+    },
+    "validador_oficial": {
+      "disponible": true,
+      "num_errores": 0,
+      "num_warnings": 0
+    }
+  },
+  "recomendaciones_huella": {
+    "foros": [
+      {
+        "url": "https://www.clubecommerce.com/",
+        "sitio": "clubecommerce.com",
+        "fuente": "descubierto",
+        "motivo": "Es una comunidad y medio muy centrado en retail/ecommerce en España; aparecer aquí ayuda a ganar visibilidad ante decisores del sector y a entrar en conversaciones, eventos y contenidos que suelen ser citados por medios y profesionales.",
+        "prioridad": "alta"
+      },
+      {
+        "sitio": "reddit.com",
+        "fuente": "citado",
+        "motivo": "El motor de IA cita este dominio 3 veces al responder sobre tu sector, pero tu marca no aparece en él.",
+        "prioridad": "media",
+        "veces_citado": 3
+      }
+    ],
+    "otros": [
+      {
+        "sitio": "holapixel.es",
+        "fuente": "citado",
+        "motivo": "El motor de IA cita este dominio 3 veces al responder sobre tu sector, pero tu marca no aparece en él.",
+        "prioridad": "media",
+        "veces_citado": 3
+      },
+      {
+        "sitio": "timeout.es",
+        "fuente": "citado",
+        "motivo": "El motor de IA cita este dominio 3 veces al responder sobre tu sector, pero tu marca no aparece en él.",
+        "prioridad": "media",
+        "veces_citado": 3
+      },
+      {
+        "sitio": "multiplicalia.com",
+        "fuente": "citado",
+        "motivo": "El motor de IA cita este dominio 2 veces al responder sobre tu sector, pero tu marca no aparece en él.",
+        "prioridad": "media",
+        "veces_citado": 2
+      },
+      {
+        "sitio": "prismaid.com",
+        "fuente": "citado",
+        "motivo": "El motor de IA cita este dominio 2 veces al responder sobre tu sector, pero tu marca no aparece en él.",
+        "prioridad": "media",
+        "veces_citado": 2
+      },
+      {
+        "sitio": "thedigitalsalad.com",
+        "fuente": "citado",
+        "motivo": "El motor de IA cita este dominio 2 veces al responder sobre tu sector, pero tu marca no aparece en él.",
+        "prioridad": "media",
+        "veces_citado": 2
+      },
+      {
+        "sitio": "visionclick.es",
+        "fuente": "citado",
+        "motivo": "El motor de IA cita este dominio 2 veces al responder sobre tu sector, pero tu marca no aparece en él.",
+        "prioridad": "media",
+        "veces_citado": 2
+      },
+      {
+        "sitio": "bierzoseo.com",
+        "fuente": "citado",
+        "motivo": "El motor de IA cita este dominio 2 veces al responder sobre tu sector, pero tu marca no aparece en él.",
+        "prioridad": "media",
+        "veces_citado": 2
+      },
+      {
+        "sitio": "q2bstudio.com",
+        "fuente": "citado",
+        "motivo": "El motor de IA cita este dominio 2 veces al responder sobre tu sector, pero tu marca no aparece en él.",
+        "prioridad": "media",
+        "veces_citado": 2
+      }
+    ],
+    "total": 18,
+    "medios": [],
+    "citadas": 10,
+    "resumen": "Sitios donde ganar citaciones y enlaces para que la IA empiece a mencionarte: 3 directorios, 5 listas/rankings, 2 foros/comunidades, 8 otros. 10 los cita ya el motor para tu sector (dato duro); 8 descubiertos por búsqueda específica de tu sector.",
+    "disponible": true,
+    "directorios": [
+      {
+        "sitio": "sortlist.es",
+        "fuente": "citado",
+        "motivo": "El motor de IA cita este dominio 5 veces al responder sobre tu sector, pero tu marca no aparece en él.",
+        "prioridad": "alta",
+        "veces_citado": 5
+      },
+      {
+        "url": "https://webcomercial.es/",
+        "sitio": "webcomercial.es",
+        "fuente": "descubierto",
+        "motivo": "Es un directorio especializado en agencias ecommerce en España, mucho más relevante que un directorio genérico para una empresa de diseño de tiendas online que quiera atraer leads cualificados y citaciones sectoriales.",
+        "prioridad": "alta"
+      },
+      {
+        "url": "https://www.shopify.com/es/partners/directory/locations/spain",
+        "sitio": "shopify.com",
+        "fuente": "descubierto",
+        "motivo": "Para empresas que trabajan con Shopify, este directorio oficial es una prueba fuerte de credibilidad y una vía directa de descubrimiento por parte de marcas que buscan partner técnico o de diseño.",
+        "prioridad": "alta"
+      }
+    ],
+    "descubiertas": 8,
+    "listas_sector": [
+      {
+        "url": "https://marketing4ecommerce.net/ecommerce-awards/ganadores-2025/",
+        "sitio": "marketing4ecommerce.net",
+        "fuente": "descubierto",
+        "motivo": "Los premios y listados de ganadores del ecosistema ecommerce español funcionan como señal de autoridad sectorial; salir mencionado aquí refuerza reputación y es útil para búsquedas asistidas por IA sobre “mejores agencias” y referentes del mercado.",
+        "prioridad": "alta"
+      },
+      {
+        "url": "https://www.lafabriquedunet.es/agencias/pages/agencias-e-commerce",
+        "sitio": "lafabriquedunet.es",
+        "fuente": "descubierto",
+        "motivo": "Es una comparativa/listado muy consultado para evaluar agencias de e-commerce en España, por lo que estar incluido ayuda tanto a captación comercial como a autoridad semántica en resultados de IA.",
+        "prioridad": "alta"
+      },
+      {
+        "url": "https://www.ecomm360.es/mejores-agencias-ecommerce-b2b-b2c-espana/",
+        "sitio": "ecomm360.es",
+        "fuente": "descubierto",
+        "motivo": "Aunque es un medio/listado más de nicho, destaca por separar B2B y B2C y por tratar criterios más técnicos; útil para empresas que venden soluciones de diseño y desarrollo con foco en ecommerce complejo.",
+        "prioridad": "media"
+      },
+      {
+        "url": "https://digitalvar.es/los-mejores/mejor-agencia-de-marketing-para-ecommerce-en-espana/",
+        "sitio": "digitalvar.es",
+        "fuente": "descubierto",
+        "motivo": "Es una comparativa española enfocada en ecommerce que puede aportar menciones en un contexto comercial y de decisión de compra, especialmente para empresas con oferta integral de tienda online + marketing.",
+        "prioridad": "media"
+      },
+      {
+        "url": "https://campusecommerce.es/las-mejores-agencias-de-ecommerce/",
+        "sitio": "campusecommerce.es",
+        "fuente": "descubierto",
+        "motivo": "Campusecommerce está muy alineado con formación y ecosistema ecommerce en España; sus rankings son útiles para legitimidad sectorial y para aparecer ante audiencias profesionales del canal.",
+        "prioridad": "media"
+      }
+    ],
+    "ya_presente_en": [
+      "es.linkedin.com",
+      "clutch.co",
+      "sortlist.com"
+    ]
+  }
+}

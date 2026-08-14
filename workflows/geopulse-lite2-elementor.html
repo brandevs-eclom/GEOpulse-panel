@@ -1,0 +1,607 @@
+<!-- GEOpulse LITE v2 · widget "HTML" de Elementor · aislado con Shadow DOM -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<div id="geopulse-lite2-host"></div>
+
+<template id="geopulse-lite2-tpl">
+<style>
+:host{
+  --gp-bg:#F6F5F2; --gp-surface:#FFFFFF; --gp-dark:#262523; --gp-dark-soft:#3D3B37; --gp-dark-line:#403E3A;
+  --gp-border:#E7E4DE; --gp-border-strong:#D6D2C9;
+  --gp-text:#121212; --gp-text-muted:#6E6B66; --gp-on-dark-muted:#B4B0A9;
+  --gp-accent:#EF3B2D; --gp-accent-dark:#D22C1F; --gp-accent-soft:#FDECEA;
+  --gp-ok:#17915B; --gp-ok-soft:#E8F4EE; --gp-warn:#C07600; --gp-warn-soft:#FBF0DE; --gp-err:#B42318; --gp-err-soft:#FBEBE9;
+  --gp-muted:#9C9791; --gp-muted-soft:#F0EEEA;
+  --gp-r:14px; --gp-r-sm:10px; --gp-pill:999px;
+  --gp-display:'Manrope',system-ui,sans-serif; --gp-ui:'Inter',system-ui,sans-serif;
+  display:block;box-sizing:border-box;background:transparent;
+  color:var(--gp-text);font-family:var(--gp-ui);font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+.wrap{max-width:840px;margin:0 auto;padding:32px 16px 56px}
+h1,h2,h3{font-family:var(--gp-display);margin:0}
+.eyebrow{display:inline-block;font:600 11px var(--gp-ui);letter-spacing:.14em;text-transform:uppercase;color:var(--gp-accent);margin-bottom:8px}
+
+.hero h1{font-size:2rem;line-height:1.15;letter-spacing:-.01em;margin-bottom:10px}
+.hero p{color:var(--gp-text-muted);font-size:1.02rem;max-width:610px}
+.hero .badge{display:inline-block;margin-top:14px;background:var(--gp-dark);color:#fff;font:600 11px var(--gp-ui);letter-spacing:.06em;text-transform:uppercase;padding:6px 13px;border-radius:var(--gp-pill)}
+.form{background:var(--gp-surface);border:1px solid var(--gp-border);border-radius:var(--gp-r);padding:28px;margin:26px 0 20px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.field label{display:block;font:600 11px var(--gp-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--gp-muted);margin-bottom:6px}
+input,select{width:100%;font-family:var(--gp-ui);font-size:16px;background:var(--gp-surface);border:1px solid var(--gp-border-strong);border-radius:var(--gp-r-sm);padding:12px 13px;color:var(--gp-text)}
+input:focus,select:focus{outline:none;border-color:var(--gp-accent)}
+.btn{width:100%;margin-top:8px;background:var(--gp-accent);color:#fff;border:none;border-radius:var(--gp-r-sm);padding:15px;font:700 .95rem var(--gp-ui);letter-spacing:.04em;text-transform:uppercase;cursor:pointer}
+.btn:hover{background:var(--gp-accent-dark)}
+.btn:disabled{opacity:.6;cursor:default}
+.ferr{color:var(--gp-err);font-size:.85rem;margin-top:8px;display:none}
+.loader{display:none;text-align:center;padding:40px 0}
+.spin{width:34px;height:34px;border:3px solid var(--gp-muted-soft);border-top-color:var(--gp-accent);border-radius:50%;margin:0 auto 14px;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.loader p{color:var(--gp-text-muted);font-size:.9rem}
+
+.results{display:none}
+.sec{margin:40px 0 16px;text-align:center}
+.sec .eyebrow{display:block}
+.sec h2{font-size:1.5rem;letter-spacing:-.01em}
+.sec p{color:var(--gp-text-muted);font-size:.93rem;max-width:620px;margin:8px auto 0}
+
+/* Diagnóstico: score + resumen + 5 estadísticas */
+.dark{background:var(--gp-dark);border-radius:var(--gp-r);padding:32px;color:#fff;margin-bottom:14px}
+.score-row{display:flex;align-items:center;gap:28px}
+.ring{width:118px;height:118px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.ring-in{width:92px;height:92px;border-radius:50%;background:var(--gp-dark);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-num{font-family:var(--gp-display);font-size:2.3rem;font-weight:800;line-height:1}
+.ring-lbl{font:600 9px var(--gp-ui);letter-spacing:.13em;text-transform:uppercase;color:var(--gp-on-dark-muted);margin-top:2px}
+.dark h3{font-size:1.2rem;margin-bottom:6px}
+.dark .eyebrow{color:var(--gp-accent)}
+.dark p{color:#EDEBE7;font-size:.93rem;line-height:1.7;margin:0}
+.areas{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:8px}
+.tile{background:var(--gp-surface);border:1px solid var(--gp-border);border-radius:var(--gp-r-sm);padding:14px 12px}
+.t-lbl{font:600 9.5px var(--gp-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--gp-muted);line-height:1.3;min-height:24px}
+.t-val{font-family:var(--gp-display);font-size:1.6rem;font-weight:800;line-height:1.1}
+.bar{height:4px;background:var(--gp-muted-soft);border-radius:2px;margin-top:7px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:2px}
+
+/* Avisos de fiabilidad */
+.avisos{margin-bottom:10px}
+.aviso{display:flex;gap:10px;align-items:flex-start;background:var(--gp-warn-soft);border:1px solid #F0DDB8;border-radius:var(--gp-r-sm);padding:12px 15px;margin-bottom:7px;font-size:.85rem;color:#7A4E00;line-height:1.6}
+.aviso-ico{flex-shrink:0;width:18px;height:18px;border-radius:50%;background:var(--gp-warn);color:#fff;font:700 11px var(--gp-ui);display:flex;align-items:center;justify-content:center;margin-top:2px}
+
+/* Tarjetas de punto */
+.card{background:var(--gp-surface);border:1px solid var(--gp-border);border-radius:var(--gp-r);padding:22px;margin-bottom:11px;overflow-wrap:anywhere;word-break:break-word}
+.pt-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pt-l{display:flex;align-items:center;min-width:0}
+.pt-title{font:700 1rem var(--gp-display)}
+.pt-r{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.pt-val{font:500 .8rem var(--gp-ui);color:var(--gp-muted)}
+.pt-detail{color:var(--gp-text-muted);font-size:.89rem;line-height:1.65;margin-top:9px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:9px;flex-shrink:0}
+.d-ok{background:var(--gp-ok)} .d-warning{background:var(--gp-warn)} .d-error{background:var(--gp-err)} .d-no_verificable{background:var(--gp-muted)}
+.pill{font:700 .62rem var(--gp-ui);letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:var(--gp-pill);white-space:nowrap}
+.p-ok{background:var(--gp-ok-soft);color:var(--gp-ok)} .p-warning{background:var(--gp-warn-soft);color:var(--gp-warn)} .p-error{background:var(--gp-err-soft);color:var(--gp-err)} .p-no_verificable{background:var(--gp-muted-soft);color:var(--gp-muted)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tag{background:var(--gp-muted-soft);border:1px solid var(--gp-border);border-radius:var(--gp-pill);padding:4px 11px;font-size:.75rem;color:var(--gp-text-muted)}
+.tag-accent{background:var(--gp-accent-soft);border-color:#F6C9C4;color:var(--gp-accent-dark)}
+
+/* Bloqueado */
+.locked{display:flex;align-items:center;gap:16px;background:var(--gp-muted-soft);border:1px dashed var(--gp-border-strong);border-radius:var(--gp-r);padding:17px 20px;margin-bottom:11px;flex-wrap:wrap}
+.lock-ico{width:34px;height:34px;border-radius:50%;background:var(--gp-surface);border:1px solid var(--gp-border);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.lock-txt{flex:1;min-width:190px}
+.lock-txt b{display:block;font:700 .9rem var(--gp-display);color:var(--gp-text)}
+.lock-txt span{font-size:.82rem;color:var(--gp-text-muted)}
+.btn-mini{background:var(--gp-dark);color:#fff;border:none;border-radius:var(--gp-r-sm);padding:11px 18px;font:700 .73rem var(--gp-ui);letter-spacing:.05em;text-transform:uppercase;cursor:pointer;white-space:nowrap}
+.btn-mini:hover{background:var(--gp-accent)}
+
+/* Preguntas */
+.q-item{border:1px solid var(--gp-border);border-radius:var(--gp-r-sm);background:var(--gp-surface);margin-bottom:9px;overflow:hidden}
+.q-head{width:100%;display:flex;align-items:flex-start;justify-content:space-between;gap:14px;background:none;border:none;padding:15px 18px;cursor:pointer;text-align:left;font-family:var(--gp-ui)}
+.q-num{font:700 .66rem var(--gp-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--gp-accent);display:block;margin-bottom:3px}
+.q-q{font:500 .94rem var(--gp-ui);color:var(--gp-text);overflow-wrap:anywhere}
+.q-meta{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.q-badge{font:700 .6rem var(--gp-ui);letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:var(--gp-pill)}
+.b-yes{background:var(--gp-ok-soft);color:var(--gp-ok)} .b-part{background:var(--gp-warn-soft);color:var(--gp-warn)} .b-no{background:var(--gp-err-soft);color:var(--gp-err)}
+.q-pm{font-size:1.2rem;color:var(--gp-accent)}
+.q-body{max-height:0;overflow:hidden;transition:max-height .35s ease}
+.q-body.open{max-height:3000px}
+.q-inner{padding:0 18px 15px}
+.q-model{border-top:1px solid var(--gp-border);padding-top:12px;margin-top:12px}
+.q-model-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:5px}
+.q-model-n{font:700 .7rem var(--gp-ui);letter-spacing:.06em;text-transform:uppercase;color:var(--gp-muted)}
+.q-ans{font-size:.85rem;color:var(--gp-text-muted);line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}
+
+/* Huella: enlaces + E-E-A-T-C */
+.links{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.links a{display:inline-block;background:var(--gp-muted-soft);border:1px solid var(--gp-border);border-radius:var(--gp-pill);padding:7px 14px;font-size:.82rem;color:var(--gp-text);text-decoration:none;overflow-wrap:anywhere}
+.links a:hover{border-color:var(--gp-accent);color:var(--gp-accent-dark)}
+.ee-row{display:flex;align-items:center;gap:12px;margin-top:12px}
+.ee-lbl{font:600 .82rem var(--gp-ui);color:var(--gp-text-muted);width:104px;flex-shrink:0}
+.ee-bar{flex:1;height:7px;background:var(--gp-muted-soft);border-radius:4px;overflow:hidden;min-width:60px}
+.ee-bar i{display:block;height:100%;border-radius:4px}
+.ee-val{font:700 .82rem var(--gp-display);width:52px;text-align:right;flex-shrink:0}
+.ee-global{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:18px;padding-top:16px;border-top:1px solid var(--gp-border)}
+.ee-global span{font:600 .74rem var(--gp-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--gp-muted)}
+.ee-global b{font-family:var(--gp-display);font-size:1.9rem;font-weight:800}
+
+/* Diagrama */
+.diag{background:var(--gp-surface);border:1px solid var(--gp-border);border-radius:var(--gp-r);padding:22px;margin-bottom:11px}
+.matrix{width:100%;border-collapse:collapse}
+.matrix th{font:600 9.5px var(--gp-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--gp-muted);padding:8px 6px;text-align:center}
+.matrix th:first-child{text-align:left}
+.matrix td{padding:9px 6px;text-align:center;border-top:1px solid var(--gp-border);font-size:.85rem}
+.matrix td:first-child{text-align:left;color:var(--gp-text-muted);font-size:.81rem;max-width:300px;overflow-wrap:anywhere}
+.mk{display:inline-flex;align-items:center;justify-content:center;width:23px;height:23px;border-radius:50%;font-size:.78rem;font-weight:700}
+.mk-yes{background:var(--gp-ok-soft);color:var(--gp-ok)} .mk-no{background:var(--gp-err-soft);color:var(--gp-err)} .mk-na{background:var(--gp-muted-soft);color:var(--gp-muted)}
+.donut-wrap{display:flex;align-items:center;gap:26px;flex-wrap:wrap;margin-top:18px;padding-top:18px;border-top:1px solid var(--gp-border)}
+.legend{flex:1;min-width:210px;display:flex;flex-direction:column;gap:7px}
+.lg{display:flex;align-items:center;gap:9px;font-size:.83rem}
+.lg i{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.lg span{color:var(--gp-text-muted);overflow-wrap:anywhere}
+.lg b{margin-left:auto;color:var(--gp-text);font-weight:600;flex-shrink:0}
+
+/* CTA */
+.cta{background:var(--gp-dark);border-radius:var(--gp-r);padding:38px 30px;margin-top:34px;text-align:center;color:#fff}
+.cta .eyebrow{color:var(--gp-accent)}
+.cta h3{font-size:1.5rem;margin-bottom:10px}
+.cta > p{color:var(--gp-on-dark-muted);font-size:.95rem;max-width:540px;margin:0 auto 22px}
+.cta-list{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:540px;margin:0 auto 24px;text-align:left}
+.cta-list div{display:flex;gap:9px;align-items:flex-start;font-size:.86rem;color:#EDEBE7}
+.cta-list i{color:var(--gp-accent);font-style:normal;flex-shrink:0}
+.cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.cta-btns a{display:inline-block;text-decoration:none;font:700 .81rem var(--gp-ui);letter-spacing:.04em;text-transform:uppercase;padding:14px 26px;border-radius:var(--gp-r-sm)}
+.cta-a{background:var(--gp-accent);color:#fff}
+.cta-b{background:transparent;color:#fff;border:1px solid var(--gp-dark-line)}
+
+.errbox{display:none;background:var(--gp-err-soft);border:1px solid #F0C4BF;border-radius:var(--gp-r);padding:22px;margin-top:16px}
+.errbox p{color:var(--gp-text-muted);font-size:.9rem;margin:0}
+.foot{margin-top:30px;text-align:center;color:var(--gp-muted);font-size:.78rem}
+
+@media(max-width:720px){ .areas{grid-template-columns:repeat(2,1fr)} }
+@media(max-width:620px){
+  .row,.cta-list{grid-template-columns:1fr}
+  .hero h1{font-size:1.6rem}
+  .score-row{flex-direction:column;text-align:center;gap:16px}
+}
+</style>
+
+<div class="wrap">
+  <div class="hero">
+    <span class="eyebrow">GEOpulse · Test gratuito</span>
+    <h1>¿Te recomienda la IA o recomienda a tu competencia?</h1>
+    <p>Lanzamos preguntas reales a ChatGPT, Claude y Perplexity y auditamos tu web. Verás una muestra real del informe: algunos indicadores de cada bloque.</p>
+    <span class="badge">Muestra gratuita · 3 modelos · 9 sondeos</span>
+  </div>
+
+  <div class="form" id="form">
+    <div class="row">
+      <div class="field"><label>Marca *</label><input id="brand" placeholder="Tu marca" autocomplete="off"></div>
+      <div class="field"><label>Dominio *</label><input id="domain" placeholder="tudominio.com" autocomplete="off"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label>Sector o término *</label><input id="keyword" placeholder="Ej: agencia de marketing" autocomplete="off"></div>
+      <div class="field"><label>País</label>
+        <select id="pais">
+          <option value="ES" selected>España</option><option value="MX">México</option>
+          <option value="AR">Argentina</option><option value="CO">Colombia</option>
+          <option value="CL">Chile</option><option value="PE">Perú</option>
+          <option value="US">Estados Unidos</option><option value="GB">Reino Unido</option>
+        </select>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:8px"><label>Ciudad o región (opcional)</label><input id="region" placeholder="Ej: Madrid" autocomplete="off"></div>
+    <button class="btn" id="btn">Analizar mi visibilidad</button>
+    <div class="ferr" id="ferr"></div>
+  </div>
+
+  <div class="loader" id="loader"><div class="spin"></div><p id="phase">Leyendo tu web…</p></div>
+  <div class="errbox" id="errbox"><p id="errmsg"></p></div>
+  <div class="results" id="results"></div>
+
+  <div class="foot">GEOpulse · muestra gratuita. El informe completo analiza 16 preguntas en 3 modelos, huella digital completa y plan de acción priorizado.</div>
+</div>
+</template>
+
+<script>
+(function(){
+'use strict';
+var host = document.getElementById('geopulse-lite2-host');
+var tpl  = document.getElementById('geopulse-lite2-tpl');
+if (!host || !tpl || host.shadowRoot) return;
+var shadow = host.attachShadow({ mode: 'open' });
+shadow.appendChild(tpl.content.cloneNode(true));
+
+const WEBHOOK_URL = 'https://api.brandevs.com/webhook/geopulse-lite2';
+const CONTACTO_URL = 'https://brandevs.com/contacto';
+const TIMEOUT_MS = 180000;
+const $id = (i) => shadow.getElementById(i);
+function el(t, c, x){ const e = document.createElement(t); if(c) e.className = c; if(x != null) e.textContent = x; return e; }
+const NS = 'http://www.w3.org/2000/svg';
+
+const PHASES = ['Leyendo tu web…','Analizando la estructura técnica…','Preguntando a ChatGPT…','Preguntando a Claude…','Preguntando a Perplexity…','Buscando tus menciones externas…','Midiendo tu presencia…'];
+let tf;
+function startLoader(){ let i=0; $id('phase').textContent = PHASES[0]; $id('loader').style.display='block';
+  tf = setInterval(()=>{ i = Math.min(i+1, PHASES.length-1); $id('phase').textContent = PHASES[i]; }, 9000); }
+function stopLoader(){ clearInterval(tf); $id('loader').style.display='none'; }
+
+const PAL = ['#C3BCAE','#9A9284','#B8946F','#7A8A90','#D6CFC2','#A19889','#68757B','#8C8478','#5C5952'];
+function tono(v){ return v === null ? 'var(--gp-muted)' : v >= 75 ? 'var(--gp-ok)' : v >= 50 ? 'var(--gp-warn)' : 'var(--gp-err)'; }
+
+function seccion(root, eyebrow, titulo, sub){
+  const s = el('div','sec');
+  s.appendChild(el('span','eyebrow', eyebrow));
+  s.appendChild(el('h2', null, titulo));
+  if (sub) s.appendChild(el('p', null, sub));
+  root.appendChild(s);
+}
+function barra(v, alto){
+  const b = el('div','bar'); const i = el('i');
+  i.style.width = (v === null ? 0 : Math.max(0, Math.min(100, v))) + '%';
+  i.style.background = tono(v);
+  if (alto) b.style.height = alto;
+  b.appendChild(i); return b;
+}
+function tarjetaPunto(p){
+  const c = el('div','card');
+  const h = el('div','pt-head');
+  const l = el('div','pt-l');
+  l.appendChild(el('span','dot d-' + p.estado));
+  l.appendChild(el('span','pt-title', p.titulo));
+  h.appendChild(l);
+  const r = el('div','pt-r');
+  if (p.valor) r.appendChild(el('span','pt-val', p.valor));
+  r.appendChild(el('span','pill p-' + p.estado, p.estado === 'no_verificable' ? 'n/d' : p.estado));
+  h.appendChild(r);
+  c.appendChild(h);
+  if (p.detalle) c.appendChild(el('div','pt-detail', p.detalle));
+  if (Array.isArray(p.entidades) && p.entidades.length){
+    c.appendChild(el('div','pt-detail','Conceptos núcleo que la IA extrae de tu contenido:'));
+    const tg = el('div','tags');
+    p.entidades.slice(0,10).forEach((e, i) => tg.appendChild(el('span','tag' + (i < 2 ? ' tag-accent' : ''), e)));
+    c.appendChild(tg);
+  }
+  return c;
+}
+function bloqueado(root, titulo, sub){
+  const b = el('div','locked');
+  const ico = el('div','lock-ico');
+  const svg = document.createElementNS(NS,'svg');
+  svg.setAttribute('viewBox','0 0 24 24'); svg.setAttribute('width','15'); svg.setAttribute('height','15');
+  svg.setAttribute('fill','none'); svg.setAttribute('stroke','#9C9791'); svg.setAttribute('stroke-width','2');
+  const rect = document.createElementNS(NS,'rect');
+  rect.setAttribute('x','3'); rect.setAttribute('y','11'); rect.setAttribute('width','18'); rect.setAttribute('height','11'); rect.setAttribute('rx','2');
+  const path = document.createElementNS(NS,'path'); path.setAttribute('d','M7 11V7a5 5 0 0 1 10 0v4');
+  svg.appendChild(rect); svg.appendChild(path); ico.appendChild(svg);
+  b.appendChild(ico);
+  const t = el('div','lock-txt');
+  t.appendChild(el('b', null, titulo));
+  t.appendChild(el('span', null, sub));
+  b.appendChild(t);
+  const btn = el('button','btn-mini','Ver informe completo'); btn.type = 'button';
+  btn.addEventListener('click', () => { const c = $id('cta'); if (c) c.scrollIntoView({ behavior:'smooth', block:'start' }); });
+  b.appendChild(btn);
+  root.appendChild(b);
+}
+function donut(mapa){
+  const total = mapa.reduce((a,x) => a + (x.menciones||0), 0);
+  const svg = document.createElementNS(NS,'svg');
+  svg.setAttribute('viewBox','0 0 42 42'); svg.setAttribute('width','148'); svg.setAttribute('height','148');
+  const R = 15.9155, CIRC = 2 * Math.PI * R;
+  const base = document.createElementNS(NS,'circle');
+  base.setAttribute('cx','21'); base.setAttribute('cy','21'); base.setAttribute('r', String(R));
+  base.setAttribute('fill','none'); base.setAttribute('stroke','#F0EEEA'); base.setAttribute('stroke-width','6');
+  svg.appendChild(base);
+  let off = 0;
+  if (total > 0) mapa.forEach((x, i) => {
+    const frac = (x.menciones||0) / total;
+    if (frac <= 0) return;
+    const seg = document.createElementNS(NS,'circle');
+    seg.setAttribute('cx','21'); seg.setAttribute('cy','21'); seg.setAttribute('r', String(R));
+    seg.setAttribute('fill','none');
+    seg.setAttribute('stroke', x.es_marca ? '#EF3B2D' : PAL[i % PAL.length]);
+    seg.setAttribute('stroke-width','6');
+    seg.setAttribute('stroke-dasharray', (frac*CIRC).toFixed(3) + ' ' + ((1-frac)*CIRC).toFixed(3));
+    seg.setAttribute('stroke-dashoffset', (CIRC*0.25 - off*CIRC).toFixed(3));
+    svg.appendChild(seg);
+    off += frac;
+  });
+  const marca = mapa.find(x => x.es_marca);
+  const pct = total > 0 && marca ? Math.round((marca.menciones/total)*100) : 0;
+  const t1 = document.createElementNS(NS,'text');
+  t1.setAttribute('x','21'); t1.setAttribute('y','21.5'); t1.setAttribute('text-anchor','middle');
+  t1.setAttribute('font-size','7'); t1.setAttribute('font-weight','800'); t1.setAttribute('font-family','Manrope,sans-serif');
+  t1.setAttribute('fill', pct > 0 ? '#121212' : '#9C9791');
+  t1.textContent = pct + '%';
+  svg.appendChild(t1);
+  const t2 = document.createElementNS(NS,'text');
+  t2.setAttribute('x','21'); t2.setAttribute('y','26'); t2.setAttribute('text-anchor','middle');
+  t2.setAttribute('font-size','2.6'); t2.setAttribute('font-weight','600'); t2.setAttribute('font-family','Inter,sans-serif');
+  t2.setAttribute('fill','#9C9791'); t2.setAttribute('letter-spacing','.2');
+  t2.textContent = pct > 0 ? 'TU CUOTA' : 'NO APARECES';
+  svg.appendChild(t2);
+  return svg;
+}
+
+function render(r){
+  const root = $id('results');
+  root.innerHTML = '';
+  const meta = r.meta || {};
+
+  /* ===== 1. DIAGNÓSTICO GLOBAL: resumen + 5 estadísticas ===== */
+  const nota = typeof r.nota === 'number' ? r.nota : null;
+  const d = el('div','dark');
+  const row = el('div','score-row');
+  const ring = el('div','ring');
+  ring.style.background = nota === null ? 'var(--gp-dark-soft)'
+    : 'conic-gradient(' + tono(nota) + ' ' + (nota*3.6) + 'deg, var(--gp-dark-soft) 0deg)';
+  const inn = el('div','ring-in');
+  inn.appendChild(el('div','ring-num', nota === null ? '–' : String(nota)));
+  inn.appendChild(el('div','ring-lbl','GEO Score'));
+  ring.appendChild(inn);
+  row.appendChild(ring);
+  const txt = el('div');
+  txt.appendChild(el('span','eyebrow','Diagnóstico global'));
+  txt.appendChild(el('h3', null, 'Así te ve hoy la inteligencia artificial'));
+  txt.appendChild(el('p', null, r.resumen_hallazgos ||
+    ('Auditoría de ' + (meta.brand || 'tu marca') + ' completada sobre ' + (meta.sondeos || 9) + ' sondeos a ' + (meta.modelos || []).join(', ') + '.')));
+  row.appendChild(txt);
+  d.appendChild(row);
+  root.appendChild(d);
+
+  const AREAS = [['infraestructura','Infraestructura'],['seo_tecnico','SEO técnico'],['contenido','Contenido'],['sov','Visibilidad IA'],['huella','Huella externa']];
+  const pa = r.por_area || {};
+  const tiles = el('div','areas');
+  AREAS.forEach(([k, lab]) => {
+    const v = typeof pa[k] === 'number' ? pa[k] : null;
+    const t = el('div','tile');
+    t.appendChild(el('div','t-lbl', lab));
+    const val = el('div','t-val', v === null ? '–' : String(v));
+    val.style.color = tono(v);
+    t.appendChild(val);
+    t.appendChild(barra(v));
+    tiles.appendChild(t);
+  });
+  root.appendChild(tiles);
+
+  /* Avisos: si algo no se ha podido verificar, se dice en vez de callarlo */
+  if (Array.isArray(r.avisos) && r.avisos.length){
+    const w = el('div','avisos');
+    r.avisos.forEach(a => {
+      const p = el('div','aviso');
+      p.appendChild(el('span','aviso-ico','!'));
+      p.appendChild(el('span', null, a));
+      w.appendChild(p);
+    });
+    root.appendChild(w);
+  }
+
+  /* ===== 2. LAS PREGUNTAS QUE HEMOS LANZADO ===== */
+  const preguntas = r.preguntas || [];
+  if (preguntas.length){
+    seccion(root, 'Metodología', 'Las preguntas que hemos lanzado',
+      'Cada pregunta se envía por separado a los tres modelos. Despliega para leer qué respondió cada uno.');
+    preguntas.forEach((p, i) => {
+      const hits = (p.respuestas || []).filter(x => x.aparece).length;
+      const val = (p.respuestas || []).filter(x => x.respondio).length;
+      const item = el('div','q-item');
+      const head = el('button','q-head'); head.type = 'button';
+      const tx = el('div');
+      tx.appendChild(el('span','q-num','Pregunta ' + (i+1)));
+      tx.appendChild(el('span','q-q', p.pregunta));
+      head.appendChild(tx);
+      const mt = el('div','q-meta');
+      mt.appendChild(el('span','q-badge ' + (hits === 0 ? 'b-no' : hits === val ? 'b-yes' : 'b-part'), hits + '/' + (val || 3)));
+      const pm = el('span','q-pm','+'); mt.appendChild(pm);
+      head.appendChild(mt);
+      const body = el('div','q-body');
+      const inner = el('div','q-inner');
+      (p.respuestas || []).forEach(m => {
+        const mm = el('div','q-model');
+        const mh = el('div','q-model-h');
+        mh.appendChild(el('span','q-model-n', m.modelo));
+        mh.appendChild(el('span','q-badge ' + (m.aparece ? 'b-yes' : 'b-no'), m.aparece ? 'Te menciona' : 'No te menciona'));
+        mm.appendChild(mh);
+        mm.appendChild(el('div','q-ans', m.respuesta || (m.respondio ? '(sin contenido)' : 'El modelo no respondió en esta ejecución.')));
+        inner.appendChild(mm);
+      });
+      body.appendChild(inner);
+      head.addEventListener('click', () => { const o = body.classList.toggle('open'); pm.textContent = o ? '–' : '+'; });
+      item.appendChild(head); item.appendChild(body);
+      root.appendChild(item);
+    });
+  }
+
+  /* ===== 3. SEO TÉCNICO ===== */
+  const seo = r.seo_tecnico || {};
+  const pts = seo.puntos || [];
+  if (pts.length){
+    seccion(root, 'Cimientos', 'SEO Técnico',
+      'La base que decide si la IA puede llegar a tu web, leerla y entenderla. Comprobado contra tu servidor real.');
+    pts.forEach(p => root.appendChild(tarjetaPunto(p)));
+    bloqueado(root, (seo.bloqueados || 4) + ' comprobaciones más en el informe completo',
+      'Indexabilidad, renderizado sin JavaScript, sitemap y llms.txt, validación oficial de schema, alineación con la intención de búsqueda y jerarquía página a página.');
+  }
+
+  /* ===== 4. HUELLA DIGITAL EXTERNA ===== */
+  const hue = r.huella_digital || {};
+  const enlaces = hue.enlaces || [];
+  const ee = hue.eeatc || {};
+  if (enlaces.length || ee.puntuacion_global !== null){
+    seccion(root, 'Off-page', 'Huella digital externa',
+      'Tu presencia fuera de tu propia web: dónde te menciona internet y si la IA te reconoce como autoridad.');
+
+    if (enlaces.length){
+      const c = el('div','card');
+      const h = el('div','pt-head');
+      const l = el('div','pt-l');
+      l.appendChild(el('span','dot d-' + (enlaces.length >= 5 ? 'ok' : enlaces.length >= 2 ? 'warning' : 'error')));
+      l.appendChild(el('span','pt-title','Dónde te menciona internet'));
+      h.appendChild(l);
+      const rr = el('div','pt-r');
+      rr.appendChild(el('span','pt-val', enlaces.length + ' fuentes'));
+      h.appendChild(rr);
+      c.appendChild(h);
+      const lk = el('div','links');
+      enlaces.slice(0,10).forEach(x => {
+        const a = el('a', null, x.dominio);
+        a.href = x.url; a.target = '_blank'; a.rel = 'noopener nofollow';
+        lk.appendChild(a);
+      });
+      c.appendChild(lk);
+      root.appendChild(c);
+    }
+
+    const EE = [['experiencia','Experiencia'],['expertise','Expertise'],['autoridad','Autoridad'],['confianza','Confianza'],['citabilidad','Citabilidad']];
+    if (EE.some(([k]) => typeof ee[k] === 'number')){
+      const c = el('div','card');
+      const h = el('div','pt-head');
+      const l = el('div','pt-l');
+      const g = typeof ee.puntuacion_global === 'number' ? ee.puntuacion_global : null;
+      l.appendChild(el('span','dot d-' + (g === null ? 'no_verificable' : g >= 70 ? 'ok' : g >= 40 ? 'warning' : 'error')));
+      l.appendChild(el('span','pt-title','E-E-A-T-C'));
+      h.appendChild(l);
+      c.appendChild(h);
+      EE.forEach(([k, lab]) => {
+        const v = typeof ee[k] === 'number' ? ee[k] : null;
+        const rw = el('div','ee-row');
+        rw.appendChild(el('div','ee-lbl', lab));
+        const bb = el('div','ee-bar'); const ii = el('i');
+        ii.style.width = (v === null ? 0 : v) + '%'; ii.style.background = tono(v);
+        bb.appendChild(ii); rw.appendChild(bb);
+        const vv = el('div','ee-val', v === null ? '–' : v + '/100');
+        vv.style.color = tono(v);
+        rw.appendChild(vv);
+        c.appendChild(rw);
+      });
+      const gl = el('div','ee-global');
+      gl.appendChild(el('span', null, 'Puntuación global'));
+      const gb = el('b', null, g === null ? '–' : g + ' / 100');
+      gb.style.color = tono(g);
+      gl.appendChild(gb);
+      c.appendChild(gl);
+      root.appendChild(c);
+    }
+    bloqueado(root, (hue.bloqueados || 3) + ' análisis más en el informe completo',
+      'Foros y comunidades, medios y prensa, directorios y reseñas, listas del sector, y dónde deberías ganar presencia primero.');
+  }
+
+  /* ===== 5. TU VISIBILIDAD EN LA IA ===== */
+  const ap = r.aparicion || {};
+  const mapa = Array.isArray(r.mapa_competitivo) ? r.mapa_competitivo : [];
+  if ((ap.por_modelo && ap.por_modelo.length) || mapa.length){
+    seccion(root, 'Motores generativos', 'Tu visibilidad en las respuestas de la IA',
+      'Dónde apareces cuando los modelos responden sobre tu sector, y quién ocupa tu espacio.');
+    const dg = el('div','diag');
+
+    if (ap.por_modelo && ap.por_modelo.length && preguntas.length){
+      const tb = el('table','matrix');
+      const th = el('thead'); const trh = el('tr');
+      trh.appendChild(el('th', null, 'Pregunta'));
+      ap.por_modelo.forEach(m => trh.appendChild(el('th', null, m.modelo)));
+      th.appendChild(trh); tb.appendChild(th);
+      const tby = el('tbody');
+      preguntas.forEach((p, i) => {
+        const tr = el('tr');
+        const q = String(p.pregunta);
+        tr.appendChild(el('td', null, 'P' + (i+1) + ' · ' + q.slice(0,56) + (q.length > 56 ? '…' : '')));
+        ap.por_modelo.forEach(m => {
+          const cc = (m.celdas || [])[i] || {};
+          const td = el('td');
+          td.appendChild(el('span','mk ' + (!cc.respondio ? 'mk-na' : cc.aparece ? 'mk-yes' : 'mk-no'),
+            !cc.respondio ? '–' : cc.aparece ? '✓' : '✕'));
+          tr.appendChild(td);
+        });
+        tby.appendChild(tr);
+      });
+      tb.appendChild(tby);
+      dg.appendChild(tb);
+    }
+
+    if (mapa.length){
+      const dw = el('div','donut-wrap');
+      dw.appendChild(donut(mapa));
+      const lg = el('div','legend');
+      const total = mapa.reduce((a,x) => a + (x.menciones||0), 0);
+      mapa.slice(0,7).forEach((x, i) => {
+        const rw = el('div','lg');
+        const sw = el('i'); sw.style.background = x.es_marca ? 'var(--gp-accent)' : PAL[i % PAL.length];
+        rw.appendChild(sw);
+        rw.appendChild(el('span', null, x.empresa + (x.es_marca ? ' (tu marca)' : '')));
+        rw.appendChild(el('b', null, total ? Math.round((x.menciones/total)*100) + '%' : '0%'));
+        lg.appendChild(rw);
+      });
+      dw.appendChild(lg);
+      dg.appendChild(dw);
+    }
+    root.appendChild(dg);
+  }
+
+  /* ===== 6. CTA FINAL ===== */
+  const cta = el('div','cta');
+  cta.id = 'cta';
+  cta.appendChild(el('span','eyebrow','Informe completo'));
+  cta.appendChild(el('h3', null, 'Esto es solo una muestra'));
+  cta.appendChild(el('p', null, 'Has visto algunos indicadores de cada bloque. El informe completo audita tu visibilidad en IA de principio a fin y te dice exactamente qué hacer para que los modelos empiecen a recomendarte.'));
+  const list = el('div','cta-list');
+  [['16 preguntas','a ChatGPT, Claude y Perplexity'],
+   ['Auditoría técnica','rastreo, indexación, schema y semántica'],
+   ['Huella completa','foros, medios, directorios y reputación'],
+   ['Plan de acción','priorizado, con dónde ganar presencia']].forEach(([t, s]) => {
+    const rw = el('div');
+    rw.appendChild(el('i', null, '✓'));
+    const tx = el('span'); tx.appendChild(el('b', null, t + ': ')); tx.appendChild(document.createTextNode(s));
+    rw.appendChild(tx);
+    list.appendChild(rw);
+  });
+  cta.appendChild(list);
+  const btns = el('div','cta-btns');
+  const a1 = el('a','cta-a','Contactar con nosotros'); a1.href = CONTACTO_URL; a1.target = '_blank'; a1.rel = 'noopener';
+  const a2 = el('a','cta-b','Quiero el informe completo'); a2.href = CONTACTO_URL; a2.target = '_blank'; a2.rel = 'noopener';
+  btns.appendChild(a1); btns.appendChild(a2);
+  cta.appendChild(btns);
+  root.appendChild(cta);
+
+  root.style.display = 'block';
+}
+
+$id('btn').addEventListener('click', async () => {
+  const brand = $id('brand').value.trim();
+  const domain = $id('domain').value.trim();
+  const keyword = $id('keyword').value.trim();
+  const pais = $id('pais').value;
+  const region = $id('region').value.trim();
+  const fe = $id('ferr');
+  fe.style.display = 'none';
+  if (!brand || !domain || !keyword){ fe.textContent = 'Completa marca, dominio y sector.'; fe.style.display = 'block'; return; }
+
+  $id('results').style.display = 'none';
+  $id('errbox').style.display = 'none';
+  const btn = $id('btn');
+  btn.disabled = true; btn.textContent = 'Analizando…';
+  startLoader();
+
+  const ctrl = new AbortController();
+  const to = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+  try {
+    const res = await fetch(WEBHOOK_URL, {
+      method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ brand, domain, keyword, pais, region }), signal: ctrl.signal
+    });
+    if (!res.ok) throw new Error('El servidor respondió ' + res.status);
+    const data = await res.json();
+    const rep = Array.isArray(data) ? data[0] : data;
+    if (!rep || (!rep.meta && typeof rep.nota === 'undefined')) throw new Error('Respuesta inesperada del servidor.');
+    stopLoader();
+    render(rep);
+  } catch (err) {
+    stopLoader();
+    $id('errmsg').textContent = err.name === 'AbortError'
+      ? 'El análisis ha tardado demasiado. Inténtalo de nuevo en unos minutos.'
+      : ('No hemos podido completar el análisis. ' + err.message);
+    $id('errbox').style.display = 'block';
+  } finally {
+    clearTimeout(to);
+    btn.disabled = false; btn.textContent = 'Analizar mi visibilidad';
+  }
+});
+})();
+</script>

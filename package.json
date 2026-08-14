@@ -1,0 +1,31 @@
+{
+  "name": "geopulse-panel",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Panel de control interno de BranDevs para GEOpulse (auditoría GEO sobre n8n)",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "check": "node scripts/verificar_panel_db.mjs && node scripts/verificar_auth.mjs",
+    "check:db": "node scripts/verificar_panel_db.mjs",
+    "check:auth": "node scripts/verificar_auth.mjs"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.101.4",
+    "drizzle-orm": "^0.38.0",
+    "jose": "^6.2.8",
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "drizzle-kit": "^0.30.0",
+    "typescript": "^5.7.0"
+  }
+}

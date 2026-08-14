@@ -1,0 +1,378 @@
+{
+  "meta": {
+    "brand": "BranDevs",
+    "domain": "https://brandevs.com",
+    "host": "brandevs.com",
+    "keyword": "agencia de marketing digital",
+    "mercado": "Madrid, España",
+    "version": "lite2",
+    "fecha": "2026-07-22T11:27:08.433Z",
+    "modelos": [
+      "ChatGPT",
+      "Claude",
+      "Perplexity"
+    ],
+    "preguntas_lanzadas": 3,
+    "sondeos": 12
+  },
+  "nota": 71,
+  "por_area": {
+    "seo_tecnico": 96,
+    "contenido": 66,
+    "sov": 58,
+    "huella": 69
+  },
+  "resumen_hallazgos": "BranDevs aparece de forma consistente en ChatGPT, Claude y Gemini para su sector en Madrid, con presencia externa en prensa especializada y directorios, aunque Competidora Uno domina en Perplexity.",
+  "posicionamiento": {
+    "veredicto": "parcial"
+  },
+  "avisos": [],
+  "seo_tecnico": {
+    "puntos": [
+      {
+        "clave": "rastreo_bots_ia",
+        "titulo": "Acceso de los bots de IA",
+        "estado": "ok",
+        "valor": "sin bloqueos críticos",
+        "detalle": "Ningún bot de IA está bloqueado.",
+        "bloqueados_por_categoria": {
+          "retrieval": [],
+          "user_fetch": [],
+          "training": [
+            "GPTBot"
+          ]
+        },
+        "waf": {
+          "bloquea": false,
+          "status": 200,
+          "challenge": false
+        }
+      },
+      {
+        "clave": "jerarquia_contenido",
+        "titulo": "Jerarquía de encabezados",
+        "estado": "ok",
+        "valor": "1 H1 · 8 encabezados",
+        "detalle": "Estructura limpia."
+      },
+      {
+        "clave": "schema",
+        "titulo": "Datos estructurados (Schema.org)",
+        "estado": "ok",
+        "valor": "4 tipos",
+        "detalle": "Schema con capa de entidad presente.",
+        "tipos_detectados": [
+          "Organization",
+          "WebSite",
+          "WebPage",
+          "BreadcrumbList"
+        ],
+        "campos_ausentes": [],
+        "validador": {
+          "disponible": true,
+          "errores": 0,
+          "warnings": 0
+        }
+      },
+      {
+        "clave": "indice_autoridad",
+        "titulo": "Índice de autoridad",
+        "estado": "warning",
+        "valor": null,
+        "detalle": "La home menciona años de experiencia pero aporta pocos datos verificables."
+      },
+      {
+        "clave": "semantica",
+        "titulo": "Cómo lee la IA tu web",
+        "estado": "ok",
+        "valor": "82 / 100",
+        "detalle": null,
+        "entidades": [
+          "marketing digital",
+          "Madrid",
+          "posicionamiento web",
+          "desarrollo web",
+          "inteligencia artificial"
+        ]
+      }
+    ],
+    "bloqueados": 4
+  },
+  "huella_digital": {
+    "enlaces": [
+      {
+        "dominio": "directorio-ejemplo.es",
+        "url": "https://directorio-ejemplo.es/a"
+      },
+      {
+        "dominio": "revista-sector.com",
+        "url": "https://revista-sector.com/a"
+      },
+      {
+        "dominio": "prensa-local.es",
+        "url": "https://prensa-local.es/a"
+      },
+      {
+        "dominio": "registro-empresas.com",
+        "url": "https://registro-empresas.com/a"
+      }
+    ],
+    "dominio_propio_citado": true,
+    "eeatc": {
+      "experiencia": 78,
+      "expertise": 70,
+      "autoridad": 60,
+      "confianza": 72,
+      "citabilidad": 55,
+      "puntuacion_global": 67
+    },
+    "bloqueados": 3
+  },
+  "preguntas": [
+    {
+      "pregunta": "¿Cuáles son las mejores opciones de agencia de marketing digital en Madrid, España? Nómbralas y explica brevemente por qué destacan.",
+      "respuestas": [
+        {
+          "modelo": "ChatGPT",
+          "clave": "chatgpt",
+          "respondio": true,
+          "aparece": true,
+          "respuesta": "En Madrid destacan BranDevs, Competidora Uno y Competidora Dos."
+        },
+        {
+          "modelo": "Claude",
+          "clave": "claude",
+          "respondio": true,
+          "aparece": true,
+          "respuesta": "Las principales son BranDevs y Competidora Uno."
+        },
+        {
+          "modelo": "Gemini",
+          "clave": "gemini",
+          "respondio": true,
+          "aparece": true,
+          "respuesta": "En Madrid destacan BranDevs y Competidora Uno por experiencia."
+        },
+        {
+          "modelo": "Perplexity",
+          "clave": "perplexity",
+          "respondio": true,
+          "aparece": true,
+          "respuesta": "Según fuentes, BranDevs y Competidora Uno."
+        }
+      ]
+    },
+    {
+      "pregunta": "Estoy en Madrid, España y busco agencia de marketing digital. ¿Qué empresas o proveedores concretos me recomiendas?",
+      "respuestas": [
+        {
+          "modelo": "ChatGPT",
+          "clave": "chatgpt",
+          "respondio": true,
+          "aparece": true,
+          "respuesta": "Te recomiendo BranDevs."
+        },
+        {
+          "modelo": "Claude",
+          "clave": "claude",
+          "respondio": true,
+          "aparece": true,
+          "respuesta": "BranDevs es referente."
+        },
+        {
+          "modelo": "Gemini",
+          "clave": "gemini",
+          "respondio": true,
+          "aparece": true,
+          "respuesta": "Yo recomendaría BranDevs."
+        },
+        {
+          "modelo": "Perplexity",
+          "clave": "perplexity",
+          "respondio": true,
+          "aparece": false,
+          "respuesta": "Competidora Uno."
+        }
+      ]
+    },
+    {
+      "pregunta": "¿Qué empresas destacan en agencia de marketing digital en Madrid, España por su reputación y experiencia? Nómbralas.",
+      "respuestas": [
+        {
+          "modelo": "ChatGPT",
+          "clave": "chatgpt",
+          "respondio": true,
+          "aparece": false,
+          "respuesta": "Competidora Uno y Competidora Dos."
+        },
+        {
+          "modelo": "Claude",
+          "clave": "claude",
+          "respondio": true,
+          "aparece": false,
+          "respuesta": "Competidora Uno y Competidora Tres."
+        },
+        {
+          "modelo": "Gemini",
+          "clave": "gemini",
+          "respondio": true,
+          "aparece": false,
+          "respuesta": "Competidora Uno tiene trayectoria."
+        },
+        {
+          "modelo": "Perplexity",
+          "clave": "perplexity",
+          "respondio": true,
+          "aparece": false,
+          "respuesta": "Competidora Uno destaca."
+        }
+      ]
+    }
+  ],
+  "aparicion": {
+    "por_modelo": [
+      {
+        "modelo": "ChatGPT",
+        "clave": "chatgpt",
+        "apariciones": 2,
+        "preguntas_validas": 3,
+        "tasa": 67,
+        "celdas": [
+          {
+            "respondio": true,
+            "aparece": true
+          },
+          {
+            "respondio": true,
+            "aparece": true
+          },
+          {
+            "respondio": true,
+            "aparece": false
+          }
+        ]
+      },
+      {
+        "modelo": "Claude",
+        "clave": "claude",
+        "apariciones": 2,
+        "preguntas_validas": 3,
+        "tasa": 67,
+        "celdas": [
+          {
+            "respondio": true,
+            "aparece": true
+          },
+          {
+            "respondio": true,
+            "aparece": true
+          },
+          {
+            "respondio": true,
+            "aparece": false
+          }
+        ]
+      },
+      {
+        "modelo": "Gemini",
+        "clave": "gemini",
+        "apariciones": 2,
+        "preguntas_validas": 3,
+        "tasa": 67,
+        "celdas": [
+          {
+            "respondio": true,
+            "aparece": true
+          },
+          {
+            "respondio": true,
+            "aparece": true
+          },
+          {
+            "respondio": true,
+            "aparece": false
+          }
+        ]
+      },
+      {
+        "modelo": "Perplexity",
+        "clave": "perplexity",
+        "apariciones": 1,
+        "preguntas_validas": 3,
+        "tasa": 33,
+        "celdas": [
+          {
+            "respondio": true,
+            "aparece": true
+          },
+          {
+            "respondio": true,
+            "aparece": false
+          },
+          {
+            "respondio": true,
+            "aparece": false
+          }
+        ]
+      }
+    ],
+    "tasa_global": 58,
+    "total_hits": 7,
+    "total_validas": 12
+  },
+  "mapa_competitivo": [
+    {
+      "empresa": "BranDevs",
+      "es_marca": true,
+      "menciones": 7,
+      "por_modelo": {
+        "chatgpt": 2,
+        "claude": 2,
+        "gemini": 2,
+        "perplexity": 0
+      }
+    },
+    {
+      "empresa": "Competidora Uno",
+      "es_marca": false,
+      "menciones": 5,
+      "por_modelo": {
+        "chatgpt": 1,
+        "claude": 1,
+        "gemini": 1,
+        "perplexity": 2
+      }
+    },
+    {
+      "empresa": "Competidora Dos",
+      "es_marca": false,
+      "menciones": 2,
+      "por_modelo": {
+        "chatgpt": 2,
+        "claude": 0,
+        "gemini": 0,
+        "perplexity": 0
+      }
+    }
+  ],
+  "_diag": {
+    "home_status": 200,
+    "robots_status": 200,
+    "sitemap_status": 200,
+    "html_bytes": 148234,
+    "palabras": 620,
+    "home_legible": true,
+    "csr": false,
+    "spa": [],
+    "encabezados": 8,
+    "jsonld_bloques": 3,
+    "robots_grupos": 3,
+    "sitemap_urls": 40,
+    "validador_schema": "ok",
+    "respuestas_ok": "ChatGPT:3/3 Claude:3/3 Gemini:3/3 Perplexity:3/3",
+    "citas_sector": 3,
+    "citas_huella": 6,
+    "marca_tokens": "brandevs",
+    "marca_distintivo": "brandevs"
+  }
+}

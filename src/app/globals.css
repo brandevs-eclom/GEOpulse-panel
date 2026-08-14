@@ -1,0 +1,78 @@
+/*
+ * Design tokens de BranDevs, portados literalmente desde los frontends de
+ * referencia (workflows/geopulse-lite2.html y geopulse-frontend-brandevs.html).
+ * Mantenerlos idénticos es lo que hace que el panel se sienta de la misma familia
+ * que los informes públicos, y permite reutilizar el render sin retocar colores.
+ */
+:root {
+  --accent: #ef3b2d;
+  --accent-dark: #d22c1f;
+  --accent-light: #ff6152;
+  --accent-soft: #fdecea;
+
+  --bg: #f6f5f2;
+  --surface: #ffffff;
+
+  --dark: #262523;
+  --dark-soft: #3d3b37;
+  --dark-line: #403e3a;
+
+  --text: #121212;
+  --text-muted: #6e6b66;
+  --muted: #9c9791;
+  --muted-soft: #f0eeea;
+  --on-dark: #ffffff;
+  --on-dark-muted: #b4b0a9;
+
+  /* Estados: los mismos que usa el informe para ok/warning/error.
+     'no_verificable' se pinta con --muted a propósito: no es un fallo,
+     es "no se pudo medir" y no debe parecer un 0. */
+  --ok: #17915b;
+  --ok-soft: #e6f4ed;
+  --warn: #c07600;
+  --warn-soft: #fbf1e0;
+  --err: #b42318;
+  --err-soft: #fdeceb;
+
+  --border: #e7e4de;
+  --border-strong: #d6d2c9;
+
+  --r: 14px;
+  --r-sm: 10px;
+  --pill: 999px;
+
+  --display: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--ui);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--display);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}

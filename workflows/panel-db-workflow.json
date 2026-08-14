@@ -1,0 +1,137 @@
+{
+  "name": "GEOpulse Panel - capa de datos (panel-db)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "panel-db",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        300
+      ],
+      "name": "Webhook",
+      "webhookId": "panel-db",
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "GEOpulse Panel - Header Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Lista blanca de operaciones. El panel manda un nombre, nunca SQL.\nconst entrada = $json.body || $json;\nconst op = String(entrada.op || '').trim();\nconst params = (entrada.params && typeof entrada.params === 'object') ? entrada.params : {};\n\nconst MIGRACION = \"-- === 0000_dark_millenium_guard.sql ===\\n-- Nota: NO se crea la extensi\\u00f3n pgcrypto. gen_random_uuid() es n\\u00facleo desde\\n-- PostgreSQL 13, y crear extensiones exige superusuario, privilegio que el\\n-- usuario de n8n no tiene ni debe tener. docs/03 la mencionaba como opci\\u00f3n para\\n-- PG antiguos; aqu\\u00ed no hace falta.\\nCREATE TABLE \\\"informes\\\" (\\n\\t\\\"run_id\\\" uuid PRIMARY KEY NOT NULL,\\n\\t\\\"informe\\\" jsonb NOT NULL,\\n\\t\\\"raw_body\\\" text,\\n\\t\\\"created_at\\\" timestamp with time zone DEFAULT now() NOT NULL\\n);\\n--> statement-breakpoint\\nCREATE TABLE \\\"runs\\\" (\\n\\t\\\"id\\\" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,\\n\\t\\\"created_at\\\" timestamp with time zone DEFAULT now() NOT NULL,\\n\\t\\\"updated_at\\\" timestamp with time zone DEFAULT now() NOT NULL,\\n\\t\\\"tipo\\\" text NOT NULL,\\n\\t\\\"brand\\\" text NOT NULL,\\n\\t\\\"domain\\\" text NOT NULL,\\n\\t\\\"keyword\\\" text NOT NULL,\\n\\t\\\"pais\\\" text DEFAULT 'ES' NOT NULL,\\n\\t\\\"region\\\" text,\\n\\t\\\"payload\\\" jsonb NOT NULL,\\n\\t\\\"estado\\\" text DEFAULT 'pendiente' NOT NULL,\\n\\t\\\"started_at\\\" timestamp with time zone,\\n\\t\\\"finished_at\\\" timestamp with time zone,\\n\\t\\\"duracion_ms\\\" integer,\\n\\t\\\"error_mensaje\\\" text,\\n\\t\\\"http_status\\\" integer,\\n\\t\\\"nota\\\" integer,\\n\\t\\\"veredicto\\\" text,\\n\\t\\\"sov\\\" integer,\\n\\t\\\"sondeos\\\" integer,\\n\\t\\\"tiene_avisos\\\" boolean DEFAULT false NOT NULL,\\n\\t\\\"lanzado_por\\\" uuid,\\n\\tCONSTRAINT \\\"runs_tipo_check\\\" CHECK (\\\"runs\\\".\\\"tipo\\\" in ('lite', 'completo')),\\n\\tCONSTRAINT \\\"runs_estado_check\\\" CHECK (\\\"runs\\\".\\\"estado\\\" in ('pendiente', 'en_curso', 'completado', 'error'))\\n);\\n--> statement-breakpoint\\nCREATE TABLE \\\"users\\\" (\\n\\t\\\"id\\\" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,\\n\\t\\\"email\\\" text NOT NULL,\\n\\t\\\"password_hash\\\" text NOT NULL,\\n\\t\\\"nombre\\\" text,\\n\\t\\\"rol\\\" text DEFAULT 'miembro' NOT NULL,\\n\\t\\\"created_at\\\" timestamp with time zone DEFAULT now() NOT NULL,\\n\\t\\\"updated_at\\\" timestamp with time zone DEFAULT now() NOT NULL,\\n\\tCONSTRAINT \\\"users_email_unique\\\" UNIQUE(\\\"email\\\")\\n);\\n--> statement-breakpoint\\nALTER TABLE \\\"informes\\\" ADD CONSTRAINT \\\"informes_run_id_runs_id_fk\\\" FOREIGN KEY (\\\"run_id\\\") REFERENCES \\\"public\\\".\\\"runs\\\"(\\\"id\\\") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint\\nALTER TABLE \\\"runs\\\" ADD CONSTRAINT \\\"runs_lanzado_por_users_id_fk\\\" FOREIGN KEY (\\\"lanzado_por\\\") REFERENCES \\\"public\\\".\\\"users\\\"(\\\"id\\\") ON DELETE set null ON UPDATE no action;--> statement-breakpoint\\nCREATE INDEX \\\"runs_created_at_idx\\\" ON \\\"runs\\\" USING btree (\\\"created_at\\\" DESC NULLS LAST);--> statement-breakpoint\\nCREATE INDEX \\\"runs_estado_idx\\\" ON \\\"runs\\\" USING btree (\\\"estado\\\");--> statement-breakpoint\\nCREATE INDEX \\\"runs_domain_idx\\\" ON \\\"runs\\\" USING btree (\\\"domain\\\");--> statement-breakpoint\\nCREATE INDEX \\\"runs_tipo_idx\\\" ON \\\"runs\\\" USING btree (\\\"tipo\\\");--> statement-breakpoint\\nCREATE INDEX \\\"runs_domain_created_at_idx\\\" ON \\\"runs\\\" USING btree (\\\"domain\\\",\\\"created_at\\\" DESC NULLS LAST);\";\n\n// Cada operacion declara su SQL y como ordenar sus parametros para $1,$2...\n// 'requiere' documenta que campos son obligatorios; se valida antes de tocar la BD.\n// Los valores de usuario (marca, dominio, ...) SIEMPRE van por $N (queryReplacement),\n// nunca concatenados dentro del SQL: es la unica defensa contra inyeccion.\nconst UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\n\nconst exigirUuid = (v, campo) => {\n  const s = String(v).trim();\n  if (!UUID_RE.test(s)) throw new Error((campo || 'id') + ' no es un UUID valido');\n  return s;\n};\n// Filtro de propiedad: null = sin filtro (admin, lo ve todo). Se valida igual que\n// un id para que nunca entre texto arbitrario en la consulta.\nconst filtroDueno = (v) => (v === undefined || v === null || v === '' ? null : exigirUuid(v, 'solo_de'));\n\n// INVARIANTE: el unique de users.email en Postgres NO es case-insensitive. La\n// normalizacion a minusculas vive AQUI. Cualquier operacion futura que toque\n// users tiene que normalizar igual, o acabaran conviviendo 'Ana@x.com' y\n// 'ana@x.com' y el login se volvera ambiguo.\nconst normEmail = (v) => String(v).trim().toLowerCase();\n\nconst ROLES = ['admin', 'miembro'];\nconst normRol = (v) => {\n  const r = String(v).trim().toLowerCase();\n  if (ROLES.indexOf(r) === -1) throw new Error('rol invalido: ' + r + ' (admin|miembro)');\n  return r;\n};\n\nconst OPS = {\n  ping: {\n    sql: 'select 1 as ok',\n    requiere: [],\n    orden: () => []\n  },\n  migrate: {\n    // Se parte en una sentencia por item (mas abajo). No idempotente a proposito:\n    // si las tablas ya existen, falla en vez de fingir. Cada item lleva params [].\n    sql: MIGRACION,\n    requiere: [],\n    orden: () => []\n  },\n  check: {\n    // Verificacion positiva: que tablas del panel existen de verdad.\n    sql: \"select table_name from information_schema.tables \" +\n         \"where table_schema = 'public' \" +\n         \"and table_name in ('runs', 'informes', 'users') \" +\n         \"order by table_name\",\n    requiere: [],\n    orden: () => []\n  },\n  whoami: {\n    // Diagnostico: con que usuario/base conecta n8n y si puede crear en public.\n    sql: \"select current_user as usuario, current_database() as base, \" +\n         \"has_schema_privilege(current_user, 'public', 'CREATE') as puede_crear_en_public\",\n    requiere: [],\n    orden: () => []\n  },\n\n  // --- Ejecuciones (runs) ---\n  count_active: {\n    // Guard de concurrencia: cuantos analisis estan vivos ahora mismo.\n    // NO se filtra por dueno a proposito: el tope es de gasto de la agencia, no\n    // una cuota por persona. Dos miembros lanzando a la vez comparten el tope.\n    sql: \"select count(*)::int as activos from runs \" +\n         \"where estado in ('pendiente', 'en_curso')\",\n    requiere: [],\n    orden: () => []\n  },\n  create_run: {\n    // Crea la ejecucion en 'pendiente' y devuelve su id. El payload (body exacto\n    // para n8n) se guarda como jsonb para poder reproducir/reintentar.\n    // lanzado_por es OPCIONAL: un reintento manual por curl (sin sesion) debe\n    // seguir funcionando y se guarda sin dueno.\n    requiere: ['tipo', 'brand', 'domain', 'keyword'],\n    sql: \"insert into runs (tipo, brand, domain, keyword, pais, region, payload, estado, lanzado_por) \" +\n         \"values ($1, $2, $3, $4, $5, $6, $7::jsonb, 'pendiente', $8) \" +\n         \"returning id, estado, created_at\",\n    orden: (p) => {\n      const tipo = String(p.tipo).trim();\n      if (tipo !== 'lite' && tipo !== 'completo') {\n        throw new Error(\"tipo invalido: \" + tipo + \" (lite|completo)\");\n      }\n      const pais = (p.pais ? String(p.pais).trim().toUpperCase() : 'ES') || 'ES';\n      const region = p.region ? String(p.region).trim() : null;\n      const payload = JSON.stringify(p.payload && typeof p.payload === 'object' ? p.payload : {});\n      const lanzadoPor = p.lanzado_por ? exigirUuid(p.lanzado_por, 'lanzado_por') : null;\n      return [tipo, String(p.brand).trim(), String(p.domain).trim(),\n              String(p.keyword).trim(), pais, region, payload, lanzadoPor];\n    }\n  },\n  list_runs: {\n    // Listado paginado para la tabla. count(*) over() da el total sin 2a consulta.\n    //\n    // $3 es el filtro de propiedad: null lo ve todo (admin), un uuid ve solo las\n    // suyas. Las ejecuciones historicas tienen lanzado_por NULL y por tanto NO\n    // pasan el filtro: no tienen dueno, asi que solo las ve un admin. Es\n    // deliberado; no aparecen en el listado de un companero nuevo como si fueran\n    // suyas.\n    sql: \"select r.id, r.created_at, r.tipo, r.brand, r.domain, r.keyword, r.pais, r.region, \" +\n         \"r.estado, r.nota, r.veredicto, r.sov, r.sondeos, r.tiene_avisos, r.duracion_ms, \" +\n         \"r.error_mensaje, r.lanzado_por, u.email as lanzado_por_email, \" +\n         \"cast(count(*) over() as integer) as _total \" +\n         \"from runs r left join users u on u.id = r.lanzado_por \" +\n         \"where ($3::uuid is null or r.lanzado_por = $3) \" +\n         \"order by r.created_at desc limit $1 offset $2\",\n    requiere: [],\n    orden: (p) => {\n      let limit = parseInt(p.limit, 10);\n      if (!Number.isFinite(limit) || limit <= 0) limit = 50;\n      if (limit > 200) limit = 200;\n      let offset = parseInt(p.offset, 10);\n      if (!Number.isFinite(offset) || offset < 0) offset = 0;\n      return [limit, offset, filtroDueno(p.solo_de)];\n    }\n  },\n  get_run: {\n    // Detalle: la fila + el informe (jsonb) si ya existe.\n    // $2 = mismo filtro de propiedad que list_runs. Devolver 0 filas cuando la\n    // ejecucion existe pero es de otro es lo correcto: el panel responde 404 y\n    // no revela que ese id existe.\n    requiere: ['id'],\n    sql: \"select r.id, r.created_at, r.updated_at, r.tipo, r.brand, r.domain, r.keyword, \" +\n         \"r.pais, r.region, r.payload, r.estado, r.started_at, r.finished_at, \" +\n         \"r.duracion_ms, r.error_mensaje, r.http_status, r.nota, r.veredicto, \" +\n         \"r.sov, r.sondeos, r.tiene_avisos, r.lanzado_por, u.email as lanzado_por_email, \" +\n         \"i.informe, i.raw_body \" +\n         \"from runs r left join informes i on i.run_id = r.id \" +\n         \"left join users u on u.id = r.lanzado_por \" +\n         \"where r.id = $1 and ($2::uuid is null or r.lanzado_por = $2)\",\n    orden: (p) => [exigirUuid(p.id), filtroDueno(p.solo_de)]\n  },\n  delete_run: {\n    // Borra una ejecucion. informes cae por ON DELETE CASCADE. Devuelve el id\n    // borrado (0 filas si no existia o si es de otra persona).\n    requiere: ['id'],\n    sql: \"delete from runs where id = $1 and ($2::uuid is null or lanzado_por = $2) returning id\",\n    orden: (p) => [exigirUuid(p.id), filtroDueno(p.solo_de)]\n  },\n  fail_run: {\n    // Marca una ejecucion como fallida. La usa el panel cuando no consigue\n    // disparar el analisis: sin esto la fila se quedaria 'pendiente' para siempre\n    // y ademas ocuparia hueco en el tope de concurrencia.\n    // Solo actua sobre ejecuciones aun vivas: no pisa un resultado ya guardado.\n    requiere: ['id', 'mensaje'],\n    sql: \"update runs set estado = 'error', error_mensaje = $2, \" +\n         \"finished_at = now(), updated_at = now() \" +\n         \"where id = $1 and estado in ('pendiente', 'en_curso') returning id\",\n    orden: (p) => [exigirUuid(p.id), String(p.mensaje).slice(0, 2000)]\n  },\n\n  // --- Usuarios ---\n  // El panel NUNCA manda ni recibe contrasenas en claro por aqui: el hash se\n  // calcula y se verifica en el panel (runtime Node, scrypt). Aqui solo viaja el\n  // hash ya calculado. Ojo: quien tenga el secreto de este webhook puede leer los\n  // hashes; son scrypt con salt, no contrasenas, pero trata el secreto en\n  // consecuencia.\n  count_users: {\n    // Lo usa el arranque inicial para saber si aun no hay ninguna cuenta.\n    sql: 'select count(*)::int as total from users',\n    requiere: [],\n    orden: () => []\n  },\n  count_admins: {\n    // Red de seguridad: impide quedarse sin ningun admin (nadie podria volver a\n    // dar de alta a nadie sin repetir el arranque inicial).\n    sql: \"select count(*)::int as total from users where rol = 'admin'\",\n    requiere: [],\n    orden: () => []\n  },\n  get_user_by_email: {\n    // Login. Devuelve el hash para que el panel lo verifique.\n    requiere: ['email'],\n    sql: 'select id, email, nombre, rol, password_hash from users where email = $1 limit 1',\n    orden: (p) => [normEmail(p.email)]\n  },\n  get_user: {\n    requiere: ['id'],\n    sql: 'select id, email, nombre, rol, created_at, updated_at from users where id = $1',\n    orden: (p) => [exigirUuid(p.id)]\n  },\n  list_users: {\n    // Cuantas ejecuciones lleva cada uno: sirve para saber que se pierde al\n    // borrar una cuenta (sus ejecuciones se quedan sin dueno).\n    sql: 'select u.id, u.email, u.nombre, u.rol, u.created_at, u.updated_at, ' +\n         'cast(count(r.id) as integer) as ejecuciones ' +\n         'from users u left join runs r on r.lanzado_por = u.id ' +\n         'group by u.id order by u.created_at asc',\n    requiere: [],\n    orden: () => []\n  },\n  create_user: {\n    requiere: ['email', 'password_hash', 'rol'],\n    sql: 'insert into users (email, password_hash, nombre, rol) values ($1, $2, $3, $4) ' +\n         'returning id, email, nombre, rol, created_at, updated_at',\n    orden: (p) => [\n      normEmail(p.email),\n      String(p.password_hash),\n      p.nombre ? String(p.nombre).trim() : null,\n      normRol(p.rol)\n    ]\n  },\n  update_user_rol: {\n    // La condicion del 'exists' es la RED DE SEGURIDAD contra quedarse sin\n    // ningun admin (nadie podria volver a dar de alta a nadie). Va aqui, en la\n    // propia sentencia, y no solo como comprobacion previa en el panel: entre\n    // \"cuento admins\" y \"escribo\" hay dos viajes HTTP distintos a n8n, y dos\n    // degradaciones simultaneas pasarian las dos comprobaciones y dejarian cero.\n    // Degradar a miembro solo se permite si queda OTRO admin distinto de esta\n    // fila. Ascender a admin no se restringe nunca.\n    requiere: ['id', 'rol'],\n    sql: 'update users set rol = $2, updated_at = now() where id = $1 ' +\n         \"and ($2 = 'admin' or exists (\" +\n         \"  select 1 from users a where a.rol = 'admin' and a.id <> $1)) \" +\n         'returning id, email, nombre, rol, created_at, updated_at',\n    orden: (p) => [exigirUuid(p.id), normRol(p.rol)]\n  },\n  update_user_password: {\n    // Reseteo de contrasena. No hay envio de correo en el proyecto, asi que la\n    // nueva contrasena la comunica el admin por su cuenta.\n    requiere: ['id', 'password_hash'],\n    sql: 'update users set password_hash = $2, updated_at = now() where id = $1 ' +\n         'returning id, email',\n    orden: (p) => [exigirUuid(p.id), String(p.password_hash)]\n  },\n  delete_user: {\n    // Quitar el acceso. runs.lanzado_por es ON DELETE SET NULL, asi que sus\n    // ejecuciones NO se borran: se quedan sin dueno y pasan a verlas solo los\n    // admins. Es la unica forma de revocar acceso, pero no es inmediata: la\n    // cookie de sesion sigue siendo valida hasta que caduque (ver README).\n    //\n    // Mismo cerrojo que update_user_rol: no se puede borrar al ultimo admin.\n    // Sin esto se podia dejar el panel con cero admins y sin forma de recuperarlo\n    // salvo repitiendo el arranque inicial a mano.\n    requiere: ['id'],\n    sql: 'delete from users where id = $1 ' +\n         \"and (rol <> 'admin' or exists (\" +\n         \"  select 1 from users a where a.rol = 'admin' and a.id <> $1)) \" +\n         'returning id, email',\n    orden: (p) => [exigirUuid(p.id)]\n  }\n};\n\nconst def = OPS[op];\nif (!def) {\n  throw new Error('Operacion no permitida: ' + (op || '(vacia)') +\n    '. Permitidas: ' + Object.keys(OPS).join(', '));\n}\n\nfor (const campo of (def.requiere || [])) {\n  if (params[campo] === undefined || params[campo] === null || params[campo] === '') {\n    throw new Error('Falta el parametro obligatorio \"' + campo + '\" para la operacion ' + op);\n  }\n}\n\n// migrate se parte en UNA sentencia por item. El nodo Postgres de n8n solo\n// ejecuta la primera sentencia de un SQL con varias (sea cual sea el protocolo),\n// asi que emitimos N items y el nodo corre cada CREATE por separado, en orden.\n// Drizzle separa las sentencias con '--> statement-breakpoint', que es el corte\n// mas fiable (no parte por ';' que podria aparecer dentro de un literal).\nif (op === 'migrate') {\n  const esSoloComentarios = (s) =>\n    !s.split('\\n').some(l => l.trim() && !l.trim().startsWith('--'));\n  const sentencias = MIGRACION\n    .split('--> statement-breakpoint')\n    .map(s => s.trim())\n    .filter(s => s && !esSoloComentarios(s));\n  if (!sentencias.length) {\n    throw new Error('La migracion no contiene sentencias ejecutables');\n  }\n  // params: [] en cada item: el nodo Postgres usa queryReplacement, y una sentencia\n  // sola sin placeholders con lista de valores vacia se ejecuta sin problema.\n  return sentencias.map((sql, i) => ({ json: { op, sql, params: [], seq: i } }));\n}\n\nreturn [{ json: { op, sql: def.sql, params: def.orden(params) } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        420,
+        300
+      ],
+      "name": "Resolver Operacion"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.sql }}",
+        "options": {
+          "queryReplacement": "={{ $json.params }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        640,
+        300
+      ],
+      "name": "Ejecutar SQL",
+      "credentials": {
+        "postgres": {
+          "name": "GEOpulse User"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Respuesta uniforme para el panel: { ok, op, rows }.\n// 'Resolver Operacion' corre una sola vez, asi que .first() es seguro aqui\n// (la regla de no usar .first() aplica a nodos que corren N veces).\nconst op = $('Resolver Operacion').first().json.op;\n\n// El nodo Postgres devuelve un item vacio cuando la consulta no retorna filas\n// (por ejemplo el DDL de migrate). Eso no es un error: son 0 filas.\nconst entradas = $input.all();\nconst rows = entradas\n  .map(i => i.json)\n  .filter(j => j && Object.keys(j).length > 0);\n\nconst salida = { ok: true, op, rows };\n// En migrate cada sentencia es un item, asi que el nº de items ejecutados es\n// una confirmacion util de que se corrio la migracion entera y no solo la 1ª.\nif (op === 'migrate') salida.sentencias = entradas.length;\n\nreturn [{ json: salida }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        860,
+        300
+      ],
+      "name": "Formatear Respuesta"
+    },
+    {
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1080,
+        300
+      ],
+      "name": "Responder"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Resolver Operacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolver Operacion": {
+      "main": [
+        [
+          {
+            "node": "Ejecutar SQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ejecutar SQL": {
+      "main": [
+        [
+          {
+            "node": "Formatear Respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Respuesta": {
+      "main": [
+        [
+          {
+            "node": "Responder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

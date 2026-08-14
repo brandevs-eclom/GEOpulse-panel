@@ -1,0 +1,20 @@
+# dependencias
+node_modules/
+
+# build de Next
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# entorno: NUNCA subir secretos (credenciales de Postgres, secret del callback, etc.)
+.env
+.env.local
+.env.*.local
+
+# sistema
+.DS_Store
+Thumbs.db
+
+# Nota: los JSON de workflows/ SÍ se versionan a propósito (docs/04: "los dos JSON
+# ya generados, para referencia"). No los ignores.

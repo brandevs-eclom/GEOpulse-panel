@@ -1,0 +1,940 @@
+{
+  "name": "GEOpulse LITE - panel (asincrono, escribe en Postgres)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "geopulse-lite2-panel",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        460
+      ],
+      "name": "Webhook",
+      "webhookId": "geopulse-lite2-panel"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normaliza y valida el input del webhook. Incluye user_location para Perplexity.\nconst b = $json.body || $json;\nfor (const f of ['brand', 'domain', 'keyword']) {\n  if (!b[f] || !String(b[f]).trim()) throw new Error('Falta el campo obligatorio: ' + f);\n}\nlet d = String(b.domain).trim();\nif (!/^https?:\\/\\//i.test(d)) d = 'https://' + d;\nd = d.replace(/\\/+$/, '');\nconst m = d.match(/^(https?:\\/\\/[^\\/]+)/i);\nif (!m) throw new Error('Dominio no válido: ' + b.domain);\nconst origin = m[1].toLowerCase();\nconst host = origin.replace(/^https?:\\/\\//, '').replace(/^www\\./, '');\nconst PAISES = { ES:'España', MX:'México', AR:'Argentina', CO:'Colombia', CL:'Chile', PE:'Perú',\n  US:'Estados Unidos', GB:'Reino Unido', FR:'Francia', DE:'Alemania', IT:'Italia', PT:'Portugal' };\nconst cc = String(b.pais || b.country || 'ES').trim().toUpperCase();\nconst paisNom = PAISES[cc] || cc || 'España';\nconst region = String(b.region || '').trim();\nconst mercado = region ? region + ', ' + paisNom : paisNom;\nreturn [{ json: {\n  brand: String(b.brand).trim(), domain: origin, host, home_url: d,\n  keyword: String(b.keyword).trim(), pais: paisNom, mercado,\n  geo: { user_location: region ? { country: cc, region } : { country: cc } }\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        380,
+        460
+      ],
+      "name": "Normalizar Input"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Normalizar Input').first().json.home_url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 20000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "text",
+              "outputPropertyName": "body"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        560,
+        300
+      ],
+      "name": "GET Home"
+    },
+    {
+      "parameters": {
+        "jsCode": "// [PARCHE PANEL] Encabezados con parser real, no con regex.\n// El regex anterior confundia un \"<h2>\" escrito dentro de un comentario CSS con\n// una etiqueta real y se tragaba el <h1> que venia despues.\nlet __cheerio = null;\ntry { __cheerio = require('cheerio'); } catch (e) { __cheerio = null; }\nconst __CRUDOS = ['script', 'style', 'textarea', 'noscript'];\n\nfunction extraerEncabezados(html, nivelMax, limite) {\n  if (__cheerio) {\n    try {\n      // OJO: NO llamar a esto '$'. En un nodo Code de n8n el simbolo dolar es\n      // una variable reservada (referencias a otros nodos, $json...) y\n      // sombrearla romperia esas referencias.\n      const __q = __cheerio.load(html);\n      __q('script, style, noscript, textarea, template').remove();\n      const sel = [];\n      for (let k = 1; k <= nivelMax; k++) sel.push('h' + k);\n      const out = [];\n      __q(sel.join(',')).each(function () {\n        if (out.length >= limite) return false;\n        out.push({ nivel: this.tagName.toLowerCase(),\n                   texto: stripTags(__q(this).html() || '').slice(0, 120) });\n      });\n      return out;\n    } catch (e) { /* cae al tokenizador */ }\n  }\n  const out = [];\n  const bajo = html.toLowerCase();\n  const n = html.length;\n  let i = 0;\n  while (i < n && out.length < limite) {\n    const lt = bajo.indexOf('<', i);\n    if (lt === -1) break;\n    if (bajo.startsWith('<!--', lt)) {                 // comentario\n      const fin = bajo.indexOf('-->', lt + 4);\n      i = fin === -1 ? n : fin + 3;\n      continue;\n    }\n    let saltado = false;\n    for (const tag of __CRUDOS) {                      // texto crudo\n      if (bajo.startsWith('<' + tag, lt)) {\n        const sig = bajo.charAt(lt + tag.length + 1);\n        if (sig === '>' || sig === ' ' || sig === '\\n' || sig === '\\t' || sig === '\\r' || sig === '/') {\n          const cierre = bajo.indexOf('</' + tag, lt);\n          i = cierre === -1 ? n : cierre + tag.length + 2;\n          saltado = true;\n          break;\n        }\n      }\n    }\n    if (saltado) continue;\n    const m = /^<h([1-6])(?=[\\s/>])/.exec(bajo.slice(lt, lt + 5));\n    if (m) {\n      const nivel = parseInt(m[1], 10);\n      const finApertura = bajo.indexOf('>', lt);\n      if (finApertura === -1) break;\n      const cierre = bajo.indexOf('</h' + m[1], finApertura);\n      if (cierre !== -1 && nivel <= nivelMax) {\n        out.push({ nivel: 'h' + m[1],\n                   texto: stripTags(html.slice(finApertura + 1, cierre)).slice(0, 120) });\n        i = cierre + 4;\n        continue;\n      }\n    }\n    i = lt + 1;\n  }\n  return out;\n}\n// Parsea la home. Nodo dedicado: en n8n puedes abrirlo y ver exactamente que se ha extraido.\n// Lee la respuesta con el mismo asText() de 'Consolidar Senales Web' del informe avanzado.\nconst j = $input.first().json;\n\n// [reutilizado de 'Consolidar Senales Web' del informe avanzado]\nconst asText = (r) => { const b = r.body ?? r.data; return typeof b === 'string' ? b : JSON.stringify(b || ''); };\nconst stripTags = (h) => String(h)\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, ' ').replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')\n  .replace(/<noscript[\\s\\S]*?<\\/noscript>/gi, ' ').replace(/<[^>]+>/g, ' ')\n  .replace(/&nbsp;|&amp;|&quot;|&#\\d+;|&[a-z]+;/gi, ' ').replace(/\\s+/g, ' ').trim();\n\nconst html = asText(j).slice(0, 400000);\nconst statusCode = j.statusCode ?? null;\n\n// Bloqueo duro del servidor (el challenge se evalua mas abajo, con el contenido ya extraido)\nconst bloqueadoWaf = statusCode !== null && (statusCode === 403 || statusCode === 429 || statusCode >= 500);\n\nconst texto = stripTags(html);\nconst palabras = texto ? texto.split(' ').filter(Boolean).length : 0;\n\n// Encabezados h1-h6 en orden de aparicion\nconst encabezados = extraerEncabezados(html, 6, 100)\n  .map(x => ({ nivel: +x.nivel.slice(1), texto: x.texto.slice(0, 90) }));\n\n// Bloques JSON-LD (con @graph y arrays aplanados)\nconst jsonld = [];\nlet jsonld_malformados = 0;\nconst reLd = /<script[^>]*type=[\"']application\\/ld\\+json[\"'][^>]*>([\\s\\S]*?)<\\/script>/gi;\nwhile ((m = reLd.exec(html)) !== null) {\n  try {\n    const p = JSON.parse(m[1].trim());\n    if (p['@graph']) jsonld.push(...p['@graph']);\n    else if (Array.isArray(p)) jsonld.push(...p);\n    else jsonld.push(p);\n  } catch(e){ jsonld_malformados++; }\n}\nconst tipos_schema = [...new Set(jsonld.flatMap(b => {\n  const t = b && b['@type'];\n  return typeof t === 'string' ? [t] : (Array.isArray(t) ? t : []);\n}))];\n\n// Renderizado en cliente: si el contenido se pinta con JS, los modelos no lo ven\nconst spa = [];\nif (/__NEXT_DATA__/.test(html)) spa.push('Next.js');\nif (/window\\.__NUXT__/.test(html)) spa.push('Nuxt');\nif (/ng-version=/.test(html)) spa.push('Angular');\nif (/<div[^>]+id=[\"'](root|app)[\"'][^>]*>\\s*<\\/div>/i.test(html)) spa.push('contenedor vacío');\nconst csr = (palabras < 150 && html.length > 50000) || spa.includes('contenedor vacío');\n\nconst cap = (re) => { const x = html.match(re); return x ? stripTags(x[1]).slice(0, 300) : ''; };\nconst title = cap(/<title[^>]*>([\\s\\S]*?)<\\/title>/i);\n\n// Pagina de desafio anti-bots. Se decide con lo YA EXTRAIDO, no buscando palabras en el\n// HTML crudo: un reCAPTCHA en el formulario contiene \"captcha\" y NO es un challenge.\n// Challenge = titulo tipico de muro de verificacion, o frases de challenge en el TEXTO\n// visible de una pagina sin contenido real.\nconst titleChallenge = /^(just a moment|attention required|access denied|verifying you are human|please verify|un momento)/i.test(title);\nconst textoChallenge = /(checking your browser|verify(ing)? (that )?you are (a )?human|enable javascript and cookies to continue|cf-browser-verification|has been blocked|ddos protection)/i.test(texto);\nconst challenge = titleChallenge || (textoChallenge && palabras < 80 && encabezados.length <= 1);\n// Red de seguridad: si hemos extraido contenido real, la pagina ES legible digan lo que\n// digan los heuristicos. Excepcion: un titulo de muro inequivoco no se rescata.\nconst contenidoReal = encabezados.length > 0 && palabras >= 30;\nconst legible = !bloqueadoWaf && !titleChallenge && (contenidoReal || (!challenge && html.length > 200));\n\nreturn [{ json: {\n  statusCode, legible, bloqueado_waf: bloqueadoWaf, challenge,\n  html_bytes: html.length, palabras, csr, spa,\n  title,\n  meta_description: cap(/<meta[^>]+name=[\"']description[\"'][^>]*content=[\"']([^\"']*)[\"']/i),\n  noindex: /<meta[^>]+name=[\"']robots[\"'][^>]*content=[\"'][^\"']*noindex/i.test(html),\n  encabezados, total_encabezados: encabezados.length,\n  h1: encabezados.filter(x => x.nivel === 1).map(x => x.texto),\n  jsonld_bloques: jsonld.length, jsonld_malformados, tipos_schema,\n  texto: texto.slice(0, 5000)\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        740,
+        300
+      ],
+      "name": "Parsear Home"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Normalizar Input').first().json.domain }}/robots.txt",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 20000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "text",
+              "outputPropertyName": "body"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        920,
+        300
+      ],
+      "name": "GET robots"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parsea robots.txt de verdad: agrupa los User-agent consecutivos con sus reglas y respeta\n// la precedencia del grupo especifico sobre el comodin '*'. Nodo dedicado y depurable.\nconst j = $input.first().json;\n\n// [reutilizado de 'Consolidar Senales Web' del informe avanzado]\nconst asText = (r) => { const b = r.body ?? r.data; return typeof b === 'string' ? b : JSON.stringify(b || ''); };\nconst stripTags = (h) => String(h)\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, ' ').replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')\n  .replace(/<noscript[\\s\\S]*?<\\/noscript>/gi, ' ').replace(/<[^>]+>/g, ' ')\n  .replace(/&nbsp;|&amp;|&quot;|&#\\d+;|&[a-z]+;/gi, ' ').replace(/\\s+/g, ' ').trim();\n\nconst txt = asText(j).slice(0, 20000);\nconst statusCode = j.statusCode ?? null;\nconst existe = statusCode === 200 && /user-agent/i.test(txt);\n\nfunction parseRobots(t){\n  const grupos = []; let actual = null, esperandoUA = true;\n  for (const raw of String(t).split(/\\r?\\n/)) {\n    const line = raw.replace(/#.*$/, '').trim();\n    if (!line) continue;\n    const m = line.match(/^([a-zA-Z-]+)\\s*:\\s*(.*)$/);\n    if (!m) continue;\n    const campo = m[1].toLowerCase(), valor = m[2].trim();\n    if (campo === 'user-agent') {\n      if (!esperandoUA) actual = null;\n      if (!actual) { actual = { agentes: [], reglas: [] }; grupos.push(actual); }\n      actual.agentes.push(valor.toLowerCase());\n      esperandoUA = true;\n    } else if (campo === 'disallow' || campo === 'allow') {\n      if (!actual) continue;\n      actual.reglas.push({ tipo: campo, ruta: valor });\n      esperandoUA = false;\n    }\n  }\n  return grupos;\n}\nfunction estaBloqueado(grupos, bot){\n  const b = bot.toLowerCase();\n  const g = grupos.find(x => x.agentes.includes(b)) || grupos.find(x => x.agentes.includes('*'));\n  if (!g) return false;\n  const cierra = g.reglas.some(r => r.tipo === 'disallow' && r.ruta === '/');\n  const abre = g.reglas.some(r => r.tipo === 'allow' && r.ruta === '/');\n  return cierra && !abre;\n}\n// Misma clasificacion que el informe avanzado: retrieval y user_fetch afectan a la citacion;\n// bloquear solo los de training NO impide que la IA te cite.\nconst CATS = {\n  retrieval:  ['OAI-SearchBot','Claude-SearchBot','PerplexityBot','DuckAssistBot','YouBot'],\n  user_fetch: ['ChatGPT-User','Claude-User','Perplexity-User','MistralAI-User'],\n  training:   ['GPTBot','ClaudeBot','CCBot','Bytespider','Google-Extended','Applebot-Extended','Amazonbot']\n};\nconst grupos = existe ? parseRobots(txt) : [];\nconst bloqueados = { retrieval: [], user_fetch: [], training: [] };\nif (existe) {\n  for (const cat of Object.keys(CATS)) {\n    for (const bot of CATS[cat]) if (estaBloqueado(grupos, bot)) bloqueados[cat].push(bot);\n  }\n}\nreturn [{ json: { statusCode, existe, grupos: grupos.length, bloqueados,\n  criticos: bloqueados.retrieval.length + bloqueados.user_fetch.length,\n  contenido: txt.slice(0, 3000) } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        300
+      ],
+      "name": "Parsear Robots"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Normalizar Input').first().json.domain }}/sitemap.xml",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 20000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "text",
+              "outputPropertyName": "body"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        1280,
+        300
+      ],
+      "name": "GET sitemap"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parsea el sitemap. Nodo dedicado.\nconst j = $input.first().json;\n\n// [reutilizado de 'Consolidar Senales Web' del informe avanzado]\nconst asText = (r) => { const b = r.body ?? r.data; return typeof b === 'string' ? b : JSON.stringify(b || ''); };\nconst stripTags = (h) => String(h)\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, ' ').replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')\n  .replace(/<noscript[\\s\\S]*?<\\/noscript>/gi, ' ').replace(/<[^>]+>/g, ' ')\n  .replace(/&nbsp;|&amp;|&quot;|&#\\d+;|&[a-z]+;/gi, ' ').replace(/\\s+/g, ' ').trim();\n\nconst txt = asText(j).slice(0, 60000);\nconst statusCode = j.statusCode ?? null;\nconst esIndex = /<sitemapindex/i.test(txt);\nconst esUrlset = /<urlset/i.test(txt);\nconst urls = (txt.match(/<loc>/gi) || []).length;\nreturn [{ json: { statusCode, existe: statusCode === 200 && (esIndex || esUrlset),\n  tipo: esIndex ? 'sitemapindex' : esUrlset ? 'urlset' : null, urls } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1460,
+        300
+      ],
+      "name": "Parsear Sitemap"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://validator.schema.org/validate",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $('Normalizar Input').first().json.home_url }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 20000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "text",
+              "outputPropertyName": "body"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        1640,
+        300
+      ],
+      "name": "Validar Schema.org"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parsea la respuesta del validador OFICIAL de schema.org (mismo enfoque defensivo que\n// 'Parsear Validacion Schema' del informe avanzado: el endpoint no esta documentado).\n// Si el validador no responde, se cae con elegancia al JSON-LD extraido de la home.\nconst j = $input.first().json;\nlet out = { disponible: false, motivo: 'sin respuesta del validador', num_errores: null, num_warnings: null };\ntry {\n  const rawV = j.body ?? j.data;\n  let body = typeof rawV === 'string' ? rawV : JSON.stringify(rawV || '');\n  if ((j.statusCode ?? 0) === 200 && body) {\n    body = body.replace(/^\\)\\]\\}'?\\s*/, '').trim();   // el validador antepone un prefijo anti-JSONP\n    const data = JSON.parse(body);\n    const errores = [], warnings = [];\n    const push = (e, propiedad) => {\n      const item = { propiedad: propiedad || null, tipo: e.errorType || e.type || 'error',\n        detalle: [propiedad, e.errorType || e.type, ...(Array.isArray(e.args) ? e.args : [])].filter(Boolean).join(' ') };\n      (e.warning || e.isWarning ? warnings : errores).push(item);\n    };\n    for (const gTri of data.tripleGroups || []) {\n      for (const n of gTri.nodes || []) {\n        for (const e of n.errors || []) push(e, null);\n        for (const p of n.properties || []) { for (const e of p.errors || []) push(e, p.pred || null); }\n      }\n    }\n    out = { disponible: true,\n      num_errores: typeof data.totalNumErrors === 'number' ? data.totalNumErrors : errores.length,\n      num_warnings: typeof data.totalNumWarnings === 'number' ? data.totalNumWarnings : warnings.length,\n      errores: errores.slice(0, 10), warnings: warnings.slice(0, 10) };\n  } else { out.motivo = 'status ' + (j.statusCode ?? 'desconocido'); }\n} catch (e) { out = { disponible: false, motivo: 'respuesta no parseable', num_errores: null, num_warnings: null }; }\nreturn [{ json: out }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1820,
+        300
+      ],
+      "name": "Parsear Schema"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Consolida lo que han extraido los nodos de parseo y construye los puntos del informe.\n// Aqui ya no se parsea nada: solo se juzga. Si algo falta, se dice, no se inventa.\nconst norm = $('Normalizar Input').first().json;\nconst H = $('Parsear Home').first().json;\nconst R = $('Parsear Robots').first().json;\nconst S = $('Parsear Sitemap').first().json;\nconst V = $('Parsear Schema').first().json;\n\n/* ---------- 1. ACCESO DE LOS BOTS DE IA (robots.txt + firewall) ---------- */\n// Dos capas: lo que robots.txt DECLARA y lo que el servidor HACE. Si el WAF nos ha\n// bloqueado o nos ha servido un muro de verificacion, los rastreadores de IA se\n// encuentran exactamente lo mismo, diga lo que diga robots.txt.\nconst wafBloquea = !!H.bloqueado_waf || !!H.challenge;\nlet estBots, detBots, valBots;\nif (!R.existe) {\n  estBots = 'warning';\n  detBots = R.statusCode === 404\n    ? 'No hay robots.txt (404). Por defecto los bots pueden acceder, pero no existe control explícito.'\n    : 'No se ha podido leer un robots.txt válido' + (R.statusCode ? ' (respuesta ' + R.statusCode + ')' : '') + '.';\n} else if (R.criticos > 0) {\n  estBots = 'error';\n  const ps = [];\n  if (R.bloqueados.retrieval.length) ps.push('Retrieval: ' + R.bloqueados.retrieval.join(', '));\n  if (R.bloqueados.user_fetch.length) ps.push('User-fetch: ' + R.bloqueados.user_fetch.join(', '));\n  detBots = 'Tu robots.txt bloquea bots que la IA necesita para citarte. ' + ps.join(' · ') + '.';\n} else if (R.bloqueados.training.length) {\n  estBots = 'ok';\n  detBots = 'Bloqueas bots de entrenamiento (' + R.bloqueados.training.join(', ') + '), pero los de retrieval y user-fetch tienen acceso, que es lo que permite que la IA te cite.';\n} else {\n  estBots = 'ok';\n  detBots = 'Ningún bot de IA está bloqueado en robots.txt.';\n}\nvalBots = R.existe ? (R.criticos ? R.criticos + ' críticos bloqueados' : 'sin bloqueos críticos') : 'sin robots.txt';\n// Segunda capa: el bloqueo EFECTIVO del firewall pisa a la declaracion de robots.txt\nif (wafBloquea) {\n  estBots = 'error';\n  valBots = 'bloqueo del firewall';\n  const motivoWaf = H.bloqueado_waf\n    ? 'tu servidor ha respondido ' + H.statusCode + ' a una petición normal'\n    : 'tu web sirve una página de verificación anti-bots en lugar del contenido';\n  detBots = 'Más allá de robots.txt, ' + motivoWaf + ': los rastreadores de IA chocan con ese mismo muro y no pueden leerte ni citarte. ' + detBots;\n} else if (estBots === 'ok') {\n  detBots += ' El servidor entrega el contenido sin muros de verificación: los motores generativos pueden leerte y citarte.';\n}\nconst punto_bots = { clave: 'rastreo_bots_ia', titulo: 'Acceso de los bots de IA', estado: estBots,\n  valor: valBots, detalle: detBots, bloqueados_por_categoria: R.bloqueados,\n  waf: { bloquea: wafBloquea, status: H.statusCode, challenge: !!H.challenge } };\n\n/* ---------- 2. JERARQUIA DE ENCABEZADOS ---------- */\n// La red de seguridad \"los datos mandan\" vive en Parsear Home: si se extrajo contenido\n// real, legible ya es true. Aqui: legible + encabezados = evaluar. Un h1 suelto dentro\n// de un muro de verificacion NO es jerarquia de la web.\nlet estJer = 'ok', detJer, valJer = null;\nconst h1 = H.h1 || [];\nif (H.legible && H.total_encabezados) {\n  valJer = h1.length + ' H1 · ' + H.total_encabezados + ' encabezados';\n  let salto = false, prev = 1;\n  for (const x of H.encabezados) { if (x.nivel > prev + 1) { salto = true; break; } prev = x.nivel; }\n  const vacios = H.encabezados.filter(x => !x.texto).length;\n  if (h1.length === 0) { estJer = 'error'; detJer = 'La home no tiene ningún H1: la IA no identifica el tema principal de la página.'; }\n  else if (h1.length > 1) { estJer = 'warning'; detJer = 'Hay ' + h1.length + ' H1 (' + h1.slice(0,3).map(x => '“' + x + '”').join(', ') + '). Lo correcto es uno solo: varios diluyen el tema principal.'; }\n  else if (salto) { estJer = 'warning'; detJer = 'Un único H1 (“' + h1[0] + '”), pero hay saltos de nivel entre encabezados que rompen la jerarquía semántica.'; }\n  else { detJer = 'Estructura limpia: un único H1 (“' + h1[0] + '”) y jerarquía sin saltos.'; }\n  if (vacios > 0 && estJer === 'ok') { estJer = 'warning'; detJer += ' Hay ' + vacios + ' encabezados vacíos que ensucian la estructura.'; }\n} else if (!H.legible) {\n  estJer = 'no_verificable';\n  detJer = H.bloqueado_waf\n    ? 'Tu servidor ha respondido ' + H.statusCode + ' a nuestra petición, así que no hemos podido leer el HTML. Suele ser un firewall o protección anti-bots: si bloquea a los rastreadores de IA igual que a nosotros, también les impide leerte.'\n    : H.challenge\n      ? 'Tu web ha devuelto una página de verificación anti-bots en lugar del contenido real. Los modelos de IA se encuentran exactamente lo mismo que nosotros.'\n      : 'No hemos podido recuperar HTML suficiente de la home para analizar los encabezados.';\n} else {\n  estJer = H.csr ? 'error' : 'no_verificable';\n  detJer = H.csr\n    ? 'No hay encabezados en el HTML inicial' + (H.spa.length ? ' (' + H.spa.join(', ') + ')' : '') + ': el contenido se pinta con JavaScript. Los modelos que no ejecutan JS ven una página casi vacía.'\n    : 'No se han encontrado encabezados en el HTML de la home.';\n}\nconst punto_jerarquia = { clave: 'jerarquia_contenido', titulo: 'Jerarquía de encabezados', estado: estJer, valor: valJer, detalle: detJer };\n\n/* ---------- 3. SCHEMA.ORG (JSON-LD propio + validador oficial) ---------- */\nconst tipos = H.tipos_schema || [];\nconst ENTIDAD = /Organization|LocalBusiness|Corporation|ProfessionalService|Store|Restaurant|EventVenue|NGO/i;\nconst tieneEntidad = tipos.some(t => ENTIDAD.test(t));\nconst ausentes = [];\nif (!tieneEntidad) ausentes.push('Organization/LocalBusiness');\nif (!tipos.some(t => /WebSite/i.test(t))) ausentes.push('WebSite');\nlet estSch, detSch;\nif (H.legible && tipos.length) {\n  // Hay tipos extraidos de una pagina legible: se juzgan.\n  if (V.disponible && V.num_errores > 0) {\n    estSch = 'error';\n    detSch = 'El validador oficial de schema.org encuentra ' + V.num_errores + ' error(es) en tu marcado'\n      + (V.errores && V.errores.length ? ': ' + V.errores.slice(0,3).map(e => e.detalle).join(' · ') : '') + '.';\n  } else if (!tieneEntidad) {\n    estSch = 'warning';\n    detSch = 'Hay schema (' + tipos.slice(0,5).join(', ') + ') pero falta el tipo de entidad (Organization o LocalBusiness), que es el que identifica tu negocio ante la IA.';\n  } else if (V.disponible && V.num_warnings > 0) {\n    estSch = 'warning';\n    detSch = 'Marcado con capa de entidad (' + tipos.slice(0,5).join(', ') + ') y sin errores, pero el validador oficial señala ' + V.num_warnings + ' aviso(s).';\n  } else {\n    estSch = 'ok';\n    detSch = 'Schema con capa de entidad presente: ' + tipos.slice(0,6).join(', ') + '.'\n      + (V.disponible ? ' Validado sin errores contra schema.org.' : '');\n  }\n} else if (!H.legible) {\n  estSch = 'no_verificable';\n  detSch = 'No hemos podido leer el HTML de la home, así que no se puede comprobar el marcado de datos estructurados.';\n} else {\n  estSch = 'error';\n  detSch = H.jsonld_malformados\n    ? 'Hay ' + H.jsonld_malformados + ' bloque(s) JSON-LD pero ninguno es parseable: el marcado está malformado y la IA no puede usarlo.'\n    : 'No se detecta ningún dato estructurado (JSON-LD) en la home. La IA no tiene una capa de datos que le diga qué eres.';\n}\nconst punto_schema = { clave: 'schema', titulo: 'Datos estructurados (Schema.org)', estado: estSch,\n  valor: tipos.length ? tipos.length + ' tipos' : (H.legible ? 'ninguno' : null),\n  detalle: detSch, tipos_detectados: tipos.slice(0, 8), campos_ausentes: ausentes,\n  validador: { disponible: !!V.disponible, errores: V.num_errores, warnings: V.num_warnings } };\n\n/* ---------- 4. INFRAESTRUCTURA ---------- */\nconst infra = { home_ok: H.legible, sitemap: !!S.existe, robots: !!R.existe, indexable: !H.noindex };\nconst score_infra = Math.round((Object.values(infra).filter(Boolean).length / 4) * 100);\n\nconst ESC = { ok: 100, warning: 50, error: 0 };\n// El score de SEO tecnico ya NO se calcula aqui: con el criterio de pesos (jerarquia 40,\n// schema 35, resto 25) necesita el indice de autoridad y la claridad, que llegan del\n// agente de informe. Se calcula en 'Ensamblar LITE2'.\n\nreturn [{ json: { ...norm,\n  punto_bots, punto_jerarquia, punto_schema, infra, score_infra,\n  pagina: { title: H.title, metaDesc: H.meta_description, texto_home: H.texto, palabras: H.palabras },\n  _diag: { home_status: H.statusCode, robots_status: R.statusCode, sitemap_status: S.statusCode,\n           html_bytes: H.html_bytes, palabras: H.palabras, home_legible: H.legible, csr: H.csr, spa: H.spa,\n           encabezados: H.total_encabezados, jsonld_bloques: H.jsonld_bloques, robots_grupos: R.grupos,\n           sitemap_urls: S.urls, validador_schema: V.disponible ? 'ok' : V.motivo }\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        300
+      ],
+      "name": "Consolidar Senales"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Emite un ITEM POR PREGUNTA: cada nodo de modelo se ejecutara una vez por item.\n// Es el patron de 'Sondas D1' del informe avanzado, y es lo que permite leerlas\n// despues con .all()[idx] indexado por pregunta, de forma fiable.\nconst r = $input.first().json;\nconst kw = r.keyword, mercado = r.mercado;\nconst preguntas = [\n  '¿Cuáles son las mejores opciones de ' + kw + ' en ' + mercado + '? Nómbralas y explica brevemente por qué destacan.',\n  'Estoy en ' + mercado + ' y busco ' + kw + '. ¿Qué empresas o proveedores concretos me recomiendas?',\n  '¿Qué empresas destacan en ' + kw + ' en ' + mercado + ' por su reputación y experiencia? Nómbralas.'\n];\nreturn preguntas.map((p, i) => ({ json: { pregunta_id: i + 1, prompt: p } }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        220
+      ],
+      "name": "Sondas"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Un solo item: consulta de huella. Sus CITAS son enlaces reales de presencia externa.\nconst r = $input.first().json;\nconst prompt = '¿Dónde aparece mencionada la empresa ' + r.brand + ' (' + r.host + ') en internet? '\n  + 'Busca menciones en directorios, medios, foros, reseñas y listas del sector. Cita las fuentes.';\nreturn [{ json: { prompt } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        540
+      ],
+      "name": "Sonda Huella"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'gpt-5.6-luna', messages: [{ role: 'user', content: $json.prompt }] }) }}",
+        "options": {
+          "timeout": 90000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        2420,
+        80
+      ],
+      "name": "Sonda - ChatGPT",
+      "credentials": {
+        "openAiApi": {
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-haiku-4-5', max_tokens: 900, temperature: 0.4, messages: [{ role: 'user', content: $json.prompt }] }) }}",
+        "options": {
+          "timeout": 90000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        2420,
+        220
+      ],
+      "name": "Sonda - Claude",
+      "credentials": {
+        "anthropicApi": {
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
+        "authentication": "predefinedCredentialType",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ contents: [{ parts: [{ text: $json.prompt }] }], generationConfig: { temperature: 0.4, maxOutputTokens: 1400, thinkingConfig: { thinking_level: 'minimal' } } }) }}",
+        "options": {
+          "timeout": 90000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        },
+        "nodeCredentialType": "googlePalmApi"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        2420,
+        360
+      ],
+      "name": "Sonda - Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "name": "Google Gemini BranDevs"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.perplexity.ai/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'sonar', messages: [{ role: 'user', content: $json.prompt }], web_search_options: { search_context_size: 'low', user_location: $('Normalizar Input').first().json.geo.user_location } }) }}",
+        "options": {
+          "timeout": 90000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        2420,
+        500
+      ],
+      "name": "Sonda - Perplexity",
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "Perplexity"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.perplexity.ai/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'sonar', messages: [{ role: 'user', content: $json.prompt }], web_search_options: { search_context_size: 'medium', user_location: $('Normalizar Input').first().json.geo.user_location } }) }}",
+        "options": {
+          "timeout": 90000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        2420,
+        560
+      ],
+      "name": "Huella - Perplexity",
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "Perplexity"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "append",
+        "numberInputs": 5
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2660,
+        300
+      ],
+      "name": "Merge Sondeos"
+    },
+    {
+      "parameters": {
+        "jsCode": "// DETERMINISTA (0 tokens). Lee las respuestas con el MISMO patron del informe avanzado:\n// .all() indexado por pregunta + pick()/pickCitations() defensivos.\nconst r = $('Consolidar Senales').first().json;\nconst preguntas = $('Sondas').all().map(i => i.json);\n\n// [reutilizado de 'D1 - Unir' del informe avanzado]\nconst pick = (arr, idx) => {\n  const j = arr[idx] || {};\n  const rawB = j.body ?? j.data;\n  const body = rawB && typeof rawB === 'object' ? rawB : j;\n  return String(\n    body.choices?.[0]?.message?.content\n    ?? (Array.isArray(body.content) ? body.content.map(c => c.text || '').join('\\n') : null)\n    ?? (Array.isArray(body.candidates?.[0]?.content?.parts) ? body.candidates[0].content.parts.map(p => p.text || '').join('') : null)\n    ?? body.message?.content ?? body.output ?? body.text ?? ''\n  );\n};\nconst pickCitations = (arr, idx) => {\n  const j = arr[idx] || {};\n  const rawB = j.body ?? j.data;\n  const body = rawB && typeof rawB === 'object' ? rawB : j;\n  if (Array.isArray(body.citations)) return body.citations;\n  if (Array.isArray(body.search_results)) return body.search_results.map(s => s.url).filter(Boolean);\n  return [];\n};\n\nconst gpt = $('Sonda - ChatGPT').all().map(i => i.json);\nconst cla = $('Sonda - Claude').all().map(i => i.json);\nconst gem = $('Sonda - Gemini').all().map(i => i.json);\nconst per = $('Sonda - Perplexity').all().map(i => i.json);\nlet hue = [];\ntry { hue = $('Huella - Perplexity').all().map(i => i.json); } catch(e){ hue = []; }\n\n/* ---------- Deteccion de marca: por nombre completo, tokens, token distintivo o dominio ----------\n   El fallo anterior era exigir el nombre completo literal: una marca citada solo por su\n   palabra distintiva no casaba con su nombre completo y salia 0 aunque estuviera bien\n   posicionada. */\nconst norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n  .replace(/[^a-z0-9]+/g, ' ').replace(/\\s+/g, ' ').trim();\nconst STOP = new Set(['la','el','los','las','de','del','y','sl','sa','slu','sau','srl','sociedad','limitada',\n  'group','grupo','the','and','co','inc','ltd','llc','company','empresa']);\nconst brandNorm = norm(r.brand);\nconst brandTokens = brandNorm.split(' ').filter(t => t && !STOP.has(t));\nconst hostToken = norm(r.host).split(' ')[0];\n// El token distintivo NO puede ser una palabra del sector ni del mercado: si la marca es\n// una marca cuyo nombre incluye su propio sector, usar esa palabra generica contaria\n// como mencion cualquier respuesta del sector aunque no te nombre.\nconst genericos = new Set([...norm(r.keyword).split(' '), ...norm(r.mercado).split(' ')].filter(Boolean));\nconst propios = brandTokens.filter(t => !genericos.has(t));\nconst distintivo = propios.filter(t => t.length >= 4).sort((a, b) => b.length - a.length)[0] || null;\n\nfunction apareceEn(texto){\n  const t = norm(texto);\n  if (!t) return false;\n  if (brandNorm.length > 2 && t.includes(brandNorm)) return true;                  // nombre completo\n  // La regla de \"todos los tokens\" solo vale si la marca tiene alguna palabra propia:\n  // con una marca tipo \"Grupo Madrid Eventos\" en el sector eventos y mercado Madrid,\n  // cualquier frase que diga Madrid y eventos daria positivo sin nombrarte.\n  if (propios.length && brandTokens.every(tok => t.includes(tok))) return true;\n  if (distintivo && t.includes(distintivo)) return true;                            // token distintivo\n  if (hostToken && hostToken.length >= 5 && t.includes(hostToken)) return true;      // dominio\n  return false;\n}\n\nconst MODELOS = [\n  { clave: 'chatgpt', etiqueta: 'ChatGPT', arr: gpt },\n  { clave: 'claude', etiqueta: 'Claude', arr: cla },\n  { clave: 'gemini', etiqueta: 'Gemini', arr: gem },\n  { clave: 'perplexity', etiqueta: 'Perplexity', arr: per }\n];\n\nconst detalle = [];\nlet citasSector = [];\npreguntas.forEach((p, idx) => {\n  const respuestas = MODELOS.map(m => {\n    const texto = pick(m.arr, idx);\n    if (m.clave === 'perplexity') citasSector = citasSector.concat(pickCitations(m.arr, idx));\n    const ok = !!texto.trim();\n    return { modelo: m.etiqueta, clave: m.clave, respondio: ok,\n             aparece: ok && apareceEn(texto), respuesta: texto.slice(0, 2500) };\n  });\n  detalle.push({ pregunta: p.prompt, respuestas });\n});\n\nconst por_modelo = MODELOS.map(m => {\n  const celdas = detalle.map(p => {\n    const x = p.respuestas.find(z => z.clave === m.clave);\n    return x ? { respondio: x.respondio, aparece: x.aparece } : { respondio: false, aparece: false };\n  });\n  const validas = celdas.filter(c => c.respondio).length;\n  const hits = celdas.filter(c => c.aparece).length;\n  return { modelo: m.etiqueta, clave: m.clave, apariciones: hits, preguntas_validas: validas,\n           tasa: validas ? Math.round((hits / validas) * 100) : null, celdas };\n});\nconst totalValidas = por_modelo.reduce((a, m) => a + m.preguntas_validas, 0);\nconst totalHits = por_modelo.reduce((a, m) => a + m.apariciones, 0);\nconst tasa_global = totalValidas ? Math.round((totalHits / totalValidas) * 100) : null;\n\n/* ---------- ENLACES DE PRESENCIA EXTERNA ---------- */\nconst textoHuella = pick(hue, 0);\nconst citasHuella = pickCitations(hue, 0);\nconst hostOf = (u) => { const m = String(u || '').match(/^https?:\\/\\/([^\\/:?#]+)/i); return m ? m[1].toLowerCase().replace(/^www\\./, '') : null; };\nconst AGREG = /^(google|bing|duckduckgo|facebook|instagram|twitter|x|youtube)\\./i;\nconst vistos = new Set(); const enlaces = [];\nfor (const u of citasHuella) {\n  const h = hostOf(u);\n  if (!h || h === r.host || AGREG.test(h) || vistos.has(h)) continue;\n  vistos.add(h);\n  enlaces.push({ dominio: h, url: String(u).slice(0, 300) });\n  if (enlaces.length >= 12) break;\n}\nconst propioCitado = citasHuella.some(u => hostOf(u) === r.host);\n\nreturn [{ json: { ...r,\n  preguntas_detalle: detalle,\n  aparicion: { por_modelo, tasa_global, total_hits: totalHits, total_validas: totalValidas },\n  presencia_externa: { enlaces, total: enlaces.length, dominio_propio_citado: propioCitado, texto_huella: textoHuella.slice(0, 2500) },\n  _diag: { ...(r._diag || {}), respuestas_ok: por_modelo.map(m => m.modelo + ':' + m.preguntas_validas + '/3').join(' '),\n           citas_sector: citasSector.length, citas_huella: citasHuella.length,\n           marca_tokens: brandTokens.join('|'), marca_distintivo: distintivo }\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2840,
+        300
+      ],
+      "name": "Recopilar Respuestas"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Construye los prompts del agente. Se hace en Code (no en la expresion del nodo HTTP)\n// porque el esquema JSON contiene '}}' y eso rompe el parseo de las expresiones ={{ }} de n8n.\nconst r = $input.first().json;\n\nconst esquema = '{\"resumen_hallazgos\":\"\",\"veredicto\":\"parcial\",\"indice_autoridad\":{\"estado\":\"warning\",\"detalle\":\"\"},'\n  + '\"semantica\":{\"claridad_nucleo\":0,\"entidades\":[]},'\n  + '\"eeatc\":{\"experiencia\":0,\"expertise\":0,\"autoridad\":0,\"confianza\":0,\"citabilidad\":0,\"puntuacion_global\":0},'\n  + '\"mapa_competitivo\":[{\"empresa\":\"\",\"es_marca\":false,\"menciones\":0,\"por_modelo\":{\"chatgpt\":0,\"claude\":0,\"gemini\":0,\"perplexity\":0}}]}';\n\nconst prompt_sistema = [\n  'Eres un analista de visibilidad de marca en motores de IA (GEO). Recibes: el contenido real de la home de una marca,',\n  'las respuestas que dieron ChatGPT, Claude, Gemini y Perplexity a tres preguntas de usuario sobre su sector, y los dominios',\n  'externos donde se menciona a la marca. Responde siempre en español.',\n  '',\n  'Devuelve un análisis con estas partes:',\n  '1) resumen_hallazgos: 2-3 frases describiendo lo encontrado (estado actual, sin recomendaciones ni plan de acción).',\n  '2) veredicto: visible | parcial | invisible | sin_datos.',\n  '3) indice_autoridad: juzga si el contenido de la home aporta datos verificables, cifras, casos o citas que la IA pueda',\n  '   reutilizar al responder. Devuelve estado (ok|warning|error) y un detalle de una sola frase.',\n  '4) semantica: claridad_nucleo (0-100: si el negocio se entiende sin ambigüedad a partir del texto) y entidades',\n  '   (5-10 conceptos núcleo extraídos del contenido REAL recibido, nunca inventados).',\n  '5) eeatc: puntúa de 0 a 100 experiencia, expertise, autoridad, confianza y citabilidad, más puntuacion_global.',\n  '   Básate SOLO en las evidencias recibidas. Solo números, sin texto.',\n  '6) mapa_competitivo: empresas mencionadas en las respuestas, con menciones totales y desglose por modelo.',\n  '   Cuenta una marca como mencionada aunque aparezca con nombre abreviado o variante, y unifica esas variantes en una',\n  '   sola entrada. Incluye SIEMPRE la marca auditada aunque tenga 0 menciones. Máximo 10.',\n  '',\n  'Si el contenido de la home llega vacío, no inventes: pon los campos que dependan de él a 0 y dilo en resumen_hallazgos.',\n  '',\n  'Devuelve SOLO un JSON válido, sin markdown ni texto alrededor, con esta forma exacta:',\n  esquema\n].join('\\n');\n\nconst prompt_usuario = JSON.stringify({\n  marca: r.brand, dominio: r.host, sector: r.keyword, mercado: r.mercado,\n  home: { titulo: r.pagina.title, descripcion: r.pagina.metaDesc, palabras: r.pagina.palabras, texto: r.pagina.texto_home },\n  menciones_externas: (r.presencia_externa.enlaces || []).map(x => x.dominio),\n  contexto_menciones: r.presencia_externa.texto_huella,\n  preguntas: (r.preguntas_detalle || []).map(p => ({\n    pregunta: p.pregunta,\n    respuestas: (p.respuestas || []).map(x => ({ modelo: x.modelo, texto: String(x.respuesta || '').slice(0, 1400) }))\n  }))\n});\n\nreturn [{ json: { ...r, prompt_sistema, prompt_usuario } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3020,
+        300
+      ],
+      "name": "Preparar Informe"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'gpt-5.4-mini', messages: [{ role: 'system', content: $json.prompt_sistema }, { role: 'user', content: $json.prompt_usuario }] }) }}",
+        "options": {
+          "timeout": 120000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        3200,
+        300
+      ],
+      "name": "Informe ChatGPT",
+      "credentials": {
+        "openAiApi": {
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Une el analisis del agente con lo determinista y arma el informe reducido.\nconst r = $('Preparar Informe').first().json;\nconst d = $input.first().json;\n\nlet A = {};\ntry {\n  const rawB = d.body ?? d.data;\n  const body = rawB && typeof rawB === 'object' ? rawB : d;\n  let texto = String(body.choices?.[0]?.message?.content ?? body.text ?? '');\n  texto = texto.replace(/```json|```/g, '').trim();\n  const m = texto.match(/\\{[\\s\\S]*\\}/);\n  if (m) A = JSON.parse(m[0]) || {};\n} catch(e){ A = {}; }\n\nconst num = (v) => (typeof v === 'number' && isFinite(v)) ? Math.max(0, Math.min(100, Math.round(v))) : null;\nconst ap = r.aparicion || {};\n\nlet veredicto = A.veredicto || '';\nif (!['visible','parcial','invisible','sin_datos'].includes(veredicto)) {\n  const t = ap.tasa_global;\n  veredicto = (t === null || t === undefined) ? 'sin_datos' : t >= 66 ? 'visible' : t >= 34 ? 'parcial' : 'invisible';\n}\n\nconst ee = A.eeatc || {};\nconst eeatc = { experiencia: num(ee.experiencia), expertise: num(ee.expertise), autoridad: num(ee.autoridad),\n  confianza: num(ee.confianza), citabilidad: num(ee.citabilidad), puntuacion_global: num(ee.puntuacion_global) };\nif (eeatc.puntuacion_global === null) {\n  const vs = ['experiencia','expertise','autoridad','confianza','citabilidad'].map(k => eeatc[k]).filter(v => v !== null);\n  eeatc.puntuacion_global = vs.length ? Math.round(vs.reduce((a,b) => a+b, 0) / vs.length) : null;\n}\n\nconst sem = A.semantica || {};\nconst claridad = num(sem.claridad_nucleo);\nconst entidades = Array.isArray(sem.entidades) ? sem.entidades.filter(x => typeof x === 'string').slice(0, 10) : [];\nconst ia = A.indice_autoridad || {};\nconst estAut = ['ok','warning','error'].includes(ia.estado) ? ia.estado : 'no_verificable';\n\nconst norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();\n// [PARCHE PANEL] es_marca NO se toma del agente LLM: se deriva del nombre.\n// El agente marcaba competidores como \"tu marca\" e inflaba la cuota del cliente.\nconst _distintivoMarca = (r._diag && r._diag.marca_distintivo) || null;\nconst _brandNorm = norm(r.brand);\nfunction esMarcaEmpresa(nombre) {\n  const n = norm(nombre);\n  if (!n) return false;\n  if (_brandNorm.length > 2 && n === _brandNorm) return true;\n  // El distintivo ya viene depurado de palabras genericas del sector/mercado.\n  if (_distintivoMarca && n.includes(_distintivoMarca)) return true;\n  // Sin distintivo fiable, solo vale el nombre exacto: antes marcar de menos que\n  // decirle al cliente que un competidor es su marca.\n  return false;\n}\nlet mapa = (Array.isArray(A.mapa_competitivo) ? A.mapa_competitivo : [])\n  .filter(x => x && x.empresa)\n  .map(x => ({ empresa: String(x.empresa).slice(0, 60),\n    es_marca: esMarcaEmpresa(x.empresa),\n    menciones: Number(x.menciones) || 0,\n    por_modelo: { chatgpt: Number((x.por_modelo||{}).chatgpt) || 0, claude: Number((x.por_modelo||{}).claude) || 0, gemini: Number((x.por_modelo||{}).gemini) || 0, perplexity: Number((x.por_modelo||{}).perplexity) || 0 } }));\n// La marca SIEMPRE en el mapa. Si el agente la cuenta por debajo de lo que hemos detectado\n// de forma determinista, se queda el valor mayor (el determinista ya es una cota inferior real).\nconst marcaIdx = mapa.findIndex(x => x.es_marca);\nconst hitsDet = ap.total_hits || 0;\nif (marcaIdx === -1) {\n  mapa.unshift({ empresa: r.brand, es_marca: true, menciones: hitsDet,\n    por_modelo: (ap.por_modelo || []).reduce((o, m) => { o[m.clave] = m.apariciones; return o; }, { chatgpt:0, claude:0, gemini:0, perplexity:0 }) });\n} else if (mapa[marcaIdx].menciones < hitsDet) {\n  mapa[marcaIdx].menciones = hitsDet;\n}\nmapa.sort((a, b) => b.menciones - a.menciones);\n\nconst V = { ok: 100, warning: 50, error: 0 };\nconst avg = (arr) => { const v = arr.filter(x => typeof x === 'number' && isFinite(x)); return v.length ? Math.round(v.reduce((a,b) => a+b, 0) / v.length) : null; };\nconst wavg = (pairs) => { let s = 0, w = 0; for (const [v, p] of pairs) { if (typeof v === 'number' && isFinite(v)) { s += v * p; w += p; } } return w ? Math.round(s / w) : null; };\nconst pe = r.presencia_externa || {};\n\n/* SEO tecnico con pesos por gravedad (criterio 2026): una media simple diluia los fallos\n   graves y una web con 2 H1 sacaba 80-90. Jerarquia 40% + schema 35% + resto 25%\n   (el resto = acceso de bots, indice de autoridad, claridad semantica e infraestructura,\n   en media; la infraestructura se fusiono en SEO tecnico por ser SEO en esencia). */\nconst vNum = (est) => (est in V) ? V[est] : null;   // no_verificable queda fuera\nconst scoreSeo = wavg([\n  [vNum(r.punto_jerarquia.estado), 0.40],\n  [vNum(r.punto_schema.estado), 0.35],\n  [avg([vNum(r.punto_bots.estado), vNum(estAut), claridad, r.score_infra]), 0.25]\n]);\n\nconst scoreContenido = avg([vNum(estAut), claridad]);\n\n/* Huella (criterio 2026): E-E-A-T-C 40% + enlaces externos 35% (8+ fuentes = 100) +\n   visibilidad del propio dominio entre las citas 25%. */\nconst scoreHuella = wavg([\n  [eeatc.puntuacion_global, 0.40],\n  [Math.min(100, (pe.total || 0) * 12), 0.35],\n  [pe.dominio_propio_citado ? 100 : 0, 0.25]\n]);\n\nconst por_area = { seo_tecnico: scoreSeo, contenido: scoreContenido, sov: ap.tasa_global, huella: scoreHuella };\n/* Pesos globales (criterio 2026): 4 areas; SEO tecnico 25% tras absorber infraestructura. */\nconst PESOS = { seo_tecnico: 0.25, contenido: 0.15, sov: 0.35, huella: 0.25 };\nlet acum = 0, peso = 0;\nfor (const k of Object.keys(PESOS)) if (typeof por_area[k] === 'number') { acum += por_area[k] * PESOS[k]; peso += PESOS[k]; }\nconst nota = peso > 0 ? Math.round(acum / peso) : null;\n\nconst dg = r._diag || {};\nconst avisos = [];\n// Con la nueva legibilidad (contenido real => legible), legible=false ya implica que\n// no se pudo extraer nada util de la home.\nif (dg.home_legible === false) avisos.push('No hemos podido leer el contenido de tu home' + (dg.home_status && dg.home_status !== 200 ? ' (respuesta ' + dg.home_status + ')' : ' (tu web sirve una página de verificación anti-bots)') + ', así que las comprobaciones que dependen de él quedan sin verificar.');\nelse if (dg.csr) avisos.push('Tu home entrega muy poco HTML inicial y pinta el contenido con JavaScript: los modelos que no ejecutan JS ven una página casi vacía.');\nif ((ap.total_validas || 0) === 0) avisos.push('Ningún modelo devolvió respuesta en esta ejecución, así que la visibilidad no es concluyente.');\nelse if ((ap.total_validas || 0) < 9) avisos.push('Solo ' + ap.total_validas + ' de 9 sondeos devolvieron respuesta.');\n\nreturn [{ json: {\n  meta: { brand: r.brand, domain: r.domain, host: r.host, keyword: r.keyword, mercado: r.mercado,\n          version: 'lite2', fecha: new Date().toISOString(),\n          modelos: ['ChatGPT','Claude','Perplexity'], preguntas_lanzadas: 3, sondeos: ap.total_validas ?? 0 },\n  nota, por_area,\n  resumen_hallazgos: A.resumen_hallazgos || '',\n  posicionamiento: { veredicto },\n  avisos,\n  seo_tecnico: { puntos: [ r.punto_bots, r.punto_jerarquia, r.punto_schema,\n      { clave: 'indice_autoridad', titulo: 'Índice de autoridad', estado: estAut, valor: null, detalle: ia.detalle || null },\n      { clave: 'semantica', titulo: 'Cómo lee la IA tu web',\n        estado: claridad === null ? 'no_verificable' : claridad >= 75 ? 'ok' : claridad >= 50 ? 'warning' : 'error',\n        valor: claridad === null ? null : claridad + ' / 100', detalle: null, entidades } ],\n    bloqueados: 4 },\n  huella_digital: { enlaces: pe.enlaces || [], dominio_propio_citado: !!pe.dominio_propio_citado, eeatc, bloqueados: 3 },\n  preguntas: r.preguntas_detalle,\n  aparicion: ap,\n  mapa_competitivo: mapa.slice(0, 10),\n  _diag: r._diag || {}\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3380,
+        300
+      ],
+      "name": "Ensamblar LITE2"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Ack inmediato para el panel. El run_id llega del panel; si no viene, el\n// analisis se ejecuta igual pero no se podra guardar (se avisa en la respuesta).\nconst b = $json.body || $json;\nconst run_id = String(b.run_id || '').trim();\nreturn [{ json: { ok: true, run_id: run_id || null, aceptado: !!run_id } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        380,
+        200
+      ],
+      "name": "Preparar Ack"
+    },
+    {
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        560,
+        200
+      ],
+      "name": "Responder Ack"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "update runs set estado = 'en_curso', started_at = now(), updated_at = now() where id = $1 and estado = 'pendiente'",
+        "options": {
+          "queryReplacement": "={{ [$('Preparar Ack').first().json.run_id] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        740,
+        200
+      ],
+      "name": "Marcar En Curso",
+      "credentials": {
+        "postgres": {
+          "name": "GEOpulse User"
+        }
+      },
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Extrae a columnas lo que la tabla necesita y prepara el informe para guardar.\n// Tolerante a las DOS formas del informe:\n//   LITE     -> nota, por_area, posicionamiento.veredicto, meta.sondeos\n//   COMPLETO -> score.global, score.por_area, informe_llm.veredicto_visibilidad.nivel,\n//               meta.sondeos_totales\n// Si un dato no esta, se queda en null: el panel lo pinta como \"-\" en vez de\n// inventarse un 0 (principio de honestidad del informe).\nconst informe = $json;\nconst run_id = String($('Webhook').first().json.body.run_id || '').trim();\nif (!run_id) throw new Error('Falta run_id: el panel no lo envio en el body');\n\nconst num = (v) => (typeof v === 'number' && isFinite(v)) ? Math.round(v) : null;\nconst score = informe.score || {};\nconst meta = informe.meta || {};\n\nconst nota = num(informe.nota) ?? num(score.global);\nconst area = informe.por_area || score.por_area || {};\nconst sov = num(area.sov);\nconst sondeos = num(meta.sondeos) ?? num(meta.sondeos_totales);\n\nconst vLite = informe.posicionamiento && informe.posicionamiento.veredicto;\nconst vCompleto = informe.informe_llm\n  && informe.informe_llm.veredicto_visibilidad\n  && informe.informe_llm.veredicto_visibilidad.nivel;\nconst veredicto = vLite || vCompleto || null;\n\nconst avisos = Array.isArray(informe.avisos) ? informe.avisos : [];\n\nreturn [{ json: {\n  run_id,\n  informe_json: JSON.stringify(informe),\n  nota, veredicto, sov, sondeos,\n  tiene_avisos: avisos.length > 0\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3560,
+        300
+      ],
+      "name": "Preparar Guardado"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "insert into informes (run_id, informe) values ($1, $2::jsonb) on conflict (run_id) do update set informe = excluded.informe",
+        "options": {
+          "queryReplacement": "={{ [$json.run_id, $json.informe_json] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        3740,
+        300
+      ],
+      "name": "Guardar Informe",
+      "credentials": {
+        "postgres": {
+          "name": "GEOpulse User"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "update runs set estado = 'completado', finished_at = now(), updated_at = now(), error_mensaje = null, duracion_ms = (extract(epoch from (now() - coalesce(started_at, created_at))) * 1000)::int, nota = $2, veredicto = $3, sov = $4, sondeos = $5, tiene_avisos = $6 where id = $1",
+        "options": {
+          "queryReplacement": "={{ [$('Preparar Guardado').first().json.run_id, $('Preparar Guardado').first().json.nota, $('Preparar Guardado').first().json.veredicto, $('Preparar Guardado').first().json.sov, $('Preparar Guardado').first().json.sondeos, $('Preparar Guardado').first().json.tiene_avisos] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        3920,
+        300
+      ],
+      "name": "Marcar Completado",
+      "credentials": {
+        "postgres": {
+          "name": "GEOpulse User"
+        }
+      },
+      "alwaysOutputData": true
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Preparar Ack",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Normalizar Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar Input": {
+      "main": [
+        [
+          {
+            "node": "GET Home",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Home": {
+      "main": [
+        [
+          {
+            "node": "Parsear Home",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsear Home": {
+      "main": [
+        [
+          {
+            "node": "GET robots",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET robots": {
+      "main": [
+        [
+          {
+            "node": "Parsear Robots",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsear Robots": {
+      "main": [
+        [
+          {
+            "node": "GET sitemap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET sitemap": {
+      "main": [
+        [
+          {
+            "node": "Parsear Sitemap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsear Sitemap": {
+      "main": [
+        [
+          {
+            "node": "Validar Schema.org",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar Schema.org": {
+      "main": [
+        [
+          {
+            "node": "Parsear Schema",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsear Schema": {
+      "main": [
+        [
+          {
+            "node": "Consolidar Senales",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consolidar Senales": {
+      "main": [
+        [
+          {
+            "node": "Sondas",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Sonda Huella",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sondas": {
+      "main": [
+        [
+          {
+            "node": "Sonda - ChatGPT",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Sonda - Claude",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Sonda - Gemini",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Sonda - Perplexity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sonda Huella": {
+      "main": [
+        [
+          {
+            "node": "Huella - Perplexity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sonda - ChatGPT": {
+      "main": [
+        [
+          {
+            "node": "Merge Sondeos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sonda - Claude": {
+      "main": [
+        [
+          {
+            "node": "Merge Sondeos",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Sonda - Gemini": {
+      "main": [
+        [
+          {
+            "node": "Merge Sondeos",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Sonda - Perplexity": {
+      "main": [
+        [
+          {
+            "node": "Merge Sondeos",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Huella - Perplexity": {
+      "main": [
+        [
+          {
+            "node": "Merge Sondeos",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Merge Sondeos": {
+      "main": [
+        [
+          {
+            "node": "Recopilar Respuestas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recopilar Respuestas": {
+      "main": [
+        [
+          {
+            "node": "Preparar Informe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Informe": {
+      "main": [
+        [
+          {
+            "node": "Informe ChatGPT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Informe ChatGPT": {
+      "main": [
+        [
+          {
+            "node": "Ensamblar LITE2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ensamblar LITE2": {
+      "main": [
+        [
+          {
+            "node": "Preparar Guardado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Ack": {
+      "main": [
+        [
+          {
+            "node": "Responder Ack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder Ack": {
+      "main": [
+        [
+          {
+            "node": "Marcar En Curso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Guardado": {
+      "main": [
+        [
+          {
+            "node": "Guardar Informe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Informe": {
+      "main": [
+        [
+          {
+            "node": "Marcar Completado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
