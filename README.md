@@ -281,6 +281,19 @@ npm run check
 
 - `scripts/verificar_panel_db.mjs` — extrae el jsCode **real** del workflow generado y comprueba que cada operación devuelve tantos parámetros como placeholders `$N` tiene su SQL (un desajuste ahí no lo detecta ni TypeScript ni el validador: revienta en producción), que los emails y roles se normalizan, que `migrate` sigue partiéndose en una sentencia por item, y que los intentos de inyección y los UUID inválidos se rechazan.
 - `scripts/verificar_auth.mjs` — compila los módulos de auth y comprueba el hash de contraseñas (formato, salt, coste real, hashes corruptos) y la cookie de sesión (ida y vuelta, firma manipulada, payload alterado, secreto rotado, `AUTH_SECRET` ausente).
+- `scripts/verificar_schema_y_edge.mjs` — ejerce el jsCode real del COMPLETO contra los dos casos que produjeron informes falsos: la detección de `Organization/LocalBusiness` (con `@graph`, `@type` en array, anidado en `publisher`, arrays vacíos) y el veredicto de `acceso_edge` por categoría de bot.
+
+### Dos falsos positivos del COMPLETO, corregidos (2026-08)
+
+**El análisis de "la home" no era el de la home.** `home_url` era el dominio *tal cual se escribía al lanzar*, con path incluido, mientras `domain` sí se normalizaba al origen. Si se lanzaba con `midominio.com/una-landing`, todo el análisis de la home —schema, validador oficial, title, encabezados— se hacía sobre esa página interna, pero el informe seguía hablando de "la home" y `meta.domain` mostraba la raíz. En la auditoría de BranDevs eso hizo que listara como ausentes los siete campos de `Organization` cuando los siete estaban en la home. Ahora `home_url` es siempre la raíz, y la URL indicada entra **además** como landing (sin duplicarse, que era otro síntoma visible).
+
+**Los campos de schema los redactaba el LLM.** `campos_ausentes` salía en prosa libre del Agente 1. Ahora se calculan en código (`JS_SCHEMA_ORG` en el builder, inyectado en los dos nodos Code que lo necesitan) recorriendo `@graph`, arrays de raíz y objetos anidados, tratando `@type` en array y sin contar como presente un `sameAs: []`. El agente los recibe hechos y tiene prohibido contradecirlos.
+
+**El bloqueo de bots estaba mal categorizado.** `acceso_edge` marcaba `error` porque el WAF bloquea GPTBot y ClaudeBot, que son rastreadores de **entrenamiento**: bloquearlos es una decisión legítima y no cuesta citaciones — lo dice el propio informe en el bloque de robots.txt. Comprobado a mano contra brandevs.com desde una IP externa, con una petición por bot: GPTBot, ClaudeBot, Google-Extended y CCBot reciben la conexión cortada; OAI-SearchBot, ChatGPT-User, Claude-User, PerplexityBot, Googlebot y Bingbot responden 200. No es rate limiting ni protección anti-DDoS: es una regla por User-Agent. Ahora el veredicto se calcula en código aplicando la misma taxonomía que `rastreo_bots_ia` (solo training → `ok` con nota; retrieval o user-fetch → `error`), se prueban seis bots en vez de tres, y un 429 se marca como posible rate limit en vez de venderse como bloqueo de IA.
+
+Además, si la petición baseline de navegador no devuelve 200, `acceso_edge` sale **`no_verificable`** en vez de comparar contra un baseline roto: hay WAFs que devuelven 403 a un User-Agent de navegador llegado desde una IP de datacenter mientras dejan pasar a los bots declarados, y sin este corte el informe acusaría al cliente de algo que no hace.
+
+> El LITE no hace la comprobación de `acceso_edge`. Que el corto "no detecte bloqueos" no es que no los haya: es que no los mira.
 
 ## Estructura
 

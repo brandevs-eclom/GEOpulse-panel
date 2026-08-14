@@ -74,6 +74,16 @@ const arr = (v: unknown): string[] =>
 
 const num = (v: unknown): number | null => (typeof v === "number" ? v : null);
 
+/**
+ * Quita las comillas que el modelo ya haya puesto alrededor de la cita, para no
+ * acabar con `“"texto"”`. Los agentes devuelven unas veces la frase pelada y
+ * otras entrecomillada; el render pone SIEMPRE las tipográficas.
+ */
+function entrecomillar(cita: string | undefined): string {
+  const s = String(cita ?? "").trim();
+  return s.replace(/^["'“”«»]+/, "").replace(/["'“”«»]+$/, "");
+}
+
 const MODELOS: Array<[ClaveModelo, string]> = [
   ["chatgpt", "ChatGPT"],
   ["claude", "Claude"],
@@ -753,12 +763,14 @@ function MotoresGenerativos({ informe }: { informe: InformeCompleto }) {
         <div className="panel">
           <span className="eyebrow">Textual</span>
           <h3>Lo que la IA dice de ti, literalmente</h3>
+          {/* Orden: la pregunta arriba (contexto), la respuesta debajo y el
+              modelo como fuente al pie. La respuesta conserva el tamaño grande:
+              es lo que hay que leer, la pregunta solo la sitúa. */}
           {inf.citas_destacadas!.map((x, i) => (
             <div className="quote" key={i}>
-              <p className="q-t">{`“${x.cita || ""}”`}</p>
-              <p className="q-m">
-                {[x.modelo, x.pregunta].filter(Boolean).join(" · ")}
-              </p>
+              {x.pregunta && <p className="q-p">{x.pregunta}</p>}
+              <p className="q-t">{`“${entrecomillar(x.cita)}”`}</p>
+              {x.modelo && <p className="q-m">{x.modelo}</p>}
             </div>
           ))}
         </div>

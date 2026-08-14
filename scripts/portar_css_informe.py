@@ -136,6 +136,13 @@ EXTRAS = """
 .informe.informe-completo .m-falta{background:var(--muted-soft);color:var(--muted)}
 .informe.informe-completo .m-competidor{background:var(--err-soft);color:var(--err)}
 
+/* La pregunta que se le hizo a la IA, encima de la respuesta. Deliberadamente
+   pequena y en gris: solo situa. El enfasis se lo queda la respuesta (.q-t),
+   que conserva su tamano y su tipografia de display. */
+.informe.informe-completo .quote .q-p{font-size:.78rem;font-weight:600;line-height:1.5;
+  color:var(--muted);margin-bottom:8px}
+.informe.informe-completo .quote .q-p::before{content:'P. ';font-weight:700;color:var(--accent)}
+
 /* Ausencia de dato: se dice, no se disimula con un cero. */
 .informe.informe-completo .sin-datos{color:var(--muted);font-style:italic}
 

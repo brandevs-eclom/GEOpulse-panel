@@ -2,6 +2,7 @@
 """GEOpulse v3: 4 agentes de sondeo LLM en ramas paralelas + agente de informe detallado.
 Datos de repositorios reales (HTTP, KG, Wikidata, validator, citations) contrastados con lo que afirman los modelos."""
 import json
+import os
 
 UA_CHROME = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
 
@@ -11,13 +12,13 @@ UA_CHROME = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML
 
 PROMPT_A1_INFRA = """Eres un auditor técnico especializado en infraestructura GEO (Generative Engine Optimization). Evalúas los cimientos técnicos que permiten a los motores generativos descubrir y entender un sitio web. Todos tus datos de entrada provienen de verificaciones reales (peticiones HTTP y el validador oficial de schema.org), no de suposiciones.
 
-ENTRADA: JSON con: domain, llms_txt (status HTTP, exists, parece_html, contenido), schema_existe (booleano determinista), jsonld (bloques de la home), schema_landings (tipos de JSON-LD detectados en cada landing interna), validacion_schema_org ({disponible, num_errores, num_warnings, errores, warnings}; si disponible=false ignóralo sin penalizar) y sitemap_xml (status, exists, lastmod_mas_reciente).
+ENTRADA: JSON con: domain, home_url (la RAÍZ del dominio, que es lo que se ha analizado como "la home"), pagina_indicada (si no es null, una URL con path que el cliente pidió analizar además de la home), llms_txt (status HTTP, exists, parece_html, contenido), schema_existe (booleano determinista), jsonld (bloques de la home), schema_org_home y schema_org_sitio (comprobación DETERMINISTA de Organization/LocalBusiness, ver abajo), schema_landings (tipos de JSON-LD y comprobación org de cada página interna), validacion_schema_org ({disponible, num_errores, num_warnings, errores, warnings}; si disponible=false ignóralo sin penalizar) y sitemap_xml (status, exists, lastmod_mas_reciente).
 
 EVALÚA:
 1. llms_txt → "ok" si existe con formato correcto (Markdown: H1, blockquote resumen, secciones con enlaces). "warning" si existe pero pobre. "error" si no existe o parece_html=true (soft-404). IMPORTANTE: indica siempre en el detalle que llms.txt es una señal de adopción temprana sin efecto confirmado por los motores en 2026: recomendable por coste cero, pero no crítica.
 2. schema → DOS PASOS obligatorios:
    PASO 1 (existencia): usa schema_existe tal cual. Si es false → existe: false, estado "error", campos vacíos, y NO continúes.
-   PASO 2 (calidad, solo si existe): a) tipos presentes y campos de Organization/LocalBusiness (name, url, logo, description, sameAs, address, telephone); "ok" solo con Organization/LocalBusiness completo incluido sameAs. b) VOCABULARIO: marca en propiedades_invalidas tipos o propiedades que no existen en schema.org o con erratas (schema.org es case-sensitive); si hay alguna, el estado no puede ser "ok". c) VALIDADOR OFICIAL: si disponible, num_errores > 0 → mínimo "warning" citando los errores. d) COBERTURA: usa schema_landings para valorar si el marcado vive solo en la home o también en las páginas de servicio. Si una landing trae es_fallback_home=true significa que no se pudieron muestrear páginas internas y se usó la home como respaldo: evalúala igualmente, pero indica en el detalle que la cobertura en páginas internas queda sin verificar (no la penalices como ausente).
+   PASO 2 (calidad, solo si existe): a) CAMPOS DE Organization/LocalBusiness — NO los juzgues tú, ya vienen comprobados en código. Copia `campos_ausentes` EXACTAMENTE de `schema_org_home.ausentes` (lista de nombres de campo tal cual: "sameAs", "telephone"...). Tienes PROHIBIDO añadir a esa lista un campo que aparezca en `schema_org_home.presentes`, y prohibido reformularlos en prosa ("Organization en la home con name" NO es un nombre de campo). Si `schema_org_home.encontrado` es false pero `schema_org_sitio.encontrado` es true, dilo así en el detalle: el marcado existe en el sitio (cita `schema_org_sitio.mejor_en`) pero no en la home, que es donde más pesa. "ok" solo si `schema_org_home.ausentes` está vacío. b) VOCABULARIO: marca en propiedades_invalidas tipos o propiedades que no existen en schema.org o con erratas (schema.org es case-sensitive); si hay alguna, el estado no puede ser "ok". c) VALIDADOR OFICIAL: si disponible, num_errores > 0 → mínimo "warning" citando los errores. d) COBERTURA: usa schema_landings para valorar si el marcado vive solo en la home o también en las páginas de servicio. Si una landing trae es_fallback_home=true significa que no se pudieron muestrear páginas internas y se usó la home como respaldo: evalúala igualmente, pero indica en el detalle que la cobertura en páginas internas queda sin verificar (no la penalices como ausente).
 3. sitemap → "ok" si status 200 Y lastmod_mas_reciente dentro de los últimos 6 meses; "warning" si existe pero el lastmod es antiguo o no hay (los crawlers de IA priorizan contenido fresco); "error" si no responde.
 
 REGLAS: evalúa EXCLUSIVAMENTE los datos de entrada; "no_verificable" cuando falte el dato; sé concreto (campos y tipos exactos).
@@ -27,7 +28,7 @@ Responde ÚNICAMENTE con un objeto JSON válido con esta estructura exacta:
 
 PROMPT_A2_SEO = """Eres un auditor de SEO técnico especializado en rastreabilidad para crawlers de IA. Trabajas SOLO con verificaciones reales: el robots.txt descargado, las respuestas reales del servidor a peticiones hechas con los User-Agents de los bots de IA, los headers HTTP y el HTML crudo.
 
-ENTRADA: JSON con: robots_txt (status, contenido, bots detectados por categoría), acceso_edge (resultado REAL de pedir la home identificándose como GPTBot, ClaudeBot y PerplexityBot frente al baseline de navegador), home (status, url, meta_robots, x_robots_tag, canonical, headings, render, response_time_ms, word_count) y landings.
+ENTRADA: JSON con: robots_txt (status, contenido, bots detectados por categoría), acceso_edge (resultado REAL de pedir la home identificándose como GPTBot, ClaudeBot, OAI-SearchBot, PerplexityBot, ChatGPT-User y Claude-User frente al baseline de navegador; incluye `veredicto`, `motivo`, `baseline_valido` y `bloqueados_por_categoria` YA CALCULADOS en código), home (status, url, meta_robots, x_robots_tag, canonical, headings, render, response_time_ms, word_count) y landings.
 
 CONTEXTO 2026 — categorías de bots (puntúa por categoría, NO por bot suelto):
 - TRAINING (GPTBot, ClaudeBot, CCBot, Bytespider, Meta-ExternalAgent, Amazonbot; tokens Google-Extended y Applebot-Extended): bloquearlos es una decisión legítima de derechos SIN coste en citaciones. NO baja el estado; repórtalo como informativo.
@@ -38,7 +39,7 @@ CONTEXTO 2026 — categorías de bots (puntúa por categoría, NO por bot suelto
 
 EVALÚA:
 1. rastreo_bots_ia → aplica las categorías al robots.txt real; cita las líneas exactas.
-2. acceso_edge → CRÍTICO: el robots.txt puede permitir mientras el CDN/WAF bloquea en silencio. Si algún bot tiene bloqueado_edge=true (403/503/challenge o body drásticamente menor que el baseline), estado "error" para bots de retrieval y "warning" para el resto, explicando que el bloqueo es a nivel de servidor/CDN aunque el robots.txt lo permita. Si todos acceden igual que el baseline → "ok".
+2. acceso_edge → el estado te viene DADO: copia `acceso_edge.veredicto` tal cual en el campo `estado`. NO lo recalcules ni lo empeores porque "suene grave". El razonamiento está en `acceso_edge.motivo`: úsalo como base del detalle, con estas reglas de redacción. a) Si el veredicto es "ok" porque solo hay bloqueados de TRAINING, dilo sin dramatizar: es una decisión legítima del cliente, probablemente un ajuste del hosting o de un plugin, y NO le cuesta citaciones; nómbralos y di explícitamente que los bots que deciden si le citan sí acceden. b) Si es "error", explica que el bloqueo es a nivel de servidor/CDN aunque el robots.txt lo permita, y qué motor concreto deja de poder citarle. c) Si es "no_verificable" (baseline_valido=false), NO afirmes nada sobre bloqueos: di que la comprobación no es concluyente porque la propia petición de referencia no pasó, y que eso suele ser el WAF filtrando por reputación de IP, no el cliente bloqueando bots. d) Un `posible_rate_limit` (429) NO es una política contra ese bot: menciónalo como límite de peticiones, nunca como bloqueo de IA. En `bots_bloqueados_edge` lista SOLO los que tengan bloqueado_edge=true.
 3. indexabilidad → "error" si meta_robots O x_robots_tag contienen noindex (el header cuenta igual que el meta). Menciona canonical cross-domain.
 4. renderizado → si sospecha_csr=true o hay spa_markers con ratio_texto_html muy bajo, "error"/"warning": el contenido depende de JavaScript y la mayoría de crawlers de IA no lo ejecutan, así que leen una página vacía.
 5. rendimiento → "ok" < 800 ms, "warning" 800-1500, "error" > 1500; null → "no_verificable".
@@ -293,7 +294,20 @@ return [{ json: {
   keyword: String(b.keyword).trim(),
   competitors,
   domain: origin,
-  home_url: d,
+  // La home DE VERDAD, siempre la raiz.
+  //
+  // BUG REAL (medido en la auditoria de BranDevs, 2026-08): esto era 'd', o sea
+  // el dominio TAL CUAL lo escribia el cliente, con path incluido. Si escribia
+  // 'midominio.com/una-landing', todo el analisis de "la home" —schema, validador
+  // oficial de schema.org, title, encabezados— se hacia sobre esa pagina interna,
+  // pero el informe seguia hablando de "la home" y meta.domain mostraba la raiz.
+  // Resultado: se acusaba al cliente de no tener Organization/LocalBusiness
+  // cuando si lo tenia, solo que en la home, que nunca se llego a descargar.
+  home_url: origin + '/',
+  // La URL que escribio el cliente. Si trae path, se analiza TAMBIEN (entra como
+  // landing, ver 'Seleccionar Landings'), pero ya no se confunde con la home.
+  pagina_url: d,
+  pagina_es_home: d.replace(/\/+$/, '') === origin,
   geo,
   email,
   email_valido,
@@ -301,11 +315,24 @@ return [{ json: {
   fecha: new Date().toISOString()
 }}];"""
 
-CODE_PREPARAR_BOTS = r"""// UAs reales de los bots de IA para comprobar bloqueos a nivel CDN/WAF
+CODE_PREPARAR_BOTS = r"""// UAs reales de los bots de IA para comprobar bloqueos a nivel CDN/WAF.
+//
+// La CATEGORIA es lo que decide si un bloqueo importa, y es la misma taxonomia
+// que ya se aplica al robots.txt:
+//   training   → rastrean para ENTRENAR modelos. Bloquearlos es una decision
+//                legitima del cliente y NO cuesta citaciones. Muchos hostings y
+//                plugins lo activan por defecto.
+//   retrieval  → buscan en vivo para responder. Si estos no pasan, no te citan.
+//   user_fetch → abren una URL porque un usuario la ha pedido en el chat.
+// Antes solo se probaban 2 de training y 1 de retrieval, asi que un bloqueo de
+// entrenamiento (inofensivo) hundia el bloque entero.
 const bots = [
-  { ua_name: 'GPTBot', ua: 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; GPTBot/1.2; +https://openai.com/gptbot' },
-  { ua_name: 'ClaudeBot', ua: 'Mozilla/5.0 (compatible; ClaudeBot/1.0; +claudebot@anthropic.com)' },
-  { ua_name: 'PerplexityBot', ua: 'Mozilla/5.0 (compatible; PerplexityBot/1.0; +https://docs.perplexity.ai/docs/perplexitybot)' }
+  { ua_name: 'GPTBot', categoria: 'training', ua: 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; GPTBot/1.2; +https://openai.com/gptbot' },
+  { ua_name: 'ClaudeBot', categoria: 'training', ua: 'Mozilla/5.0 (compatible; ClaudeBot/1.0; +claudebot@anthropic.com)' },
+  { ua_name: 'OAI-SearchBot', categoria: 'retrieval', ua: 'Mozilla/5.0 (compatible; OAI-SearchBot/1.0; +https://openai.com/searchbot)' },
+  { ua_name: 'PerplexityBot', categoria: 'retrieval', ua: 'Mozilla/5.0 (compatible; PerplexityBot/1.0; +https://docs.perplexity.ai/docs/perplexitybot)' },
+  { ua_name: 'ChatGPT-User', categoria: 'user_fetch', ua: 'Mozilla/5.0 (compatible; ChatGPT-User/1.0; +https://openai.com/bot)' },
+  { ua_name: 'Claude-User', categoria: 'user_fetch', ua: 'Mozilla/5.0 (compatible; Claude-User/1.0; +Claude-User@anthropic.com)' }
 ];
 return bots.map(b => ({ json: b }));"""
 
@@ -317,6 +344,15 @@ const baseStatus = baseline.statusCode ?? null;
 const baseRaw = baseline.body ?? baseline.data;
 const baseLen = typeof baseRaw === 'string' ? baseRaw.length : 0;
 const challenge = (b) => /just a moment|attention required|cf-browser-verification|checking your browser|access denied|enable javascript and cookies/i.test(b || '');
+
+// BASELINE BLINDADO: si la peticion de navegador no devolvio 200, no hay con que
+// comparar y NADA de lo que salga aqui es concluyente. Pasa de verdad: hay WAFs
+// que devuelven 403 a un User-Agent de navegador que llega desde una IP de
+// datacenter (heuristica antiscraping) mientras dejan pasar a los bots
+// declarados. Sin este corte, el informe acusaria al cliente de bloquear bots
+// basandose en una comparacion contra un baseline roto.
+const baselineValido = baseStatus === 200;
+
 const resultados = bots.map((b, i) => {
   const r = resps[i] || {};
   const status = r.statusCode ?? null;
@@ -325,13 +361,55 @@ const resultados = bots.map((b, i) => {
   const bloqueado = status === null || status === 403 || status === 503 || status === 429 || (status === 200 && challenge(body));
   return {
     bot: b.ua_name,
+    categoria: b.categoria || 'training',
     status,
-    bloqueado_edge: !!(bloqueado && baseStatus === 200),
+    // null (no false) cuando no se puede saber: ausencia de dato, no ausencia de bloqueo.
+    bloqueado_edge: baselineValido ? !!bloqueado : null,
+    // 429 es rate limit, no una politica contra ese bot: se marca aparte para no
+    // venderlo como "te bloquean los bots de IA".
+    posible_rate_limit: status === 429,
     ratio_vs_baseline: baseLen && body.length ? Math.round((body.length / baseLen) * 100) / 100 : null,
     challenge_detectado: challenge(body)
   };
 });
-return [{ json: { baseline_status: baseStatus, resultados } }];"""
+
+// --- Veredicto DETERMINISTA, por categoria ---
+const porCategoria = { training: [], retrieval: [], user_fetch: [] };
+for (const r of resultados) {
+  if (r.bloqueado_edge === true) (porCategoria[r.categoria] || porCategoria.training).push(r.bot);
+}
+const criticos = porCategoria.retrieval.concat(porCategoria.user_fetch);
+
+let veredicto, motivo;
+if (!baselineValido) {
+  veredicto = 'no_verificable';
+  motivo = 'El baseline de navegador devolvio ' + (baseStatus === null ? 'sin respuesta' : baseStatus) +
+    ' en vez de 200, asi que no hay contra que comparar. Puede ser el WAF filtrando por reputacion de IP: ' +
+    'no se puede concluir nada sobre el acceso de los bots.';
+} else if (criticos.length) {
+  veredicto = 'error';
+  motivo = 'Bloqueados bots de retrieval/user-fetch (' + criticos.join(', ') + '). ' +
+    'Estos son los que deciden si un motor te cita: si no pueden leer la web, no apareces.';
+} else if (porCategoria.training.length) {
+  veredicto = 'ok';
+  motivo = 'Solo se bloquean rastreadores de ENTRENAMIENTO (' + porCategoria.training.join(', ') + '). ' +
+    'Suele ser un ajuste deliberado del hosting o de un plugin, es una decision legitima y NO cuesta ' +
+    'citaciones: los bots que deciden si te citan (' +
+    resultados.filter(r => r.categoria !== 'training' && r.bloqueado_edge === false).map(r => r.bot).join(', ') +
+    ') acceden con normalidad.';
+} else {
+  veredicto = 'ok';
+  motivo = 'Todos los bots de IA probados acceden igual que un navegador.';
+}
+
+return [{ json: {
+  baseline_status: baseStatus,
+  baseline_valido: baselineValido,
+  resultados,
+  bloqueados_por_categoria: porCategoria,
+  veredicto,
+  motivo
+} }];"""
 
 CODE_PARSEAR_VALIDACION = r"""// Parsea la respuesta de validator.schema.org (endpoint no documentado: extracción defensiva)
 const j = $input.first().json;
@@ -443,6 +521,16 @@ function puntuar(path){
 const debug = { fuente, candidatas: urls.length, tokens, descartes: { otro_host: 0, home: 0, excluidas: 0, duplicadas: 0 } };
 const seen = new Set();
 const homeUrl = (norm.home_url || norm.domain).replace(/\/+$/, '');
+
+// Paginas que entran SI O SI, antes que ninguna otra: la home, y ademas la URL
+// que escribio el cliente si traia path (para eso la escribio). Se meten en
+// 'seen' ANTES del bucle para que no vuelvan a salir del sitemap: esa era la
+// causa de que la primera landing apareciese duplicada en el informe.
+const fijas = [homeUrl];
+const paginaUrl = String(norm.pagina_url || '').trim().replace(/\/+$/, '');
+if (paginaUrl && paginaUrl !== homeUrl && hostOf(paginaUrl) === baseHost) fijas.push(paginaUrl);
+for (const f of fijas) seen.add(hostOf(f) + pathOf(f));
+
 let candidatos = [];
 for (const u of urls) {
   const clean = String(u).trim().replace(/\/+$/, '');
@@ -466,16 +554,97 @@ debug.total_candidatas_validas = candidatos.length;
 debug.seleccionadas = elegidas.length;
 debug.criterio = conMatch.length ? 'coincidencia con termino de busqueda' : 'sin coincidencias: primeras paginas validas';
 
-// --- 4. La HOME (o la URL del campo dominio) SIEMPRE va, la primera ---
+// --- 4. Primero las fijas (home + la URL indicada), luego las elegidas ---
+debug.fijas = fijas;
+const items = fijas.map((u, i) => ({
+  json: { url: u, skip: false, es_home: i === 0, ...(i === 0 ? { _debug: debug } : {}) }
+}));
 if (!elegidas.length) {
-  return [{ json: { url: homeUrl, skip: false, es_fallback_home: true, _debug: debug } }];
+  items[0].json.es_fallback_home = true;
+  return items;
 }
-const items = [{ json: { url: homeUrl, skip: false, _debug: debug } }];
-for (const c of elegidas) items.push({ json: { url: c.url, skip: false } });
+for (const c of elegidas.slice(0, Math.max(0, MAX_LANDINGS - items.length + 1))) {
+  items.push({ json: { url: c.url, skip: false } });
+}
 return items;
 """
 
-CODE_ANALIZAR_LANDINGS = r"""// Extrae title, headings y tipos de Schema de cada landing descargada.
+# ============================================================
+# Deteccion DETERMINISTA de Organization/LocalBusiness en JSON-LD
+# ============================================================
+# POR QUE EXISTE
+# 'campos_ausentes' lo redactaba el LLM en prosa libre a partir de los bloques
+# JSON-LD. En la auditoria real de BranDevs listo como ausentes los siete campos
+# (name, url, logo, description, sameAs, address, telephone) cuando los siete
+# estaban en la home. El LITE ya lo calculaba en codigo; el COMPLETO no.
+#
+# Ahora se calcula aqui y el agente recibe el resultado ya hecho (ver el prompt
+# del Agente 1, que tiene prohibido contradecirlo).
+#
+# Se inyecta en DOS nodos Code (la home y las landings) porque en n8n los nodos
+# no comparten codigo. Definirlo aqui una sola vez evita que se desincronicen.
+JS_SCHEMA_ORG = r"""
+// --- Deteccion determinista de Organization/LocalBusiness ---
+const CAMPOS_ORG = ['name', 'url', 'logo', 'description', 'sameAs', 'address', 'telephone'];
+// LocalBusiness tiene decenas de subtipos (ProfessionalService, Store, Dentist...).
+// Se aceptan los mas comunes y, como red, cualquier tipo que termine en Business
+// u Organization. OJO: 'Service' a secas NO es una organizacion, es una oferta.
+const RE_ORG = /^(organization|corporation|ngo|localbusiness|professionalservice|store|onlinestore|restaurant|hotel|medicalbusiness|legalservice|homeandconstructionbusiness|automotivebusiness|financialservice|foodestablishment|healthandbeautybusiness|lodgingbusiness|sportsactivitylocation|entertainmentbusiness|educationalorganization|governmentorganization|sportsorganization|newsmediaorganization|travelagency|realestateagent|dentist|physician|attorney|emergencyservice|childcare|selfstorage|shoppingcenter|touristinformationcenter|[a-z]*business|[a-z]*organization)$/i;
+
+const tiposDe = (n) => {
+  const t = n && n['@type'];
+  return (Array.isArray(t) ? t : [t]).filter(x => typeof x === 'string');
+};
+const esOrg = (n) => tiposDe(n).some(t => RE_ORG.test(t.replace(/^https?:\/\/schema\.org\//i, '')));
+
+// Recorre TODO: @graph, arrays de raiz y objetos anidados dentro de propiedades.
+// Un Organization dentro de publisher/provider tambien cuenta: existe igual.
+function aplanarLd(v, out, prof) {
+  if (!v || prof > 6) return out;
+  if (Array.isArray(v)) { for (const x of v) aplanarLd(x, out, prof + 1); return out; }
+  if (typeof v !== 'object') return out;
+  if (v['@type']) out.push(v);
+  for (const k of Object.keys(v)) {
+    if (k === '@context') continue;
+    if (v[k] && typeof v[k] === 'object') aplanarLd(v[k], out, prof + 1);
+  }
+  return out;
+}
+
+// Un campo cuenta como presente si tiene contenido de verdad: '' , [] y {} no valen.
+const tieneValor = (v) => {
+  if (v === null || v === undefined) return false;
+  if (typeof v === 'string') return v.trim() !== '';
+  if (Array.isArray(v)) return v.length > 0;
+  if (typeof v === 'object') return Object.keys(v).length > 0;
+  return true;
+};
+
+// Se queda con el nodo de organizacion MAS COMPLETO: una web puede declarar un
+// Organization escueto en una pagina y el bueno en otra.
+function analizarOrg(nodos) {
+  const orgs = (nodos || []).filter(esOrg);
+  if (!orgs.length) {
+    return { encontrado: false, tipo: null, presentes: [], ausentes: CAMPOS_ORG.slice() };
+  }
+  let mejor = null;
+  for (const o of orgs) {
+    const presentes = CAMPOS_ORG.filter(c => tieneValor(o[c]));
+    if (!mejor || presentes.length > mejor.presentes.length) {
+      mejor = {
+        encontrado: true,
+        tipo: tiposDe(o).join('+'),
+        presentes,
+        ausentes: CAMPOS_ORG.filter(c => !tieneValor(o[c]))
+      };
+    }
+  }
+  return mejor;
+}
+"""
+
+CODE_ANALIZAR_LANDINGS = JS_SCHEMA_ORG + r"""
+// Extrae title, headings y tipos de Schema de cada landing descargada.
 // Defensivo: NUNCA emite vacio. Pase lo que pase aguas arriba, siempre devuelve 1 item {landings, _debug}.
 let reqs = [], resps = [];
 try { reqs = $('Seleccionar Landings').all().map(i => i.json); } catch (e) { reqs = []; }
@@ -497,26 +666,38 @@ reqs.forEach((r, idx) => {
     headings.push({ nivel: 'h' + m[1], texto: stripTags(m[2]).slice(0, 120) });
   }
   const tipos = new Set();
+  let nodos = [];
+  let malformados = 0;
   const reLd = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
   while ((m = reLd.exec(html)) !== null) {
     try {
       const parsed = JSON.parse(m[1].trim());
-      const flat = parsed['@graph'] ? parsed['@graph'] : (Array.isArray(parsed) ? parsed : [parsed]);
-      for (const b of flat) {
-        const t = b['@type'];
-        if (typeof t === 'string') tipos.add(t);
-        else if (Array.isArray(t)) t.forEach(x => tipos.add(x));
-      }
-    } catch (e) {}
+      // aplanarLd baja tambien a @graph, arrays y objetos anidados: antes solo se
+      // miraba el primer nivel y un Organization dentro de publisher no contaba.
+      nodos = aplanarLd(parsed, nodos, 0);
+    } catch (e) { malformados++; }
   }
-  landings.push({ url: r.url, status: resp.statusCode ?? null, title, headings, schema_tipos: [...tipos], es_fallback_home: !!r.es_fallback_home });
+  for (const b of nodos) for (const t of tiposDe(b)) tipos.add(t);
+  landings.push({
+    url: r.url,
+    status: resp.statusCode ?? null,
+    title,
+    headings,
+    schema_tipos: [...tipos],
+    // Campos de Organization/LocalBusiness comprobados EN CODIGO, no por el LLM.
+    schema_org: analizarOrg(nodos),
+    schema_bloques_malformados: malformados,
+    es_home: !!r.es_home,
+    es_fallback_home: !!r.es_fallback_home
+  });
 });
 
 const _debug = (reqs[0] && reqs[0]._debug) || (reqs.length === 0 ? { motivo: 'sin items de entrada desde GET Landing' } : null);
 return [{ json: { landings, _debug } }];
 """
 
-CODE_CONSOLIDAR = r"""// Consolida todas las señales verificadas (repositorios reales, sin LLM)
+CODE_CONSOLIDAR = JS_SCHEMA_ORG + r"""
+// Consolida todas las señales verificadas (repositorios reales, sin LLM)
 const input = $('Normalizar Input').first().json;
 const llms = $('GET llms.txt').first().json;
 const robots = $('GET robots.txt').first().json;
@@ -573,6 +754,7 @@ const hdrs = home.headers || {};
 const x_robots_tag = hdrs['x-robots-tag'] || hdrs['X-Robots-Tag'] || null;
 
 const jsonld = [];
+let nodosLd = [];
 const reLd = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
 let m;
 while ((m = reLd.exec(html)) !== null) {
@@ -581,9 +763,32 @@ while ((m = reLd.exec(html)) !== null) {
     if (parsed['@graph']) jsonld.push(...parsed['@graph']);
     else if (Array.isArray(parsed)) jsonld.push(...parsed);
     else jsonld.push(parsed);
+    // Ademas del aplanado de arriba (que solo baja un nivel), se recorre en
+    // profundidad para la comprobacion determinista de campos.
+    nodosLd = aplanarLd(parsed, nodosLd, 0);
   } catch (e) { jsonld.push({ _error: 'Bloque JSON-LD malformado (no parseable)' }); }
 }
 const schema_existe = jsonld.some(b => !b._error);
+
+// Campos de Organization/LocalBusiness EN LA HOME, comprobados en codigo.
+// El Agente 1 recibe esto ya resuelto y tiene prohibido contradecirlo.
+const schema_org_home = analizarOrg(nodosLd);
+// Y si la home no lo trae, puede estar en otra pagina: se mira el sitio entero
+// para poder decir "no esta en la home pero si en /contacto" en vez de "no hay".
+const schema_org_sitio = (() => {
+  const conOrg = (landings || []).filter(l => l && l.schema_org && l.schema_org.encontrado);
+  if (!conOrg.length) return { encontrado: false, paginas: [] };
+  const mejor = conOrg.reduce((a, b) =>
+    b.schema_org.presentes.length > a.schema_org.presentes.length ? b : a);
+  return {
+    encontrado: true,
+    paginas: conOrg.map(l => l.url).slice(0, 5),
+    mejor_en: mejor.url,
+    tipo: mejor.schema_org.tipo,
+    presentes: mejor.schema_org.presentes,
+    ausentes: mejor.schema_org.ausentes
+  };
+})();
 
 const headings = [];
 const reH = /<h([1-3])[^>]*>([\s\S]*?)<\/h\1>/gi;
@@ -630,6 +835,7 @@ if (!landings.length) {
 }
 
 return [{ json: { ...input, llms_txt, robots_txt, sitemap_xml, schema_existe, landings, landings_debug, acceso_edge,
+  schema_org_home, schema_org_sitio,
   home: { status: home.statusCode ?? null, url: input.home_url, title, meta_description, meta_robots, x_robots_tag,
     canonical, headings, jsonld, render: { ratio_texto_html, spa_markers, sospecha_csr },
     texto_extracto: texto.slice(0, 6000), word_count, response_time_ms } } }];"""
@@ -2014,9 +2220,15 @@ nodes.append(code("Analizar Landings", CODE_ANALIZAR_LANDINGS, [3520, 300]))
 nodes.append(code("Consolidar Señales Web", CODE_CONSOLIDAR, [3740, 300]))
 
 # Agentes técnicos
-user_a1 = ("={{ JSON.stringify({ domain: " + C + ".domain, llms_txt: " + C + ".llms_txt, "
+user_a1 = ("={{ JSON.stringify({ domain: " + C + ".domain, home_url: " + C + ".home_url, "
+           "pagina_indicada: " + C + ".pagina_es_home ? null : " + C + ".pagina_url, "
+           "llms_txt: " + C + ".llms_txt, "
            "schema_existe: " + C + ".schema_existe, jsonld: " + C + ".home.jsonld, "
-           "schema_landings: (" + C + ".landings || []).map(l => ({ url: l.url, tipos: l.schema_tipos, es_fallback_home: !!l.es_fallback_home })), "
+           # Comprobacion DETERMINISTA de los campos de Organization/LocalBusiness.
+           # El agente ya no juzga si un campo esta o no: se lo damos hecho.
+           "schema_org_home: " + C + ".schema_org_home, schema_org_sitio: " + C + ".schema_org_sitio, "
+           "schema_landings: (" + C + ".landings || []).map(l => ({ url: l.url, tipos: l.schema_tipos, "
+           "org: l.schema_org, es_home: !!l.es_home, es_fallback_home: !!l.es_fallback_home })), "
            "validacion_schema_org: $('Parsear Validación Schema').first().json, "
            "sitemap_xml: " + C + ".sitemap_xml }) }}")
 nodes.append(openai_agent("Agente 1 - Infraestructura GEO", "gpt-5.4-mini", PROMPT_A1_INFRA, user_a1, [3960, 300]))
@@ -2234,7 +2446,13 @@ workflow = {
 # reutilizar 'nodes' y 'connections' sin regenerar este fichero. Ejecutarlo
 # directamente se comporta exactamente igual que antes.
 if __name__ == "__main__":
-    with open("geopulse-workflow.json", "w", encoding="utf-8") as f:
+    # Junto al builder, no en el directorio desde el que se invoque: si no, el
+    # JSON acaba donde toque estar en ese momento (la raiz del repo, por ejemplo)
+    # y conviven dos copias distintas del mismo workflow. Los demas builders ya
+    # lo hacen asi.
+    _salida = os.path.join(os.path.dirname(os.path.abspath(__file__)), "geopulse-workflow.json")
+    with open(_salida, "w", encoding="utf-8") as f:
         json.dump(workflow, f, ensure_ascii=False, indent=2)
 
     print("OK - nodos:", len(nodes), "| conexiones:", len(connections))
+    print("Escrito en:", _salida)

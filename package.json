@@ -9,9 +9,10 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
-    "check": "node scripts/verificar_panel_db.mjs && node scripts/verificar_auth.mjs",
+    "check": "node scripts/verificar_panel_db.mjs && node scripts/verificar_auth.mjs && node scripts/verificar_schema_y_edge.mjs",
     "check:db": "node scripts/verificar_panel_db.mjs",
-    "check:auth": "node scripts/verificar_auth.mjs"
+    "check:auth": "node scripts/verificar_auth.mjs",
+    "check:analisis": "node scripts/verificar_schema_y_edge.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.4",
