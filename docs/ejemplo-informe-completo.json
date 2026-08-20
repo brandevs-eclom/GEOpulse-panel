@@ -48,7 +48,7 @@
       "https://www.brandevs.com/diseno-web-mancomunidad-la-maliciosa",
       "https://www.brandevs.com/diseno-web-electricidad-chasquea"
     ],
-    "analysis_version": "completo-v10",
+    "analysis_version": "completo-v11",
     "scoring_version": "score-v1",
     "prompt_version": "prompt-v2"
   },
@@ -5562,5 +5562,46 @@
     "reputacion": "completed",
     "informe_llm": "completed",
     "sintesis": "completed"
+  },
+  "ficha_google": {
+    "encontrada": true,
+    "confianza": "alta",
+    "nombre": "BranDevs",
+    "direccion": "Calle Ejemplo 1, Madrid",
+    "rating": 4.8,
+    "resenas": 37,
+    "categoria": "Agencia de marketing",
+    "web": "https://www.brandevs.com",
+    "telefono": "+34 600 000 000",
+    "estado": "OPERATIONAL",
+    "horario_publicado": true,
+    "maps_url": "https://maps.google.com/?cid=123"
+  },
+  "enlaces_rotos": {
+    "revisados": 40,
+    "encontrados": 63,
+    "cap_aplicado": true,
+    "total_rotos": 3,
+    "internos_rotos": 2,
+    "externos_rotos": 1,
+    "no_verificables": 4,
+    "rotos": [
+      {
+        "url": "https://www.brandevs.com/blog/post-viejo",
+        "tipo": "interno",
+        "status": 404
+      },
+      {
+        "url": "https://www.brandevs.com/servicio-descatalogado",
+        "tipo": "interno",
+        "status": 410
+      },
+      {
+        "url": "https://medio-externo.com/articulo",
+        "tipo": "externo",
+        "status": 404
+      }
+    ],
+    "paginas_revisadas": 24
   }
 }

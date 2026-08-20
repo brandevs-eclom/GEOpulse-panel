@@ -312,6 +312,7 @@ export function InformeCompletoView({ informe }: { informe: InformeCompleto }) {
               <TarjetaContenido informe={informe} />
               <TarjetaSemantica informe={informe} />
             </div>
+            <EnlacesRotosCompleta enlaces={informe.enlaces_rotos} />
           </SeccionInforme>
 
           {/* ===== 7. Huella externa ===== */}
@@ -330,6 +331,7 @@ export function InformeCompletoView({ informe }: { informe: InformeCompleto }) {
               recomendaciones={informe.recomendaciones_huella}
               competidores={informe.mapa_competitivo}
             />
+            <FichaGoogleCompleta ficha={informe.ficha_google} />
           </SeccionInforme>
 
           {/* ===== 8. Qué hacer ===== */}
@@ -410,6 +412,109 @@ function ModulosIncompletos({
         </div>
       )}
     </aside>
+  );
+}
+
+/**
+ * Ficha de Google Business (Places API). Se omite si no se analizó (`null`).
+ * Distingue "no encontrada" (legítimo) de encontrada, y avisa si la coincidencia
+ * es solo por nombre (confianza media) — para no dar por tuya la de un competidor.
+ */
+function FichaGoogleCompleta({ ficha }: { ficha?: InformeCompleto["ficha_google"] }) {
+  if (!ficha) return null;
+  if (!ficha.encontrada) {
+    return (
+      <Ficha eyebrow="Local" titulo="Ficha de Google Business" estado="muted">
+        <p className="m-detail">
+          {ficha.motivo ||
+            "No encontramos una ficha de Google Business que case con tu empresa."}
+        </p>
+      </Ficha>
+    );
+  }
+  const operativa = !ficha.estado || ficha.estado === "OPERATIONAL";
+  return (
+    <Ficha
+      eyebrow="Local"
+      titulo={`Ficha de Google Business${ficha.nombre ? " · " + ficha.nombre : ""}`}
+      estado={operativa ? "ok" : "warning"}
+    >
+      {ficha.confianza === "media" && (
+        <p className="m-detail">
+          <b>Coincidencia por nombre</b> (no verificada por dominio): confirma que
+          es tu ficha y no la de otra empresa parecida.
+        </p>
+      )}
+      {ficha.rating != null && (
+        <Metrica
+          etiqueta="Valoración"
+          estado="ok"
+          valor={`${ficha.rating} ★${ficha.resenas != null ? ` · ${ficha.resenas} reseñas` : ""}`}
+        />
+      )}
+      {ficha.categoria && (
+        <Metrica etiqueta="Categoría" estado="ok" valor={ficha.categoria} />
+      )}
+      {ficha.direccion && (
+        <Metrica etiqueta="Dirección" estado="ok" valor={ficha.direccion} />
+      )}
+      <Metrica
+        etiqueta="Horario publicado"
+        estado={ficha.horario_publicado ? "ok" : "warning"}
+        valor={ficha.horario_publicado ? "Sí" : "No"}
+      />
+      {ficha.estado && ficha.estado !== "OPERATIONAL" && (
+        <Metrica etiqueta="Estado" estado="warning" valor={ficha.estado} />
+      )}
+      {ficha.maps_url && (
+        <p className="m-detail">
+          <a href={ficha.maps_url} target="_blank" rel="noopener noreferrer">
+            Ver en Google Maps
+          </a>
+        </p>
+      )}
+    </Ficha>
+  );
+}
+
+/**
+ * Enlaces rotos (404) de la home. Se omite si no se analizó o no se revisó ninguno.
+ * Distingue rotos (404/410) de no verificables (403/timeout), y avisa si fue muestra.
+ */
+function EnlacesRotosCompleta({
+  enlaces,
+}: {
+  enlaces?: InformeCompleto["enlaces_rotos"];
+}) {
+  if (!enlaces || enlaces.revisados === 0) return null;
+  const hayRotos = enlaces.total_rotos > 0;
+  const estado = hayRotos
+    ? enlaces.internos_rotos > 0
+      ? "error"
+      : "warning"
+    : "ok";
+  return (
+    <Ficha eyebrow="Cimientos" titulo="Enlaces rotos (404)" estado={estado}>
+      <Metrica
+        etiqueta="Enlaces rotos"
+        estado={estado}
+        valor={
+          hayRotos
+            ? `${enlaces.total_rotos} · ${enlaces.internos_rotos} internos, ${enlaces.externos_rotos} externos`
+            : "Ninguno"
+        }
+        detalle={`Revisados ${enlaces.revisados} enlaces en ${enlaces.paginas_revisadas} página${enlaces.paginas_revisadas === 1 ? "" : "s"} del sitio${enlaces.cap_aplicado ? ` (muestra de ${enlaces.encontrados})` : ""}${enlaces.no_verificables > 0 ? ` · ${enlaces.no_verificables} no verificables (403/timeout, no cuentan como rotos)` : ""}.`}
+      />
+      {hayRotos &&
+        enlaces.rotos.map((x, i) => (
+          <Metrica
+            key={i}
+            etiqueta={x.url.replace(/^https?:\/\//, "").slice(0, 60)}
+            estado={x.tipo === "interno" ? "error" : "warning"}
+            valor={`${x.tipo} · ${x.status}`}
+          />
+        ))}
+    </Ficha>
   );
 }
 

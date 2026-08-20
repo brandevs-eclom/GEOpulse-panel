@@ -37,7 +37,7 @@ const linea = (ok, txt) => {
 };
 
 console.log("=== E2 · versionado en meta ===");
-linea(out.meta.analysis_version === "completo-v10", `analysis_version = ${out.meta.analysis_version}`);
+linea(out.meta.analysis_version === "completo-v11", `analysis_version = ${out.meta.analysis_version}`);
 linea(out.meta.scoring_version === "score-v1", `scoring_version = ${out.meta.scoring_version}`);
 linea(out.meta.prompt_version === "prompt-v2", `prompt_version = ${out.meta.prompt_version}`);
 linea(out.meta.brand === informe.meta.brand, "meta original preservada (brand)");
@@ -142,6 +142,60 @@ linea(!jsScore.includes("answer_first") && !jsScore.includes("intent_mismatch"),
 const cg = out.contenido_geo || {};
 linea(!!cg.answer_first && !!cg.answer_first.estado, "el informe conserva contenido_geo.answer_first");
 linea(!!cg.intent_mismatch && !!cg.intent_mismatch.intencion_keyword, "el informe conserva contenido_geo.intent_mismatch (con intencion_keyword)");
+
+console.log("\n=== GROUNDING · pick() parsea las 4 formas de respuesta (sondas) ===");
+// Extrae respApi+pick del nodo real 'D1 - Unir' y las ejerce con respuestas sinteticas
+// de cada proveedor. Lo critico es la Responses API grounded de OpenAI (forma nueva).
+const unir = wf.nodes.find((n) => n.name === "D1 - Unir");
+if (!unir) throw new Error("no encuentro el nodo 'D1 - Unir'");
+const codU = unir.parameters.jsCode;
+const iniP = codU.indexOf("const respApi");
+const finP = codU.indexOf("const pickCitations");
+if (iniP < 0 || finP < 0) throw new Error("no encuentro respApi/pick en 'D1 - Unir'");
+const { pick } = new Function(codU.slice(iniP, finP) + "\nreturn { pick };")();
+const wrap = (b) => [{ body: b }];
+linea(pick(wrap({ choices: [{ message: { content: "hola chat" } }] }), 0) === "hola chat", "openai chat/completions");
+linea(pick(wrap({ content: [{ type: "server_tool_use" }, { type: "text", text: "resp claude" }] }), 0) === "resp claude", "anthropic con web_search (ignora tool blocks, coge el text)");
+linea(pick(wrap({ candidates: [{ content: { parts: [{ text: "resp gemini" }] } }] }), 0) === "resp gemini", "gemini grounded (parts)");
+linea(pick(wrap({ output: [{ type: "web_search_call" }, { type: "message", content: [{ type: "output_text", text: "resp openai grounded" }] }] }), 0) === "resp openai grounded", "openai RESPONSES API (web_search) -> output_text");
+linea(pick(wrap({ output_text: "atajo output_text" }), 0) === "atajo output_text", "openai responses atajo output_text");
+linea(pick([], 0) === "", "respuesta ausente -> cadena vacia (no rompe)");
+
+console.log("\n=== FICHA GOOGLE · nodo Places + matchFicha (anti misatribución) ===");
+const fichaNode = wf.nodes.find((n) => n.name === "Ficha Google");
+linea(!!fichaNode && (fichaNode.parameters.url || "").includes("places.googleapis.com/v1/places:searchText"), "nodo 'Ficha Google' llama a Places API (New) searchText");
+linea(JSON.stringify(fichaNode?.parameters?.headerParameters || {}).includes("X-Goog-FieldMask"), "envía el X-Goog-FieldMask obligatorio");
+const parseFicha = wf.nodes.find((n) => n.name === "Parsear Ficha");
+const codF = parseFicha ? parseFicha.parameters.jsCode : "";
+const iniF = codF.indexOf("const _nm");
+const finF = codF.indexOf("// <<<FIN-FICHA-TESTABLE>>>");
+if (iniF < 0 || finF < 0) throw new Error("no encuentro matchFicha en 'Parsear Ficha'");
+const { matchFicha } = new Function(codF.slice(iniF, finF) + "\nreturn { matchFicha };")();
+linea(matchFicha([{ websiteUri: "https://www.brandevs.com", displayName: { text: "BranDevs" } }], "BranDevs", "brandevs.com")?.confianza === "alta", "casa por dominio -> confianza alta");
+linea(matchFicha([{ websiteUri: "https://otra.com", displayName: { text: "BranDevs Studio" } }], "BranDevs", "brandevs.com")?.confianza === "media", "solo por nombre -> confianza media");
+linea(matchFicha([{ websiteUri: "https://acme.com", displayName: { text: "Acme Corp" } }], "BranDevs", "brandevs.com") === null, "competidor -> null (no se atribuye como tuya)");
+// La ficha se sincroniza en Merge Bloques (input 4) antes de consolidar.
+const mb = wf.nodes.find((n) => n.name === "Merge Bloques");
+linea(mb && Number(mb.parameters.numberInputs) >= 5, "Merge Bloques sincroniza la ficha (>=5 entradas)");
+linea(!!out.ficha_google, "el informe ensamblado incluye ficha_google");
+
+console.log("\n=== ENLACES 404 · TODO el sitio + clasificación honesta ===");
+for (const n of ["Paginas a Revisar", "GET Pagina", "Extraer Enlaces", "Comprobar Enlace", "Clasificar Enlaces"]) {
+  linea(wf.nodes.some((x) => x.name === n), `nodo '${n}' existe`);
+}
+const pagN = wf.nodes.find((x) => x.name === "Paginas a Revisar");
+linea(!!pagN && /GET Sitemap Páginas/.test(pagN.parameters.jsCode) && /GET Home/.test(pagN.parameters.jsCode), "descubre páginas del sitemap + home");
+const clasNode = wf.nodes.find((n) => n.name === "Clasificar Enlaces");
+const codC = clasNode ? clasNode.parameters.jsCode : "";
+const iniC = codC.indexOf("function clasificarStatus");
+const finC = codC.indexOf("// <<<FIN-ENLACES-TESTABLE>>>");
+if (iniC < 0 || finC < 0) throw new Error("no encuentro clasificarStatus en 'Clasificar Enlaces'");
+const { clasificarStatus } = new Function(codC.slice(iniC, finC) + "\nreturn { clasificarStatus };")();
+linea(clasificarStatus(404) === "roto" && clasificarStatus(410) === "roto", "404/410 -> roto");
+linea(clasificarStatus(200) === "ok" && clasificarStatus(301) === "ok", "2xx/3xx -> ok");
+linea(clasificarStatus(403) === "no_verificable" && clasificarStatus(500) === "no_verificable" && clasificarStatus(0) === "no_verificable", "403/5xx/timeout -> no verificable, NO roto");
+linea(mb && (mb.parameters.numberInputs === 6 || mb.parameters.numberInputs === "6"), "Merge Bloques tiene 6 entradas (4 evaluadores + ficha + enlaces)");
+linea(!!out.enlaces_rotos, "el informe ensamblado incluye enlaces_rotos");
 
 console.log(`\n${fallos ? `${fallos} COMPROBACIONES FALLAN` : "TODO CORRECTO"}`);
 process.exit(fallos ? 1 : 0);

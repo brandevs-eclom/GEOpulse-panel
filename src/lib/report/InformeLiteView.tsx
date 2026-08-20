@@ -124,6 +124,7 @@ export function InformeLiteView({ informe }: { informe: InformeLite }) {
           {seoPuntos.map((p, i) => (
             <TarjetaPunto key={i} punto={p} />
           ))}
+          <EnlacesRotosCard enlaces={informe.enlaces_rotos} />
         </>
       )}
 
@@ -160,6 +161,9 @@ export function InformeLiteView({ informe }: { informe: InformeLite }) {
           {tieneEeatc(huella.eeatc) && <Eeatc eeatc={huella.eeatc} />}
         </>
       )}
+
+      {/* ===== 4b. Ficha de Google Business ===== */}
+      <FichaGoogleCard ficha={informe.ficha_google} />
 
       {/* ===== 5. Visibilidad en la IA ===== */}
       {((aparicion?.por_modelo?.length ?? 0) > 0 || mapa.length > 0) && (
@@ -288,6 +292,159 @@ function ModulosIncompletos({
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Enlaces rotos (404) de la home. Se omite si no se analizó o no se revisó ninguno.
+ * Distingue rotos (404/410) de no verificables (403/timeout, que no son rotos), y
+ * avisa si solo se revisó una muestra (cap).
+ */
+function EnlacesRotosCard({ enlaces }: { enlaces?: InformeLite["enlaces_rotos"] }) {
+  if (!enlaces || enlaces.revisados === 0) return null;
+  const hayRotos = enlaces.total_rotos > 0;
+  const estado = hayRotos ? (enlaces.internos_rotos > 0 ? "error" : "warning") : "ok";
+  return (
+    <div className="card">
+      <div className="pt-head">
+        <div className="pt-l">
+          <span className={`dot d-${estado}`} />
+          <span className="pt-title">Enlaces rotos (404)</span>
+        </div>
+        <div className="pt-r">
+          <span className="pt-val">
+            {hayRotos
+              ? `${enlaces.total_rotos} roto${enlaces.total_rotos === 1 ? "" : "s"}`
+              : "Ninguno"}
+          </span>
+        </div>
+      </div>
+      <div className="pt-detail">
+        Revisados {enlaces.revisados} enlaces en {enlaces.paginas_revisadas}{" "}
+        página{enlaces.paginas_revisadas === 1 ? "" : "s"} del sitio
+        {enlaces.cap_aplicado ? ` (muestra de ${enlaces.encontrados})` : ""}
+        {hayRotos
+          ? ` · ${enlaces.internos_rotos} internos, ${enlaces.externos_rotos} externos`
+          : ""}
+        {enlaces.no_verificables > 0
+          ? ` · ${enlaces.no_verificables} no verificables (403/timeout, no cuentan como rotos)`
+          : ""}
+        .
+      </div>
+      {hayRotos && (
+        <div className="links">
+          {enlaces.rotos.map((x, i) => (
+            <a
+              key={i}
+              href={x.url}
+              target="_blank"
+              rel="noopener nofollow"
+              title={`${x.tipo} · ${x.status}`}
+            >
+              {x.url.replace(/^https?:\/\//, "").slice(0, 50)}{" "}
+              <span style={{ color: "var(--muted)" }}>
+                ({x.tipo} · {x.status})
+              </span>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const ESTADO_FICHA: Record<string, string> = {
+  OPERATIONAL: "Operativo",
+  CLOSED_TEMPORARILY: "Cerrado temporalmente",
+  CLOSED_PERMANENTLY: "Cerrado permanentemente",
+};
+
+/**
+ * Ficha de Google Business (Places API). Se omite si no se analizó (`null`).
+ * Distingue "no encontrada" (resultado legítimo) de una encontrada, y avisa
+ * cuando la coincidencia es solo por nombre (confianza media) — para no dar por
+ * tuya la ficha de otra empresa parecida.
+ */
+function FichaGoogleCard({ ficha }: { ficha?: InformeLite["ficha_google"] }) {
+  if (!ficha) return null;
+  if (!ficha.encontrada) {
+    return (
+      <>
+        <Seccion eyebrow="Local" titulo="Ficha de Google Business" />
+        <div className="card">
+          <div className="pt-detail">
+            {ficha.motivo ||
+              "No encontramos una ficha de Google Business que case con tu empresa."}
+          </div>
+        </div>
+      </>
+    );
+  }
+  const filas: Array<[string, string]> = [];
+  if (ficha.rating != null)
+    filas.push([
+      "Valoración",
+      `${ficha.rating} ★${ficha.resenas != null ? ` · ${ficha.resenas} reseñas` : ""}`,
+    ]);
+  else if (ficha.resenas != null) filas.push(["Reseñas", String(ficha.resenas)]);
+  if (ficha.categoria) filas.push(["Categoría", ficha.categoria]);
+  if (ficha.direccion) filas.push(["Dirección", ficha.direccion]);
+  if (ficha.telefono) filas.push(["Teléfono", ficha.telefono]);
+  filas.push(["Horario publicado", ficha.horario_publicado ? "Sí" : "No"]);
+  if (ficha.estado && ficha.estado !== "OPERATIONAL")
+    filas.push(["Estado", ESTADO_FICHA[ficha.estado] ?? ficha.estado]);
+
+  const operativa = !ficha.estado || ficha.estado === "OPERATIONAL";
+  return (
+    <>
+      <Seccion
+        eyebrow="Local"
+        titulo="Ficha de Google Business"
+        sub="Tu presencia en Google Maps y en la búsqueda local: un indicador de autoridad que la IA también usa al responder."
+      />
+      <div className="card">
+        <div className="pt-head">
+          <div className="pt-l">
+            <span className={`dot d-${operativa ? "ok" : "warning"}`} />
+            <span className="pt-title">{ficha.nombre || "Ficha encontrada"}</span>
+          </div>
+          {ficha.maps_url && (
+            <div className="pt-r">
+              <a
+                href={ficha.maps_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="pt-val"
+              >
+                Ver en Maps
+              </a>
+            </div>
+          )}
+        </div>
+        {ficha.confianza === "media" && (
+          <div className="pt-detail">
+            <b>Coincidencia por nombre</b> (no verificada por dominio): confirma
+            que es tu ficha y no la de otra empresa parecida.
+          </div>
+        )}
+        {filas.map(([k, v], i) => (
+          <div
+            key={i}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 12,
+              padding: "5px 0",
+              borderTop: i ? "1px solid var(--border)" : "none",
+              fontSize: "0.85rem",
+            }}
+          >
+            <span style={{ color: "var(--text-muted)" }}>{k}</span>
+            <b style={{ textAlign: "right" }}>{v}</b>
+          </div>
+        ))}
+      </div>
+    </>
   );
 }
 

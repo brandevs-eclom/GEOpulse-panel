@@ -110,5 +110,70 @@ linea(codigo.includes("variantes_marca,"), "el informe LITE incluye el bloque va
 const prep = wf.nodes.find((n) => n.name === "Preparar Informe");
 linea(!!prep && prep.parameters.jsCode.includes('"variantes_marca":[]'), "el esquema del agente pide variantes_marca");
 
+console.log("\n=== GROUNDING · sondas LITE con búsqueda web ===");
+// Las sondas ChatGPT/Claude/Gemini deben ir grounded (Perplexity ya lo estaba).
+const nodo2 = (n) => wf.nodes.find((x) => x.name === n);
+const bodyDe = (n) => (nodo2(n)?.parameters?.jsonBody) || "";
+linea(bodyDe("Sonda - ChatGPT").includes("web_search") && (nodo2("Sonda - ChatGPT")?.parameters?.url || "").includes("/v1/responses"), "ChatGPT grounded (Responses API + web_search)");
+linea(bodyDe("Sonda - Claude").includes("web_search_20250305"), "Claude grounded (web_search_20250305, variante haiku)");
+linea(bodyDe("Sonda - Gemini").includes("google_search"), "Gemini grounded (google_search)");
+linea(bodyDe("Sonda - Perplexity").includes("web_search_options"), "Perplexity sigue grounded");
+// El redactor NO se groundea (escribe con los datos ya recogidos).
+linea(!bodyDe("Informe ChatGPT").includes("web_search") && !(nodo2("Informe ChatGPT")?.parameters?.url || "").includes("/v1/responses"), "el redactor 'Informe ChatGPT' NO se groundea");
+
+console.log("\n=== GROUNDING · pick() parsea las 4 formas (incl. Responses API) ===");
+const rec = nodo2("Recopilar Respuestas");
+const codR = rec ? rec.parameters.jsCode : "";
+const iniR = codR.indexOf("const respApi");
+const finR = codR.indexOf("const pickCitations");
+if (iniR < 0 || finR < 0) throw new Error("no encuentro respApi/pick en 'Recopilar Respuestas'");
+const { pick } = new Function(codR.slice(iniR, finR) + "\nreturn { pick };")();
+const wrap = (b) => [{ body: b }];
+linea(pick(wrap({ choices: [{ message: { content: "chat ok" } }] }), 0) === "chat ok", "openai chat/completions");
+linea(pick(wrap({ content: [{ type: "server_tool_use" }, { type: "text", text: "claude ok" }] }), 0) === "claude ok", "anthropic web_search (solo text)");
+linea(pick(wrap({ candidates: [{ content: { parts: [{ text: "gemini ok" }] } }] }), 0) === "gemini ok", "gemini grounded (parts)");
+linea(pick(wrap({ output: [{ type: "web_search_call" }, { type: "message", content: [{ type: "output_text", text: "openai grounded ok" }] }] }), 0) === "openai grounded ok", "openai RESPONSES API -> output_text");
+
+console.log("\n=== FICHA GOOGLE · nodo Places + matchFicha (anti misatribución) ===");
+const fichaNode = nodo2("Ficha Google");
+linea(!!fichaNode && (fichaNode.parameters.url || "").includes("places.googleapis.com/v1/places:searchText"), "nodo 'Ficha Google' llama a Places API (New) searchText");
+const fmHeader = JSON.stringify(fichaNode?.parameters?.headerParameters || {});
+linea(fmHeader.includes("X-Goog-FieldMask") && fmHeader.includes("userRatingCount"), "envía el X-Goog-FieldMask obligatorio (con rating/reseñas)");
+const parseFicha = nodo2("Parsear Ficha");
+const codF = parseFicha ? parseFicha.parameters.jsCode : "";
+const iniF = codF.indexOf("const _nm");
+const finF = codF.indexOf("// <<<FIN-FICHA-TESTABLE>>>");
+if (iniF < 0 || finF < 0) throw new Error("no encuentro matchFicha en 'Parsear Ficha'");
+const { matchFicha } = new Function(codF.slice(iniF, finF) + "\nreturn { matchFicha };")();
+const j2 = (o) => JSON.stringify(o);
+linea(matchFicha([{ websiteUri: "https://www.brandevs.com", displayName: { text: "BranDevs" } }], "BranDevs", "brandevs.com")?.confianza === "alta", "casa por dominio -> confianza alta");
+linea(matchFicha([{ websiteUri: "https://otra.com", displayName: { text: "BranDevs Studio" } }], "BranDevs", "brandevs.com")?.confianza === "media", "solo por nombre -> confianza media");
+linea(matchFicha([{ websiteUri: "https://acme.com", displayName: { text: "Acme Corp" } }], "BranDevs", "brandevs.com") === null, "competidor -> null (no se atribuye como tuya)");
+linea(matchFicha([], "BranDevs", "brandevs.com") === null, "sin resultados -> null");
+// El dominio gana al nombre: si hay una que casa por dominio, esa es (aunque el nombre difiera).
+linea(matchFicha([{ websiteUri: "https://x.com", displayName: { text: "BranDevs" } }, { websiteUri: "https://brandevs.com", displayName: { text: "BD" } }], "BranDevs", "brandevs.com")?.confianza === "alta", "prioriza la coincidencia por dominio");
+linea(codF.includes("ficha_google"), "el nodo emite el bloque ficha_google");
+
+console.log("\n=== ENLACES 404 · TODO el sitio + clasificación honesta ===");
+for (const n of ["Paginas a Revisar", "GET Pagina", "Extraer Enlaces", "Comprobar Enlace", "Clasificar Enlaces"]) {
+  linea(!!nodo2(n), `nodo '${n}' existe`);
+}
+// El descubrimiento de paginas lee el sitemap y la home (no solo la home).
+const pag = nodo2("Paginas a Revisar");
+linea(!!pag && /GET sitemap/.test(pag.parameters.jsCode) && /GET Home/.test(pag.parameters.jsCode), "descubre páginas del sitemap + home");
+linea(!!nodo2("Extraer Enlaces") && /GET Pagina/.test(nodo2("Extraer Enlaces").parameters.jsCode), "extrae enlaces de todas las páginas crawleadas");
+const clasNode = nodo2("Clasificar Enlaces");
+const codC = clasNode ? clasNode.parameters.jsCode : "";
+const iniC = codC.indexOf("function clasificarStatus");
+const finC = codC.indexOf("// <<<FIN-ENLACES-TESTABLE>>>");
+if (iniC < 0 || finC < 0) throw new Error("no encuentro clasificarStatus en 'Clasificar Enlaces'");
+const { clasificarStatus } = new Function(codC.slice(iniC, finC) + "\nreturn { clasificarStatus };")();
+linea(clasificarStatus(404) === "roto" && clasificarStatus(410) === "roto", "404/410 -> roto");
+linea(clasificarStatus(200) === "ok" && clasificarStatus(301) === "ok", "2xx/3xx -> ok");
+linea(clasificarStatus(403) === "no_verificable" && clasificarStatus(429) === "no_verificable", "403/429 (WAF/rate) -> no verificable, NO roto");
+linea(clasificarStatus(500) === "no_verificable" && clasificarStatus(0) === "no_verificable", "5xx/timeout -> no verificable, NO roto");
+linea(clasificarStatus(401) === "ok", "otros 4xx (401) no se marcan como roto");
+linea(codC.includes("enlaces_rotos"), "el nodo emite el bloque enlaces_rotos");
+
 console.log(`\n${fallos ? `${fallos} COMPROBACIONES FALLAN` : "TODO CORRECTO"}`);
 process.exit(fallos ? 1 : 0);

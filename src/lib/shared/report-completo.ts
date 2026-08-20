@@ -15,7 +15,12 @@
  * ausencia, nunca convertirla en un 0.
  */
 
-import type { ClaveModelo, EstadoPunto } from "./report";
+import type {
+  ClaveModelo,
+  EnlacesRotos,
+  EstadoPunto,
+  FichaGoogle,
+} from "./report";
 
 /** Bloque estándar de comprobación técnica: estado + detalle. */
 export interface PuntoTecnico {
@@ -426,6 +431,10 @@ export interface InformeCompleto {
   estados_modulos?: Record<string, EstadoModulo>;
   /** Coste por ejecución (E1). Observabilidad interna, no se muestra al cliente. */
   coste?: CosteRun;
+  /** Ficha de Google Business (Places API). null/ausente si no se analizó. */
+  ficha_google?: FichaGoogle | null;
+  /** Enlaces rotos (404) de la home. null/ausente si no se analizó. */
+  enlaces_rotos?: EnlacesRotos | null;
   infraestructura_geo?: Record<string, PuntoTecnico>;
   seo_tecnico?: Record<string, PuntoTecnico>;
   contenido_geo?: Record<string, PuntoTecnico>;

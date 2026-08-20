@@ -13,7 +13,8 @@
       "Perplexity"
     ],
     "preguntas_lanzadas": 3,
-    "sondeos": 12
+    "sondeos": 12,
+    "analysis_version": "lite-v3"
   },
   "nota": 71,
   "por_area": {
@@ -390,5 +391,41 @@
       "Brandevs",
       "Brand Devs"
     ]
+  },
+  "ficha_google": {
+    "encontrada": true,
+    "confianza": "alta",
+    "nombre": "BranDevs",
+    "direccion": "Calle Ejemplo 1, Madrid",
+    "rating": 4.8,
+    "resenas": 37,
+    "categoria": "Agencia de marketing",
+    "web": "https://www.brandevs.com",
+    "telefono": "+34 600 000 000",
+    "estado": "OPERATIONAL",
+    "horario_publicado": true,
+    "maps_url": "https://maps.google.com/?cid=123"
+  },
+  "enlaces_rotos": {
+    "revisados": 38,
+    "encontrados": 52,
+    "cap_aplicado": true,
+    "total_rotos": 2,
+    "internos_rotos": 1,
+    "externos_rotos": 1,
+    "no_verificables": 3,
+    "rotos": [
+      {
+        "url": "https://www.brandevs.com/servicios-antiguo",
+        "tipo": "interno",
+        "status": 404
+      },
+      {
+        "url": "https://partner-roto.com/x",
+        "tipo": "externo",
+        "status": 404
+      }
+    ],
+    "paginas_revisadas": 12
   }
 }

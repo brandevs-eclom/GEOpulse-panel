@@ -18,7 +18,7 @@ UA_CHROME = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML
 #   SCORING_VERSION   cambios en pesos o formula del score (rompe comparabilidad
 #                     de la nota: coordinar con la regla de CLAUDE.md).
 #   PROMPT_VERSION    cambios en los prompts de los agentes.
-ANALYSIS_VERSION = "completo-v10"
+ANALYSIS_VERSION = "completo-v11"   # v11: sondas GROUNDED (web search en ChatGPT/Claude/Gemini); re-baseliza la nota vs v10 paramétrico
 SCORING_VERSION = "score-v1"
 PROMPT_VERSION = "prompt-v2"   # v2: Agente 3 anade answer_first e intent_mismatch (B2)
 VERSIONS_JSON = json.dumps(
@@ -882,6 +882,147 @@ try {
 } catch (e) {}
 return [{ json: parsed || { _raw: texto || JSON.stringify(j).slice(0, 2000), _error: 'Respuesta no parseable como JSON' } }];"""
 
+# --- Ficha de Google Business (Places API New) --- (misma logica que el LITE)
+CODE_PARSEAR_FICHA = r"""// Analiza la ficha de Google Business (Places API New, nodo 'Ficha Google').
+// HONESTIDAD: NO atribuye una ficha cualquiera como "la tuya". Casa por DOMINIO
+// (confianza alta) o por NOMBRE (media); si no casa con seguridad, dice que no la
+// encontro. Nunca presenta la ficha de un competidor como si fuera tuya (bug es_marca).
+const _nm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '');
+const _host = u => { const m = String(u || '').match(/^https?:\/\/([^\/:?#]+)/i); return m ? m[1].toLowerCase().replace(/^www\./, '') : ''; };
+// Devuelve { place, confianza } o null. 'alta' = casa por dominio; 'media' = solo por nombre.
+function matchFicha(places, brand, domain) {
+  const arr = Array.isArray(places) ? places : [];
+  const domN = _nm(_host('http://' + String(domain || '')) || domain);
+  const brandN = _nm(brand);
+  if (domN) for (const p of arr) { const h = _nm(_host(p && p.websiteUri)); if (h && (h.includes(domN) || domN.includes(h))) return { place: p, confianza: 'alta' }; }
+  if (brandN.length > 2) for (const p of arr) { const n = _nm(p && p.displayName && p.displayName.text); if (n && (n.includes(brandN) || brandN.includes(n))) return { place: p, confianza: 'media' }; }
+  return null;
+}
+// <<<FIN-FICHA-TESTABLE>>>
+const N = $('Normalizar Input').first().json;
+const raw = $('Ficha Google').first().json;
+const body = (raw && (raw.body !== undefined ? raw.body : (raw.data !== undefined ? raw.data : raw))) || {};
+const hit = matchFicha(body.places, N.brand, N.domain || N.host);
+if (!hit) return [{ json: { ficha_google: { encontrada: false, candidatos: Array.isArray(body.places) ? body.places.length : 0,
+  motivo: (Array.isArray(body.places) && body.places.length) ? 'Hay fichas parecidas pero ninguna casa con tu marca/dominio con seguridad.' : 'No encontramos ficha de Google Business para esta empresa en este mercado.' } } }];
+const p = hit.place;
+const oh = p.regularOpeningHours;
+return [{ json: { ficha_google: {
+  encontrada: true,
+  confianza: hit.confianza,
+  nombre: p.displayName ? p.displayName.text : null,
+  direccion: p.formattedAddress || null,
+  rating: (typeof p.rating === 'number') ? p.rating : null,
+  resenas: (typeof p.userRatingCount === 'number') ? p.userRatingCount : null,
+  categoria: (p.primaryTypeDisplayName ? p.primaryTypeDisplayName.text : null) || (Array.isArray(p.types) ? p.types[0] : null) || null,
+  web: p.websiteUri || null,
+  telefono: p.nationalPhoneNumber || null,
+  estado: p.businessStatus || null,
+  horario_publicado: !!(oh && Array.isArray(oh.weekdayDescriptions) && oh.weekdayDescriptions.length),
+  maps_url: p.googleMapsUri || null
+} } }];"""
+
+# --- Enlaces rotos (404) en TODO el sitio --- (mismo patron que el LITE)
+_HE = ("const hostOf = u => { try { return new URL(u).host.replace(/^www\\./, '').toLowerCase(); } catch (e) { return ''; } };\n"
+       "const reg = h => h.split('.').slice(-2).join('.');\n")
+CODE_PAGINAS = r"""// Descubre las PAGINAS del sitio a revisar (no solo la home): union de la home +
+// las URLs del sitemap (urlset) + los enlaces internos de la home (fallback si el
+// sitemap falta o es un indice). Acota a 30 paginas (avisado). Un item por pagina.
+""" + _HE + r"""const base = $('Normalizar Input').first().json;
+const homeUrl = base.home_url || base.domain || ('https://' + (base.host || ''));
+const site = hostOf(homeUrl);
+let sm = '';
+try { const s = $('GET Sitemap Páginas').first().json; sm = String((s && (s.body !== undefined ? s.body : s.data)) || ''); } catch (e) {}
+const esIndex = /<sitemapindex/i.test(sm);
+let locs = esIndex ? [] : (sm.match(/<loc>([\s\S]*?)<\/loc>/gi) || []).map(x => x.replace(/<\/?loc>/gi, '').replace(/&amp;/g, '&').trim());
+let homeHtml = '';
+try { const h = $('GET Home').first().json; homeHtml = String((h && (h.body !== undefined ? h.body : h.data)) || ''); } catch (e) {}
+const homeLinks = [];
+const re = /<a\b[^>]*\bhref\s*=\s*["']([^"']+)["']/gi; let m;
+while ((m = re.exec(homeHtml)) !== null && homeLinks.length < 300) {
+  let href = String(m[1]).trim();
+  if (!href || /^(mailto:|tel:|javascript:|data:|#)/i.test(href)) continue;
+  let abs; try { abs = new URL(href, homeUrl).href.split('#')[0]; } catch (e) { continue; }
+  const h = hostOf(abs);
+  if (/^https?:/i.test(abs) && h && site && reg(h) === reg(site)) homeLinks.push(abs);
+}
+const cand = new Set();
+const addC = u => { const c = String(u).split('#')[0]; if (/^https?:/i.test(c)) cand.add(c); };
+addC(homeUrl); locs.forEach(addC); homeLinks.forEach(addC);
+const todas = [...cand];
+const CAP = 30;
+const paginas = todas.slice(0, CAP);
+return paginas.map(url => ({ json: { url, _paginas_encontradas: todas.length, _cap_paginas: CAP } }));"""
+
+CODE_EXTRAER_ENLACES = r"""// Extrae los enlaces <a href> de TODAS las paginas crawleadas ('GET Pagina'),
+// resolviendo cada uno contra la URL de SU pagina. Clasifica interno/externo, dedup
+// entre paginas y CAPA a 120 (avisado). Un item por enlace; centinela si no hay.
+""" + _HE + r"""const paginasIn = $('Paginas a Revisar').all().map(i => i.json);
+const htmls = $('GET Pagina').all().map(i => i.json);
+const base = $('Normalizar Input').first().json;
+const homeUrl = base.home_url || base.domain || ('https://' + (base.host || ''));
+const site = hostOf(homeUrl);
+const CAP = 120;
+const seen = new Set(), todos = [];
+for (let pi = 0; pi < paginasIn.length; pi++) {
+  const pageUrl = (paginasIn[pi] && paginasIn[pi].url) || homeUrl;
+  const hj = htmls[pi];
+  const html = String((hj && (hj.body !== undefined ? hj.body : hj.data)) || '');
+  const re = /<a\b[^>]*\bhref\s*=\s*["']([^"']+)["']/gi; let m;
+  while ((m = re.exec(html)) !== null) {
+    let href = String(m[1]).trim();
+    if (!href || /^(mailto:|tel:|javascript:|data:|#)/i.test(href)) continue;
+    let abs; try { abs = new URL(href, pageUrl).href.split('#')[0]; } catch (e) { continue; }
+    if (!/^https?:/i.test(abs) || seen.has(abs)) continue;
+    seen.add(abs);
+    const h = hostOf(abs);
+    todos.push({ url: abs, tipo: (h && site && reg(h) === reg(site)) ? 'interno' : 'externo' });
+  }
+}
+const encontrados = todos.length;
+const paginasRev = paginasIn.length;
+const out = todos.slice(0, CAP);
+if (out.length === 0) return [{ json: { url: homeUrl, tipo: 'interno', _vacio: true, _encontrados: 0, _cap: CAP, _paginas: paginasRev } }];
+out[0]._encontrados = encontrados; out[0]._cap = CAP; out[0]._paginas = paginasRev;
+return out.map(e => ({ json: e }));"""
+
+CODE_CLASIFICAR_ENLACES = r"""// Clasifica el estado de cada enlace. 404/410 = ROTO (seguro); 403/429/5xx/timeout =
+// NO VERIFICABLE (un WAF/rate-limit/lento NO es un enlace roto). 2xx/3xx y otros 4xx =
+// accesible. No cuenta el centinela (_vacio).
+function clasificarStatus(sc) {
+  sc = Number(sc);
+  if (sc === 404 || sc === 410) return 'roto';
+  if (!sc || sc === 403 || sc === 429 || sc >= 500) return 'no_verificable';
+  return 'ok';
+}
+// <<<FIN-ENLACES-TESTABLE>>>
+const entradas = $('Extraer Enlaces').all().map(i => i.json);
+const resp = $('Comprobar Enlace').all().map(i => i.json);
+const rotos = [];
+let revisados = 0, noVerif = 0;
+const cap = (entradas[0] && entradas[0]._cap) || 120;
+const encontrados = (entradas[0] && entradas[0]._encontrados) || 0;
+const paginas = (entradas[0] && entradas[0]._paginas) || 0;
+for (let i = 0; i < entradas.length; i++) {
+  const e = entradas[i];
+  if (!e || e._vacio || !e.url) continue;
+  revisados++;
+  const r = resp[i] || {};
+  let sc = Number(r.statusCode);
+  if (!Number.isFinite(sc)) sc = 0;
+  const cls = clasificarStatus(sc);
+  if (cls === 'roto') rotos.push({ url: e.url, tipo: e.tipo, status: sc });
+  else if (cls === 'no_verificable') noVerif++;
+}
+return [{ json: { enlaces_rotos: {
+  revisados, encontrados, paginas_revisadas: paginas, cap_aplicado: encontrados > cap,
+  total_rotos: rotos.length,
+  internos_rotos: rotos.filter(x => x.tipo === 'interno').length,
+  externos_rotos: rotos.filter(x => x.tipo === 'externo').length,
+  no_verificables: noVerif,
+  rotos: rotos.slice(0, 20)
+} } }];"""
+
 # ============================================================
 # CODE NODES — LOS 4 AGENTES DE SONDEO
 # ============================================================
@@ -965,15 +1106,27 @@ const cla = $('%s - Claude').all().map(i => i.json);
 const gem = $('%s - Gemini').all().map(i => i.json);
 const per = $('%s - Perplexity').all().map(i => i.json);
 
+// Responses API de OpenAI (web_search): el texto va en output[].content[].output_text
+// (o en el atajo output_text). Sin esto, el ?? body.output stringificaria el array.
+const respApi = (b) => {
+  if (typeof b.output_text === 'string' && b.output_text) return b.output_text;
+  if (Array.isArray(b.output)) {
+    let t = '';
+    for (const o of b.output) if (Array.isArray(o.content)) for (const c of o.content) if (c.type === 'output_text' && c.text) t += c.text;
+    return t;
+  }
+  return '';
+};
 const pick = (arr, idx) => {
   const j = arr[idx] || {};
   const rawB = j.body ?? j.data;
   const body = rawB && typeof rawB === 'object' ? rawB : j;
   return String(
-    body.choices?.[0]?.message?.content
-    ?? (Array.isArray(body.content) ? body.content.map(c => c.text || '').join('\n') : null)
-    ?? (Array.isArray(body.candidates?.[0]?.content?.parts) ? body.candidates[0].content.parts.map(p => p.text || '').join('') : null)
-    ?? body.message?.content ?? body.output ?? body.text ?? ''
+    body.choices?.[0]?.message?.content                                                                // chat/completions
+    ?? (Array.isArray(body.content) ? (body.content.filter(c => typeof c.text === 'string' && c.text).map(c => c.text).join('\n') || null) : null)  // anthropic (solo bloques text; ignora server_tool_use / web_search_tool_result)
+    ?? (Array.isArray(body.candidates?.[0]?.content?.parts) ? body.candidates[0].content.parts.map(p => p.text || '').join('') : null)  // gemini
+    ?? (respApi(body) || null)                                                                          // openai responses (web_search)
+    ?? body.message?.content ?? body.text ?? ''
   );
 };
 const pickCitations = (arr, idx) => {
@@ -1416,7 +1569,10 @@ const meta = { ...(informe.meta || {}), ...VERSIONS,
   estimated_cost_usd: coste.estimated_cost_usd,
   coste_completo: coste.completo,
   tokens_total: coste.token_usage.total };
-return [{ json: { ...informe, meta, estados_modulos, coste, sintesis: director } }];"""
+// [Ficha Google] rama paralela; defensivo si el nodo no corrio (sin credencial).
+const ficha_google = (() => { try { return $('Parsear Ficha').first().json.ficha_google; } catch (e) { return null; } })();
+const enlaces_rotos = (() => { try { return $('Clasificar Enlaces').first().json.enlaces_rotos; } catch (e) { return null; } })();
+return [{ json: { ...informe, meta, estados_modulos, coste, ficha_google, enlaces_rotos, sintesis: director } }];"""
 )
 
 CODE_EMAIL = r"""// Informe completo en HTML apto para email. CERO LLM: plantilla + datos del propio reporte.
@@ -2321,26 +2477,33 @@ def openai_agent(name, model, system_prompt, user_expr, pos, temperature=None, m
     }, "type": "@n8n/n8n-nodes-langchain.openAi", "typeVersion": 1.8, "position": pos, "name": name}
 
 def model_openai(name, pos):
-    """Sonda a gpt-5.4-mini via HTTP (items concurrentes).
+    """Sonda GROUNDED a gpt-5.4-mini via la Responses API (items concurrentes).
+    El web search de OpenAI para gpt-5.x va por /v1/responses con tools:[{web_search}],
+    no por chat/completions (mismo patron que el nodo de huella, ya probado con este modelo).
+    La respuesta viene en output[].content[].output_text; pick() lo parsea aparte.
     SIN temperature: los modelos de razonamiento de OpenAI la rechazan (400)."""
     return {"parameters": {
-        "method": "POST", "url": "https://api.openai.com/v1/chat/completions",
+        "method": "POST", "url": "https://api.openai.com/v1/responses",
         "authentication": "predefinedCredentialType", "nodeCredentialType": "openAiApi",
         "sendBody": True, "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: 'gpt-5.4-mini', messages: [{ role: 'user', content: $json.prompt }] }) }}",
-        "options": {"timeout": 90000, "response": {"response": {"fullResponse": True, "neverError": True}}}
+        "jsonBody": "={{ JSON.stringify({ model: 'gpt-5.4-mini', tools: [{ type: 'web_search' }], input: $json.prompt }) }}",
+        "options": {"timeout": 120000, "response": {"response": {"fullResponse": True, "neverError": True}}}
     }, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2,
         "onError": "continueRegularOutput", "position": pos, "name": name}
 
 def model_anthropic(name, pos):
+    # GROUNDED: el server tool web_search hace que Claude responda buscando en la web.
+    # sonnet-4-6 soporta la variante 20260209. La respuesta trae bloques server_tool_use +
+    # web_search_tool_result + text; pick() ya extrae solo los bloques text (la respuesta).
+    # max_tokens sube (una respuesta grounded con citas es mas larga; cortarla pierde empresas).
     return {"parameters": {
         "method": "POST", "url": "https://api.anthropic.com/v1/messages",
         "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi",
         "sendHeaders": True,
         "headerParameters": {"parameters": [{"name": "anthropic-version", "value": "2023-06-01"}]},
         "sendBody": True, "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1200, temperature: 0.4, messages: [{ role: 'user', content: $json.prompt }] }) }}",
-        "options": {"timeout": 90000, "response": {"response": {"fullResponse": True, "neverError": True}}}
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 2500, temperature: 0.4, tools: [{ type: 'web_search_20260209', name: 'web_search' }], messages: [{ role: 'user', content: $json.prompt }] }) }}",
+        "options": {"timeout": 120000, "response": {"response": {"fullResponse": True, "neverError": True}}}
     }, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2,
         "onError": "continueRegularOutput", "position": pos, "name": name}
 
@@ -2361,12 +2524,14 @@ def model_perplexity(name, pos):
 def model_gemini(name, pos):
     # Gemini via API de Google: cuerpo contents/parts, respuesta en candidates[].content.parts[].text.
     # Auth: Header Auth generica con header 'x-goog-api-key' = clave de Gemini.
+    # GROUNDED: tools:[{google_search:{}}] hace que responda buscando en la web (no de memoria).
+    # La respuesta sigue en candidates[].content.parts[].text, asi que pick() no cambia.
     return {"parameters": {
         "method": "POST",
         "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
         "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth",
         "sendBody": True, "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ contents: [{ parts: [{ text: $json.prompt }] }], generationConfig: { temperature: 0.4, maxOutputTokens: 1600, thinkingConfig: { thinkingBudget: 0 } } }) }}",
+        "jsonBody": "={{ JSON.stringify({ contents: [{ parts: [{ text: $json.prompt }] }], tools: [{ google_search: {} }], generationConfig: { temperature: 0.4, maxOutputTokens: 1600, thinkingConfig: { thinkingBudget: 0 } } }) }}",
         "options": {"timeout": 90000, "response": {"response": {"fullResponse": True, "neverError": True}}}
     }, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2,
         "onError": "continueRegularOutput", "position": pos, "name": name}
@@ -2474,7 +2639,38 @@ EVAL_NAMES = {"D1": "Evaluador D1 - Descubrimiento", "D2": "Evaluador D2 - Compe
               "D3": "Evaluador D3 - Conocimiento", "D4": "Evaluador D4 - Reputacion"}
 Y = {"D1": -320, "D2": 100, "D3": 520, "D4": 940}
 
-nodes.append(merge("Merge Bloques", 4, [6600, 300]))
+# --- Ficha de Google Business (Places API New) --- rama paralela, sincronizada en Merge Bloques.
+# Auth: Header Auth generica con 'X-Goog-Api-Key' = clave de Google Cloud (Places API New).
+# El X-Goog-FieldMask es OBLIGATORIO (sin el, 400). textQuery = marca + mercado.
+nodes.append({"parameters": {"method": "POST", "url": "https://places.googleapis.com/v1/places:searchText",
+    "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth",
+    "sendHeaders": True, "headerParameters": {"parameters": [
+        {"name": "X-Goog-FieldMask", "value": "places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.types,places.primaryTypeDisplayName,places.websiteUri,places.googleMapsUri,places.businessStatus,places.regularOpeningHours,places.nationalPhoneNumber"}]},
+    "sendBody": True, "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ textQuery: ((" + N + ".brand || '') + ' ' + ((" + N + ".geo && " + N + ".geo.texto) || '')).trim() }) }}",
+    "options": {"timeout": 20000, "response": {"response": {"fullResponse": True, "neverError": True}}}},
+    "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "onError": "continueRegularOutput",
+    "position": [6360, 1300], "name": "Ficha Google"})
+nodes.append(code("Parsear Ficha", CODE_PARSEAR_FICHA, [6580, 1300]))
+
+# --- Enlaces rotos (404) en TODO el sitio --- rama paralela; se sincroniza en Merge Bloques.
+nodes.append(code("Paginas a Revisar", CODE_PAGINAS, [6140, 1480]))
+nodes.append({"parameters": {"url": "={{ $json.url }}", "method": "GET",
+    "sendHeaders": True, "headerParameters": {"parameters": [{"name": "User-Agent", "value": UA_CHROME}]},
+    "options": {"timeout": 15000, "response": {"response": {"fullResponse": True, "neverError": True,
+        "responseFormat": "text", "outputPropertyName": "body"}}}},
+    "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "onError": "continueRegularOutput",
+    "position": [6260, 1560], "name": "GET Pagina"})
+nodes.append(code("Extraer Enlaces", CODE_EXTRAER_ENLACES, [6360, 1480]))
+nodes.append({"parameters": {"url": "={{ $json.url }}", "method": "GET",
+    "sendHeaders": True, "headerParameters": {"parameters": [{"name": "User-Agent", "value": UA_CHROME}]},
+    "options": {"timeout": 12000, "response": {"response": {"fullResponse": True, "neverError": True,
+        "responseFormat": "text", "outputPropertyName": "body"}}}},
+    "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "onError": "continueRegularOutput",
+    "position": [6580, 1480], "name": "Comprobar Enlace"})
+nodes.append(code("Clasificar Enlaces", CODE_CLASIFICAR_ENLACES, [6800, 1480]))
+
+nodes.append(merge("Merge Bloques", 6, [6600, 300]))
 
 for i, dx in enumerate(["D1", "D2", "D3", "D4"]):
     bloque, js = SONDAS[dx]
@@ -2521,6 +2717,21 @@ for i, dx in enumerate(["D1", "D2", "D3", "D4"]):
     connect(dx + " - Merge", dx + " - Unir")
     connect(dx + " - Unir", EVAL_NAMES[dx])
     connect(EVAL_NAMES[dx], "Merge Bloques", 0, i)
+
+# Ficha de Google: rama paralela desde la consolidacion tecnica; se sincroniza como
+# 5ª entrada de Merge Bloques (input 4), asi Consolidar Sondeos no arranca hasta que
+# la ficha esta lista, y Ensamblar puede leerla. La ficha es rapida: termina mucho
+# antes que las sondas, no anade latencia real.
+connect("Consolidar Señales Web", "Ficha Google")
+connect("Ficha Google", "Parsear Ficha")
+connect("Parsear Ficha", "Merge Bloques", 0, 4)
+# Enlaces rotos (404) en todo el sitio: rama paralela sincronizada como 6ª entrada.
+connect("Consolidar Señales Web", "Paginas a Revisar")
+connect("Paginas a Revisar", "GET Pagina")
+connect("GET Pagina", "Extraer Enlaces")
+connect("Extraer Enlaces", "Comprobar Enlace")
+connect("Comprobar Enlace", "Clasificar Enlaces")
+connect("Clasificar Enlaces", "Merge Bloques", 0, 5)
 
 # --- Consolidación, informe y cierre ---
 nodes.append(code("Consolidar Sondeos", CODE_CONSOLIDAR_SONDEOS, [6840, 300]))

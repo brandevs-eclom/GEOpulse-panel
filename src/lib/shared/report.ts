@@ -151,6 +151,47 @@ export interface VariantesMarca {
   observadas: string[];
 }
 
+/**
+ * Ficha de Google Business (Places API New). `encontrada:false` es un resultado
+ * legítimo (empresa sin ficha, o ninguna casó con seguridad). `confianza`: 'alta'
+ * = casó por dominio; 'media' = solo por nombre (menos seguro, se avisa).
+ */
+export interface FichaGoogle {
+  encontrada: boolean;
+  confianza?: "alta" | "media";
+  candidatos?: number;
+  motivo?: string;
+  nombre?: string | null;
+  direccion?: string | null;
+  rating?: number | null;
+  resenas?: number | null;
+  categoria?: string | null;
+  web?: string | null;
+  telefono?: string | null;
+  /** OPERATIONAL | CLOSED_TEMPORARILY | CLOSED_PERMANENTLY */
+  estado?: string | null;
+  horario_publicado?: boolean;
+  maps_url?: string | null;
+}
+
+/**
+ * Enlaces rotos (404). Honestidad: `rotos` son 404/410 (seguro); `no_verificables`
+ * son 403/429/5xx/timeout (un WAF o un lento no es un enlace roto). `cap_aplicado`
+ * avisa si se revisó solo una muestra (los `encontrados` superan el tope).
+ */
+export interface EnlacesRotos {
+  revisados: number;
+  encontrados: number;
+  /** Nº de páginas del sitio crawleadas (no solo la home). */
+  paginas_revisadas: number;
+  cap_aplicado: boolean;
+  total_rotos: number;
+  internos_rotos: number;
+  externos_rotos: number;
+  no_verificables: number;
+  rotos: Array<{ url: string; tipo: "interno" | "externo"; status: number }>;
+}
+
 /** La marca SIEMPRE está presente en el mapa, aunque sea con 0 menciones. */
 export interface CompetidorMapa {
   empresa: string;
@@ -201,6 +242,10 @@ export interface InformeLite {
    * alimentan menciones ni share-of-voice.
    */
   variantes_marca?: VariantesMarca;
+  /** Ficha de Google Business (Places API). null/ausente si no se analizó. */
+  ficha_google?: FichaGoogle | null;
+  /** Enlaces rotos (404) encontrados en la home. null/ausente si no se analizó. */
+  enlaces_rotos?: EnlacesRotos | null;
   seo_tecnico: { puntos: PuntoSeoTecnico[]; bloqueados: number };
   huella_digital: HuellaDigital;
   preguntas: PreguntaInforme[];
