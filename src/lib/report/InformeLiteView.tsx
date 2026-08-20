@@ -96,6 +96,9 @@ export function InformeLiteView({ informe }: { informe: InformeLite }) {
         </div>
       )}
 
+      {/* Módulos que no se completaron (E3): se dicen, no se esconden. */}
+      <ModulosIncompletos estados={informe.estados_modulos} />
+
       {/* ===== 2. Preguntas lanzadas ===== */}
       {preguntas.length > 0 && (
         <>
@@ -172,7 +175,117 @@ export function InformeLiteView({ informe }: { informe: InformeLite }) {
             )}
             {mapa.length > 0 && <Competitivo mapa={mapa} />}
           </div>
+          <VariantesMarca variantes={informe.variantes_marca} />
         </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Variantes/erratas de marca (C2). Separa lo que los modelos ESCRIBIERON
+ * (observado/inferido) de cómo el sistema IDENTIFICA la marca (medido). Solo se
+ * pinta si hay algo que enseñar; con `observadas` vacío no finge un hallazgo.
+ */
+function VariantesMarca({
+  variantes,
+}: {
+  variantes?: InformeLite["variantes_marca"];
+}) {
+  if (!variantes) return null;
+  const observadas = variantes.observadas ?? [];
+  const deteccion = variantes.deteccion ?? [];
+  if (observadas.length === 0 && deteccion.length === 0) return null;
+
+  return (
+    <div className="card">
+      <div className="pt-head">
+        <div className="pt-l">
+          <span className="pt-title">Cómo te nombran los modelos</span>
+        </div>
+      </div>
+      {observadas.length > 0 ? (
+        <>
+          <div className="pt-detail">
+            Grafías y variantes con las que los modelos escribieron tu marca
+            (inferido de sus respuestas, no medido):
+          </div>
+          <div className="tags">
+            {observadas.map((v, i) => (
+              <span className="tag tag-inferido" key={i}>
+                {v}
+              </span>
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="pt-detail">
+          No detectamos variantes ni erratas de tu marca en las respuestas.
+        </div>
+      )}
+      {deteccion.length > 0 && (
+        <>
+          <div className="pt-detail">Cómo identificamos tu marca (medido):</div>
+          <div className="tags">
+            {deteccion.map((v, i) => (
+              <span className="tag" key={i}>
+                {v}
+              </span>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** Etiqueta legible de cada módulo del informe LITE (E3). */
+const ETIQUETA_MODULO_LITE: Record<string, string> = {
+  seo_tecnico: "SEO técnico",
+  huella_digital: "Huella externa",
+  visibilidad: "Visibilidad en IA",
+  informe: "Análisis de visibilidad",
+};
+
+/**
+ * Aviso de módulos incompletos (E3), gemelo del COMPLETO. Solo se pinta si algún
+ * módulo quedó `partial` o `failed`; en un run sano no aparece nada. Distingue
+ * "no se pudo" de "medido a medias": no es lo mismo y el cliente debe saberlo.
+ */
+function ModulosIncompletos({
+  estados,
+}: {
+  estados?: Record<string, string>;
+}) {
+  if (!estados) return null;
+  const parciales = Object.entries(estados)
+    .filter(([, v]) => v === "partial")
+    .map(([k]) => ETIQUETA_MODULO_LITE[k] ?? k);
+  const fallidos = Object.entries(estados)
+    .filter(([, v]) => v === "failed")
+    .map(([k]) => ETIQUETA_MODULO_LITE[k] ?? k);
+  if (parciales.length === 0 && fallidos.length === 0) return null;
+
+  return (
+    <div className="avisos" role="note" aria-label="Módulos incompletos">
+      {fallidos.length > 0 && (
+        <div className="aviso">
+          <span className="aviso-ico">!</span>
+          <span>
+            <b>No se pudo completar:</b> {fallidos.join(", ")}. El resto del
+            informe es válido; estos bloques no se han podido medir en esta
+            ejecución.
+          </span>
+        </div>
+      )}
+      {parciales.length > 0 && (
+        <div className="aviso">
+          <span className="aviso-ico">!</span>
+          <span>
+            <b>Medido a medias:</b> {parciales.join(", ")}. Corrieron pero sin
+            datos suficientes; tómalos como orientativos.
+          </span>
+        </div>
       )}
     </div>
   );

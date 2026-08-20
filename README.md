@@ -271,6 +271,52 @@ Los fixtures viven en `docs/ejemplo-informe-lite.json` y `docs/ejemplo-informe-c
 
 El detalle de una ejecución elige el render **por la forma del informe** (`score.global` ⇒ completo, `nota` ⇒ lite), no por la columna `tipo`: si una fila se guardó con el tipo equivocado, manda el dato real.
 
+## Cómo se presenta el informe COMPLETO
+
+El sistema visual está portado del mockup `informe-brandevs-completo(2).html`: paleta clara BranDevs
+(`--paper #F6F5F2`, acento `--accent #EF3B2D`, oscuro `--dark #262523`), estados suaves (`--ok #1E8A5B`,
+`--warn #B67E12`), radios 14/9/6 px y tarjetas planas con línea de 1 px. Todo vive en el bloque EXTRAS de
+`scripts/portar_css_informe.py`, **acotado a `.informe.informe-completo`**: el chrome del panel conserva su
+paleta. **La fuente de titulares es Space Grotesk en todas las secciones** (el mockup usaba Manrope; se
+mantiene Space Grotesk por petición, para que las dos secciones que no se reestructuran no canten con otra
+tipografía). El cuerpo es Inter.
+
+**Disposición del mockup, sidebar a la izquierda.** El índice es un sidebar fijo de 260 px **a la izquierda**,
+con la navegación numerada (`01…08`) y el GEO Score en un mini-anillo al pie; el contenido es una columna de
+lectura de **840 px**. El conjunto (sidebar + contenido, ~1200 px) se centra en el viewport saliéndose del
+ancho de `.gp-main` con `left:50% / translateX(-50%)`. Por debajo de 1000 px el sidebar pasa a una tira de
+píldoras sobre el contenido.
+
+**Componentes del mockup:**
+- **Hero** oscuro con el anillo de score, el eyebrow, el título y un **verdict-tag** (invisible / emergente /
+  competitiva / dominante) coloreado.
+- **Métricas con carril de estado**: cada fila lleva una barra vertical de color a la izquierda según su
+  estado (el estado viaja en el contenedor `.metric.st-*`, no solo en el valor).
+- **Las 4 dimensiones son pestañas interactivas** (`role="tablist"`): una tab por dimensión con su punto de
+  estado, navegables con las flechas del teclado, y solo un panel visible a la vez.
+- Tarjetas de bloque, plan de acción numerado, gaps, citas, quickwins, plan de enlaces y KPIs re-skineados.
+
+**Dos secciones se dejaron sin reestructurar, por petición:** las **16 preguntas** (metodología) y la **cuota
+de voz** (los 5 donuts + tabla de competidores sobre panel oscuro). Conservan su estructura actual; solo
+heredan la paleta y Space Grotesk para que el documento sea coherente.
+
+### Accesibilidad
+
+### Accesibilidad
+
+- **El estado nunca viaja solo en el color.** Cada punto de tarjeta y cada métrica llevan glifo (`aria-hidden`) más la palabra del estado para lectores de pantalla. Con daltonismo rojo-verde, el `ok` y el `error` eran el mismo tono.
+- **Contraste AA en todo el texto.** `--muted #9C9791` daba 2,90:1 sobre blanco y era el color por defecto de casi todo el texto secundario; ahora es `#6E675F` (5,57:1). Verde y ámbar de estado también se oscurecieron. Medido en el navegador: los diez pares dudosos pasan.
+- **Jerarquía correcta**: h1 (página) → h2 (sección) → h3 (bloque). Antes el informe abría en h3 y los h2 aparecían después.
+- **Landmarks**: `<article>`, `<section>` con `aria-labelledby`, `<nav>` para el índice, `<aside role="note">` para la confusión de entidad.
+- **Foco visible** (no había ni una regla en el proyecto), `aria-expanded`/`aria-controls` en los plegables, `scope` y `<caption>` en las tablas, y respeto a `prefers-reduced-motion`.
+- **Hoja de impresión**: abre lo plegado, quita el rail y las sombras, evita cortes dentro de las tarjetas, repite cabeceras de tabla y añade la URL de cada enlace.
+
+### El diagnóstico global
+
+Era de 4-6 frases sin tope (1.118 caracteres en la auditoría real, con una primera frase de 351). Ahora el prompt del **Agente 6 - Director** pide 2-3 frases y **máximo 320 caracteres**, con tres cosas y nada más: dónde está la marca, una sola causa, y qué cambia si se corrige. Se recorta repetición, no contenido: cuatro de las cinco frases ya estaban en `informe_llm.resumen_ejecutivo`, que sigue contando el detalle de mercado y competidores más abajo.
+
+> Aviso honesto: un límite en caracteres dentro de un prompt es una **petición, no una garantía** — los modelos cuentan tokens, no caracteres. Si hiciera falta un tope duro, habría que recortar también al ensamblar el informe, y eso ya toca el nodo `CODE_ENSAMBLAR`.
+
 ## Comprobaciones que no necesitan ni n8n ni servidor
 
 El proyecto no tiene runner de tests. Estas dos son las que cubren lo que un typecheck no ve, y se ejecutan en segundos:

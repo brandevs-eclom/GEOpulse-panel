@@ -7,6 +7,30 @@ import os
 UA_CHROME = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
 
 # ============================================================
+# VERSIONADO DEL ANALISIS  (funcion E2 del catalogo)
+# ============================================================
+# Cada informe se sella con estas versiones dentro de meta. Permiten comparar
+# ejecuciones correctamente: si el pipeline, el scoring o los prompts cambian, se
+# sabe que dos informes NO son comparables aunque el dominio sea el mismo.
+#
+# Cuando cambies algo, sube SOLO la version que corresponda:
+#   ANALYSIS_VERSION  cambios en el pipeline / nodos / que se mide.
+#   SCORING_VERSION   cambios en pesos o formula del score (rompe comparabilidad
+#                     de la nota: coordinar con la regla de CLAUDE.md).
+#   PROMPT_VERSION    cambios en los prompts de los agentes.
+ANALYSIS_VERSION = "completo-v10"
+SCORING_VERSION = "score-v1"
+PROMPT_VERSION = "prompt-v2"   # v2: Agente 3 anade answer_first e intent_mismatch (B2)
+VERSIONS_JSON = json.dumps(
+    {
+        "analysis_version": ANALYSIS_VERSION,
+        "scoring_version": SCORING_VERSION,
+        "prompt_version": PROMPT_VERSION,
+    },
+    ensure_ascii=False,
+)
+
+# ============================================================
 # PROMPTS — CAPA TÉCNICA (heredados de v2)
 # ============================================================
 
@@ -61,11 +85,13 @@ EVALÚA:
 4. tono → 2-4 palabras.
 5. entidades → 5-10 entidades núcleo realmente presentes.
 6. claridad_nucleo → 0-100: ¿un LLM entendería sin ambigüedad qué hace el negocio, para quién y dónde?
+7. answer_first → la POSICIÓN de la respuesta: ¿la respuesta principal a la intención de la keyword aparece directa en el primer bloque visible (primeras 1-2 frases), o hay que atravesar intro/marketing para llegar a ella? "ok" directa y arriba, "warning" presente pero enterrada, "error" hay que deducirla de toda la página. Desglosa solo la posición; no repitas intent_match.
+8. intent_mismatch → clasifica la intención de la keyword (comercial|transaccional|informativa|navegacional) y el tipo de la página (comercial|informativa|mixta); "ok" si encajan, "warning"/"error" ante desajuste (p.ej. keyword comercial que aterriza en página informativa, o al revés).
 
-REGLAS: solo el texto recibido; acciones concretas (máximo 5).
+REGLAS: solo el texto recibido; acciones concretas (máximo 5). answer_first e intent_mismatch son juicios INFERIDOS del texto, no mediciones; si no puedes decidir con lo dado, no fuerces un "ok".
 
 Responde ÚNICAMENTE con un objeto JSON válido con esta estructura exacta:
-{"indice_autoridad":{"estado":"ok|warning|error","detalle":"string"},"intent_match":{"estado":"ok|warning|error","detalle":"string"},"estructura_extraccion":{"estado":"ok|warning|error","detalle":"string"},"tono":"string","entidades":["string"],"claridad_nucleo":0,"acciones":[{"prioridad":"alta|media|baja","accion":"string"}]}"""
+{"indice_autoridad":{"estado":"ok|warning|error","detalle":"string"},"intent_match":{"estado":"ok|warning|error","detalle":"string"},"estructura_extraccion":{"estado":"ok|warning|error","detalle":"string"},"tono":"string","entidades":["string"],"claridad_nucleo":0,"answer_first":{"estado":"ok|warning|error","detalle":"string"},"intent_mismatch":{"estado":"ok|warning|error","detalle":"string","intencion_keyword":"comercial|transaccional|informativa|navegacional","tipo_pagina":"comercial|informativa|mixta"},"acciones":[{"prioridad":"alta|media|baja","accion":"string"}]}"""
 
 PROMPT_DIRECTORIOS_JS = (
     "Eres un consultor de link building y presencia digital para el sector \"__KEYWORD__\". Tu tarea: descubrir con busquedas web reales los directorios, listados sectoriales, medios especializados, comunidades profesionales y rankings \"mejores de\" donde una empresa de este sector DEBERIA aparecer para ganar autoridad y citaciones en motores de IA.\\n\\n"
@@ -218,11 +244,11 @@ Responde ÚNICAMENTE con un objeto JSON válido con esta estructura exacta:
 PROMPT_A6_DIRECTOR = """Eres el director de una auditoría GEO/SEO completa. Recibes: el score global y por área (determinista, NO lo recalcules), los hallazgos técnicos (infraestructura, SEO técnico, contenido), la huella digital externa, y el INFORME DE VISIBILIDAD EN LLMs ya redactado por el analista.
 
 TU TRABAJO es la síntesis GLOBAL que une lo técnico con lo de visibilidad. NO repitas el informe de LLMs: úsalo como insumo.
-1. diagnostico_ejecutivo: 4-6 frases. Cómo se conectan las causas técnicas y de huella con el resultado de visibilidad observado en las IA (ejemplo: si los bots de retrieval están bloqueados o la web no tiene huella externa, esa es la CAUSA de la invisibilidad que el informe describe). Esa relación causa-efecto es lo que el cliente debe entender.
+1. diagnostico_ejecutivo: MÁXIMO 320 caracteres y 2-3 frases. Es el TITULAR del informe, no su resumen: si no cabe, recorta. Di exactamente tres cosas y nada más: (a) DÓNDE ESTÁ la marca hoy en las IA, nombrándola y apoyándote en el dato duro que ya tienes (la nota global sobre 100 y/o el nivel del veredicto de visibilidad); (b) POR QUÉ, UNA sola causa, la técnica o de huella que más pese; (c) QUÉ CAMBIA si se corrige esa causa. Frases cortas de sujeto-verbo-objeto. PROHIBIDO: enumerar varias causas, encadenar subordinadas, y usar jerga (nada de 'paramétrico', 'grounded', 'retrieval', 'citabilidad', 'extracción', 'semántica', 'headings': si necesitas hablar de eso, dilo en lenguaje de negocio). Lo lee un director de un vistazo, junto a la nota. NO repitas el resumen_ejecutivo del informe de LLMs: ese cuenta el detalle de mercado, modelos y competidores; este cuenta el resultado global.
 2. plan_accion: máximo 7 acciones GLOBALES ordenadas por impacto (prioridad, area, accion con verbo primero, impacto_esperado). Prioriza las que desbloquean varias áreas a la vez. No dupliques literalmente el plan del informe de LLMs: integra.
 3. quick_wins: máximo 3 acciones ejecutables en menos de un día.
 
-REGLAS: solo el informe recibido; no inventes trabajo si un área está bien; español claro.
+REGLAS: solo el informe recibido; no inventes trabajo si un área está bien; español claro. El diagnostico_ejecutivo NUNCA supera los 320 caracteres: es el único campo con tope duro de longitud.
 
 Responde ÚNICAMENTE con un objeto JSON válido con esta estructura exacta:
 {"diagnostico_ejecutivo":"string","plan_accion":[{"prioridad":"alta|media|baja","area":"string","accion":"string","impacto_esperado":"string"}],"quick_wins":["string"]}"""
@@ -1201,7 +1227,8 @@ return [{ json: {
   huella_digital: huella
 } }];"""
 
-CODE_ENSAMBLAR = r"""// Añade la síntesis global del Director y devuelve el JSON final
+CODE_ENSAMBLAR = (
+    r"""// Añade la síntesis global del Director y devuelve el JSON final
 // Lee el reporte de Fusionar Recomendaciones (último nodo que lo arrastra completo, YA con
 // recomendaciones_huella), NO de Calcular Score, que es una foto anterior a las recomendaciones.
 let informe;
@@ -1209,7 +1236,188 @@ try { informe = $('Fusionar Recomendaciones').first().json; }
 catch (e) { informe = $('Calcular Score').first().json; }   // respaldo defensivo
 const d = $input.first().json;
 const director = d.message?.content ?? d;
-return [{ json: { ...informe, sintesis: director } }];"""
+
+// [E3] Estado por modulo: completed | partial | failed. Un modulo caido (un
+// modelo que no respondio, un bloque sin datos) NO invalida el resto del informe:
+// se marca y el render lo dice, en vez de fingir un 0 o esconder la ausencia.
+const ES_ESTADO = new Set(['ok', 'warning', 'error', 'no_verificable']);
+function estadoModulo(b, opts) {
+  opts = opts || {};
+  if (b === null || b === undefined) return 'failed';
+  if (typeof b !== 'object') return 'failed';
+  if (b._error) return 'failed';                       // el bloque avisa de su fallo
+  const claves = Object.keys(b).filter(k => k[0] !== '_');
+  if (!claves.length) return 'failed';                 // objeto vacio = no se pudo
+  // Bloques tecnicos: si TODOS sus puntos con estado quedaron 'no_verificable',
+  // el modulo corrio pero no pudo medir nada -> parcial.
+  const estados = [];
+  for (const k of claves) {
+    const v = b[k];
+    if (v && typeof v === 'object' && ES_ESTADO.has(v.estado)) estados.push(v.estado);
+  }
+  if (estados.length && estados.every(e => e === 'no_verificable')) return 'partial';
+  // Dimensiones de sondeo LLM: parcial si ningun modelo respondio (sin por_modelo,
+  // sin detalle_preguntas y sin veredicto no hubo sondeo real).
+  if (opts.dimension) {
+    const pm = b.por_modelo || {};
+    const hayModelos = Object.keys(pm).length > 0;
+    const hayDetalle = Array.isArray(b.detalle_preguntas) && b.detalle_preguntas.length > 0;
+    if (!hayModelos && !hayDetalle && !b.veredicto) return 'partial';
+  }
+  return 'completed';
+}
+
+// [E1] Coste por ejecucion. Observabilidad INTERNA (no se muestra al cliente):
+// cuantos tokens gasto esta auditoria y cuanto costo aproximado. Los tokens son
+// MEDIDOS -> salen del usage real que devuelve cada API. El coste es una
+// ESTIMACION a partir de una tabla de tarifas editable: si un modelo no tiene
+// precio, su coste no se inventa (se lista en 'sin_precio' y el total es un
+// suelo, no un dato cerrado). Nunca un numero falso presentado como real.
+const PRECIOS = {                          // USD por 1M tokens (estimado, editable en el builder)
+  'gpt-5.4-mini':      { in: 0.25, out: 2.00 },
+  'gpt-5.6-luna':      { in: 0.50, out: 3.00 },   // sonda del tier gratuito (panel)
+  'claude-sonnet-4-6': { in: 3.00, out: 15.00 },
+  'gemini-2.5-flash':  { in: 0.30, out: 2.50 },
+  'gemini-3.5-flash':  { in: 0.40, out: 3.00 },   // sonda del tier gratuito (panel)
+  'sonar':             { in: 1.00, out: 1.00 },
+};
+const PRECIOS_META = { estimado: true, fecha: '2026-08', fuente: 'tarifa publica aproximada; ajustar en build_workflow_v10.py' };
+
+// Normaliza el usage de CADA proveedor a { in, out }. Se detecta por forma, no
+// por nombre: openai/perplexity usan prompt_tokens/completion_tokens; anthropic
+// y la Responses API usan input_tokens/output_tokens; gemini usa usageMetadata.
+function tokensDe(body) {
+  if (!body || typeof body !== 'object') return null;
+  const um = body.usageMetadata;
+  if (um) return { in: um.promptTokenCount || 0, out: um.candidatesTokenCount || 0 };
+  const u = body.usage;
+  if (!u || typeof u !== 'object') return null;
+  if (u.input_tokens != null || u.output_tokens != null) return { in: u.input_tokens || 0, out: u.output_tokens || 0 };
+  if (u.prompt_tokens != null || u.completion_tokens != null) return { in: u.prompt_tokens || 0, out: u.completion_tokens || 0 };
+  return null;
+}
+// Modelo REALMENTE usado segun lo que reporta la API (openai/anthropic/perplexity
+// en body.model; gemini en body.modelVersion). El panel cambia la sonda a otro
+// modelo que el builder (p.ej. gemini-3.5-flash), asi que fiarse de la etiqueta
+// hardcodeada mentiria; el fallback solo se usa si la respuesta no trae modelo.
+function modeloDe(body, fallback) {
+  if (body && typeof body === 'object') {
+    const m = body.model || body.modelVersion;
+    if (m) return String(m).replace(/^models\//, '');
+  }
+  return fallback;
+}
+// Tarifa por coincidencia exacta o por prefijo (absorbe sufijos de version tipo
+// 'gpt-5.6-luna-2026-08'). Sin coincidencia -> null (el modelo va a sin_precio).
+function precioDe(modelo) {
+  if (PRECIOS[modelo]) return PRECIOS[modelo];
+  let mejor = null;
+  for (const k in PRECIOS) if (modelo && modelo.startsWith(k) && (!mejor || k.length > mejor.length)) mejor = k;
+  return mejor ? PRECIOS[mejor] : null;
+}
+
+// Agrega las muestras { modelo, tokens, error } a un resumen de coste.
+function agregarCoste(muestras) {
+  const r6 = x => Math.round(x * 1e6) / 1e6;
+  const porModelo = {};
+  const sinPrecio = new Set();
+  let requests = 0, fallos = 0, inTot = 0, outTot = 0, costeTot = 0;
+  for (const m of (muestras || [])) {
+    requests++;
+    if (m.error || !m.tokens) { fallos++; continue; }
+    const ti = m.tokens.in || 0, to = m.tokens.out || 0;
+    inTot += ti; outTot += to;
+    const p = precioDe(m.modelo);
+    const coste = p ? (ti / 1e6) * p.in + (to / 1e6) * p.out : 0;
+    if (p) costeTot += coste; else sinPrecio.add(m.modelo);
+    const pm = porModelo[m.modelo] || (porModelo[m.modelo] =
+      { modelo: m.modelo, requests: 0, input: 0, output: 0, coste_usd: 0, sin_precio: !p });
+    pm.requests++; pm.input += ti; pm.output += to; pm.coste_usd += coste;
+  }
+  for (const k in porModelo) porModelo[k].coste_usd = r6(porModelo[k].coste_usd);
+  return {
+    token_usage: { input: inTot, output: outTot, total: inTot + outTot },
+    estimated_cost_usd: r6(costeTot),        // suelo si sin_precio no esta vacio
+    completo: sinPrecio.size === 0,          // false => el coste es una cota inferior
+    request_count: requests,
+    fallos,
+    reintentos: 0,                           // el workflow no reintenta (onError: continue)
+    por_modelo: Object.values(porModelo),
+    sin_precio: [...sinPrecio],
+    precios: PRECIOS_META,
+  };
+}
+// <<<FIN-HELPERS-TESTABLES>>> (el verificador extrae de estadoModulo hasta aqui)
+
+const s = informe.sondeo_llm || {};
+const fs = informe.fuentes_sector;
+const estados_modulos = {
+  seo_tecnico: estadoModulo(informe.seo_tecnico),
+  infraestructura_geo: estadoModulo(informe.infraestructura_geo),
+  contenido_geo: estadoModulo(informe.contenido_geo),
+  huella_digital: estadoModulo(informe.huella_digital),
+  // fuentes_sector trae su propio flag 'disponible'; si el motor grounded no
+  // devolvio fuentes, es parcial (el resto del informe sigue valido).
+  fuentes_sector: (fs && fs.disponible === false) ? 'partial' : estadoModulo(fs),
+  descubrimiento: estadoModulo(s.descubrimiento, { dimension: true }),
+  competitivo: estadoModulo(s.competitivo, { dimension: true }),
+  conocimiento: estadoModulo(s.conocimiento, { dimension: true }),
+  reputacion: estadoModulo(s.reputacion, { dimension: true }),
+  informe_llm: estadoModulo(informe.informe_llm),
+  sintesis: estadoModulo(director),
+};
+
+// [E1] Recoge el usage real de los nodos LLM de HTTP crudo (los que traen
+// fullResponse). Cada nodo de sondeo procesa varias preguntas -> .all().
+function leerNodo(nombre) {
+  try { return $(nombre).all().map(i => i.json); } catch (e) { return null; }  // no ejecutado en esta corrida
+}
+const NODOS_SONDEO = [];
+for (const dx of ['D1', 'D2', 'D3', 'D4']) {
+  NODOS_SONDEO.push({ nodo: dx + ' - ChatGPT', modelo: 'gpt-5.4-mini' });
+  NODOS_SONDEO.push({ nodo: dx + ' - Claude', modelo: 'claude-sonnet-4-6' });
+  NODOS_SONDEO.push({ nodo: dx + ' - Gemini', modelo: 'gemini-2.5-flash' });
+  NODOS_SONDEO.push({ nodo: dx + ' - Perplexity', modelo: 'sonar' });
+}
+const muestrasCoste = [];
+for (const { nodo, modelo } of NODOS_SONDEO) {
+  const items = leerNodo(nodo);
+  if (items === null) continue;
+  for (const it of items) {
+    const body = (it && it.body !== undefined) ? it.body : it;   // fullResponse -> body
+    const errApi = (it && it.statusCode && it.statusCode >= 400) || (body && body.error);
+    const tk = errApi ? null : tokensDe(body);
+    muestrasCoste.push({ modelo: modeloDe(body, modelo), tokens: tk, error: !!errApi || !tk });
+  }
+}
+// Huella: Responses API SIN fullResponse -> el usage va en la raiz del json.
+const huella = leerNodo('Agente 5 - Huella Digital (web_search)');
+if (huella) for (const it of huella) {
+  const tk = (it && it.error) ? null : tokensDe(it);
+  muestrasCoste.push({ modelo: modeloDe(it, 'gpt-5.4-mini'), tokens: tk, error: !tk });
+}
+const coste = agregarCoste(muestrasCoste);
+// Los agentes internos (nodos langchain openAi) NO exponen usage por llamada:
+// se declaran sin medir en vez de inventarles tokens.
+coste.no_medido = {
+  agentes: ['Agente 1 - Infraestructura GEO', 'Agente 2 - SEO Técnico',
+            'Agente 3 - Contenido y Entidades', 'Evaluador D1 - Descubrimiento',
+            'Evaluador D2 - Competitivo', 'Evaluador D3 - Conocimiento',
+            'Evaluador D4 - Reputacion', 'Agente Informe LLM'],
+  motivo: 'el nodo langchain openAi no expone el usage por llamada',
+};
+
+// [E2] Versionado: se sella el informe en el nodo final, para que TODO informe
+// lo lleve pase lo que pase aguas arriba. Las versiones vienen del builder.
+const VERSIONS = """
+    + VERSIONS_JSON
+    + r""";
+const meta = { ...(informe.meta || {}), ...VERSIONS,
+  estimated_cost_usd: coste.estimated_cost_usd,
+  coste_completo: coste.completo,
+  tokens_total: coste.token_usage.total };
+return [{ json: { ...informe, meta, estados_modulos, coste, sintesis: director } }];"""
+)
 
 CODE_EMAIL = r"""// Informe completo en HTML apto para email. CERO LLM: plantilla + datos del propio reporte.
 // Tablas + estilos inline + colores de fondo: se ve igual en Gmail, Outlook, Apple Mail y moviles.
@@ -1450,6 +1658,10 @@ function construir(opts){
   const cont = r.contenido_geo || {};
   let cCon = metrica('\u00cdndice de autoridad (datos/citas)', g(cont,'indice_autoridad.estado'), '', det(g(cont,'indice_autoridad.detalle')));
   cCon += metrica('Alineaci\u00f3n con la intenci\u00f3n', g(cont,'intent_match.estado'), '', det(g(cont,'intent_match.detalle')));
+  // [B2] answer-first e intent-mismatch: informativos e INFERIDOS por el LLM. No
+  // entran en el estado de la tarjeta (peor de abajo) para no sugerir que pesan.
+  if (g(cont,'answer_first.estado')) cCon += metrica('Answer-first (inferido por IA)', g(cont,'answer_first.estado'), '', det(g(cont,'answer_first.detalle')));
+  if (g(cont,'intent_mismatch.estado')) cCon += metrica('Coincidencia de intenci\u00f3n (inferido por IA)', g(cont,'intent_mismatch.estado'), '', det(g(cont,'intent_mismatch.detalle')));
   cCon += metrica('Chunks autocontenidos', g(cont,'estructura_extraccion.estado'), '', det(g(cont,'estructura_extraccion.detalle')));
   if (cont.tono) cCon += metrica('Tono percibido', 'ok', cont.tono, null);
   B += tarjeta('Contenido', 'Contenido optimizado para IA', peor([g(cont,'indice_autoridad.estado'), g(cont,'intent_match.estado'), g(cont,'estructura_extraccion.estado')]), cCon);

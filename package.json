@@ -9,10 +9,13 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
-    "check": "node scripts/verificar_panel_db.mjs && node scripts/verificar_auth.mjs && node scripts/verificar_schema_y_edge.mjs",
+    "check": "node scripts/verificar_panel_db.mjs && node scripts/verificar_auth.mjs && node scripts/verificar_schema_y_edge.mjs && node scripts/verificar_ensamblar.mjs && node scripts/verificar_lite.mjs && node scripts/verificar_export.mjs",
     "check:db": "node scripts/verificar_panel_db.mjs",
     "check:auth": "node scripts/verificar_auth.mjs",
-    "check:analisis": "node scripts/verificar_schema_y_edge.mjs"
+    "check:analisis": "node scripts/verificar_schema_y_edge.mjs",
+    "check:ensamblar": "node scripts/verificar_ensamblar.mjs",
+    "check:lite": "node scripts/verificar_lite.mjs",
+    "check:export": "node scripts/verificar_export.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.4",

@@ -17,6 +17,13 @@
 /** Estado de un punto de comprobación. `no_verificable` ≠ error: es "no se pudo medir". */
 export type EstadoPunto = "ok" | "warning" | "error" | "no_verificable";
 
+/**
+ * Estado de un módulo del análisis (E3). Mismo union que el COMPLETO
+ * (report-completo.ts) para que ambos informes sean comparables. Se define aquí
+ * aparte porque LITE y COMPLETO viven en ficheros separados por regla del proyecto.
+ */
+export type EstadoModulo = "completed" | "partial" | "failed";
+
 /** Veredicto de posicionamiento. `sin_datos` cuando no hubo sondeos válidos. */
 export type Veredicto = "visible" | "parcial" | "invisible" | "sin_datos";
 
@@ -135,6 +142,15 @@ export interface Aparicion {
   total_validas: number;
 }
 
+/**
+ * Variantes de marca (C2). `deteccion` = medido (determinista); `observadas` =
+ * inferido por los modelos. Se muestran por separado y marcando cuál es cuál.
+ */
+export interface VariantesMarca {
+  deteccion: string[];
+  observadas: string[];
+}
+
 /** La marca SIEMPRE está presente en el mapa, aunque sea con 0 menciones. */
 export interface CompetidorMapa {
   empresa: string;
@@ -170,6 +186,21 @@ export interface InformeLite {
   posicionamiento: { veredicto: Veredicto };
   /** Avisos de fiabilidad. Se muestran SIEMPRE tal cual. Vacío = todo medible. */
   avisos: string[];
+  /**
+   * Estado por módulo (E3): completed | partial | failed. Un módulo caído (ningún
+   * modelo respondió, el agente devolvió JSON no parseable) se marca y el render
+   * lo dice, en vez de fingir un 0. Claves LITE: seo_tecnico, huella_digital,
+   * visibilidad, informe.
+   */
+  estados_modulos?: Record<string, EstadoModulo>;
+  /**
+   * Variantes/erratas de marca (C2). `deteccion` es MEDIDO (tokens deterministas
+   * con los que el sistema identifica la marca); `observadas` es INFERIDO (las
+   * grafías que los modelos dicen haber usado, ya filtradas para que no se cuele
+   * un competidor). El render las etiqueta como medido vs inferido; nunca
+   * alimentan menciones ni share-of-voice.
+   */
+  variantes_marca?: VariantesMarca;
   seo_tecnico: { puntos: PuntoSeoTecnico[]; bloqueados: number };
   huella_digital: HuellaDigital;
   preguntas: PreguntaInforme[];

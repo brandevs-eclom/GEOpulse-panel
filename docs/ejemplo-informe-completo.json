@@ -47,7 +47,10 @@
       "https://www.brandevs.com/diseno-web-mudanzas-romero",
       "https://www.brandevs.com/diseno-web-mancomunidad-la-maliciosa",
       "https://www.brandevs.com/diseno-web-electricidad-chasquea"
-    ]
+    ],
+    "analysis_version": "completo-v10",
+    "scoring_version": "score-v1",
+    "prompt_version": "prompt-v2"
   },
   "score": {
     "pesos": {
@@ -3884,6 +3887,16 @@
     "estructura_extraccion": {
       "estado": "warning",
       "detalle": "La página está bien segmentada en secciones y usa chunks relativamente autocontenidos, con listas y bloques cortos que facilitan extracción. Sin embargo, varios apartados dependen del contexto previo para cerrar el mensaje, y el extracto muestra repeticiones comerciales más que respuestas completas por sección."
+    },
+    "answer_first": {
+      "estado": "warning",
+      "detalle": "La propuesta de valor aparece, pero por debajo de un bloque de marca; la respuesta directa a la intención no está en las primeras frases."
+    },
+    "intent_mismatch": {
+      "estado": "ok",
+      "detalle": "La keyword es comercial y la home es comercial: encajan.",
+      "intencion_keyword": "comercial",
+      "tipo_pagina": "comercial"
     }
   },
   "fuentes_sector": {
@@ -5536,5 +5549,18 @@
       "clutch.co",
       "sortlist.com"
     ]
+  },
+  "estados_modulos": {
+    "seo_tecnico": "completed",
+    "infraestructura_geo": "completed",
+    "contenido_geo": "completed",
+    "huella_digital": "completed",
+    "fuentes_sector": "completed",
+    "descubrimiento": "completed",
+    "competitivo": "completed",
+    "conocimiento": "completed",
+    "reputacion": "completed",
+    "informe_llm": "completed",
+    "sintesis": "completed"
   }
 }

@@ -45,6 +45,8 @@ export const ETIQUETA_PUNTO: Record<string, string> = {
   jerarquia_contenido: "Jerarquía de encabezados",
   estructura_extraccion: "Facilidad de extracción",
   intent_match: "Ajuste a la intención de búsqueda",
+  answer_first: "Answer-first (inferido por IA)",
+  intent_mismatch: "Coincidencia de intención (inferido por IA)",
   indice_autoridad: "Índice de autoridad",
   claridad_nucleo: "Claridad del núcleo",
   entidades: "Entidades detectadas",
@@ -70,6 +72,50 @@ export interface MetaCompleto {
   /** El completo usa `sondeos_totales`, no `sondeos`. */
   sondeos_totales?: number;
   landings_analizadas?: string[];
+  /**
+   * Versionado del análisis (E2). Sella cada informe para poder comparar
+   * ejecuciones: si el pipeline, el scoring o los prompts cambian, dos informes
+   * dejan de ser comparables aunque el dominio sea el mismo.
+   */
+  analysis_version?: string;
+  scoring_version?: string;
+  prompt_version?: string;
+  /**
+   * Resumen de coste (E1). Observabilidad interna, no se muestra al cliente.
+   * `tokens_total` es MEDIDO; `estimated_cost_usd` es una estimación y es un
+   * suelo cuando `coste_completo` es false (falta la tarifa de algún modelo).
+   */
+  estimated_cost_usd?: number;
+  coste_completo?: boolean;
+  tokens_total?: number;
+}
+
+/**
+ * Coste por ejecución (E1). Tokens medidos del `usage` real de cada API + coste
+ * estimado desde una tabla de tarifas editable. Es observabilidad interna del
+ * panel: nunca se enseña en el informe del cliente.
+ */
+export interface CosteRun {
+  token_usage: { input: number; output: number; total: number };
+  /** Estimación en USD. Cota inferior si `completo` es false. */
+  estimated_cost_usd: number;
+  /** false ⇒ falta la tarifa de algún modelo y el coste es un suelo. */
+  completo: boolean;
+  request_count: number;
+  fallos: number;
+  reintentos: number;
+  por_modelo: Array<{
+    modelo: string;
+    requests: number;
+    input: number;
+    output: number;
+    coste_usd: number;
+    sin_precio: boolean;
+  }>;
+  sin_precio: string[];
+  precios: { estimado: boolean; fecha: string; fuente: string };
+  /** Nodos cuyo coste no se puede medir (los agentes langchain no exponen usage). */
+  no_medido?: { agentes: string[]; motivo: string };
 }
 
 export interface ScoreCompleto {
@@ -365,10 +411,21 @@ export interface EmpresaMapa {
   por_modelo?: Partial<Record<ClaveModelo, number>>;
 }
 
+/** Estado de un módulo del análisis (E3). */
+export type EstadoModulo = "completed" | "partial" | "failed";
+
 /** El informe completo tal cual lo devuelve `Ensamblar Reporte`. */
 export interface InformeCompleto {
   meta: MetaCompleto;
   score: ScoreCompleto;
+  /**
+   * Estado por módulo (E3): completed | partial | failed. Un módulo caído (un
+   * modelo que no respondió, un bloque sin datos) no invalida el resto: se marca
+   * y el render lo dice, en vez de fingir un 0.
+   */
+  estados_modulos?: Record<string, EstadoModulo>;
+  /** Coste por ejecución (E1). Observabilidad interna, no se muestra al cliente. */
+  coste?: CosteRun;
   infraestructura_geo?: Record<string, PuntoTecnico>;
   seo_tecnico?: Record<string, PuntoTecnico>;
   contenido_geo?: Record<string, PuntoTecnico>;

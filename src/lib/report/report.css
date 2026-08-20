@@ -275,6 +275,13 @@
   border-color: #f6c9c4;
   color: var(--accent-dark);
 }
+/* Chip de dato INFERIDO por el LLM (C2): borde discontinuo para distinguirlo a
+   simple vista de un dato medido, sin gritar. */
+.informe .tag-inferido {
+  background: transparent;
+  border-style: dashed;
+  font-style: italic;
+}
 
 /* Preguntas (acordeón con respuestas literales) */
 .informe .q-item {
@@ -557,5 +564,26 @@
     flex-direction: column;
     text-align: center;
     gap: 16px;
+  }
+}
+
+/* Impresión / PDF del informe LITE (G12). El COMPLETO trae su propio @media print
+   en report-completo.css (generado por scripts/portar_css_informe.py). Aquí, para
+   el LITE: abrir el acordeón de preguntas (si no, .q-body{max-height:0} imprime las
+   respuestas colapsadas y se pierden), fondo blanco y evitar cortar tarjetas. */
+@media print {
+  .informe .q-body {
+    max-height: none !important;
+    overflow: visible !important;
+    transition: none !important;
+  }
+  .informe .card,
+  .informe .q-item,
+  .informe .tile {
+    break-inside: avoid;
+  }
+  .informe .dark {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }

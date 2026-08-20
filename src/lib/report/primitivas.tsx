@@ -51,20 +51,42 @@ export const AREAS: Array<[string, string]> = [
 
 export function AreaTiles({
   por_area,
+  enlaces,
 }: {
   por_area: Record<string, number | null | undefined>;
+  /**
+   * Ancla a la que salta cada área, por clave. Convierte cada nota en un enlace
+   * al bloque que la explica: ver un 34 y no poder llegar al porqué obliga a
+   * buscarlo a mano en un informe de 20 pantallas.
+   *
+   * Opcional: el informe LITE no tiene secciones con ancla y se queda igual.
+   */
+  enlaces?: Record<string, string>;
 }) {
   return (
     <div className="areas">
       {AREAS.map(([k, lab]) => {
         const v = typeof por_area?.[k] === "number" ? (por_area[k] as number) : null;
-        return (
-          <div className="tile" key={k}>
+        const ancla = enlaces?.[k];
+        const dentro = (
+          <>
             <div className="t-lbl">{lab}</div>
             <div className="t-val" style={{ color: tono(v) }}>
               {v === null ? "–" : v}
+              <span className="sr-only">
+                {v === null ? " sin datos" : " sobre 100"}
+              </span>
             </div>
             <Barra v={v} />
+          </>
+        );
+        return ancla ? (
+          <a className="tile tile-link" href={`#${ancla}`} key={k}>
+            {dentro}
+          </a>
+        ) : (
+          <div className="tile" key={k}>
+            {dentro}
           </div>
         );
       })}

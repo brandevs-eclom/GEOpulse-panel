@@ -16,13 +16,16 @@ import type {
   SitioRecomendado,
 } from "@/lib/shared/report-completo";
 import type { ClaveModelo } from "@/lib/shared/report";
-import { AreaTiles, Avisos, Barra, ScoreRing, Seccion } from "./primitivas";
+import { AreaTiles, Avisos, Barra, ScoreRing } from "./primitivas";
 import {
   Accion,
+  Desplegable,
   Donut,
   Ficha,
+  IndiceInforme,
   Metrica,
   PALETA_DONUT,
+  SeccionInforme,
   Tabla,
   peor,
   type FilaTabla,
@@ -34,20 +37,38 @@ import "./report-completo.css";
 /**
  * Render del informe COMPLETO.
  *
- * La DISPOSICIÓN Y EL ORDEN DE BLOQUES son los del informe original
- * (workflows/geopulse-frontend-brandevs.html, el frontend que genera el PDF que
- * ve el cliente). Concretamente:
+ * DISPOSICIÓN
+ * El sistema visual (color, tipografía, formas, ritmo) está portado del mockup
+ * informe-brandevs-completo(2).html: los tokens viven en
+ * scripts/portar_css_informe.py y se aplican ACOTADOS a `.informe.informe-completo`
+ * para no repintar el chrome del panel. Los titulares van en Space Grotesk (por
+ * petición; el mockup usaba Manrope), el cuerpo en Inter.
  *
- *   cabecera · confusión de entidad · GEO Score · áreas · preguntas lanzadas
- *   → CIMIENTOS (SEO técnico, 5 tarjetas)
- *   → OFF-PAGE (huella externa, 2 tarjetas)
- *   → MOTORES GENERATIVOS (veredicto, resumen, modelo por modelo, cuota de voz,
- *     las 4 dimensiones, memoria vs. web, fuentes del sector, dónde ganar
- *     presencia, gaps, citas, plan LLM, KPIs)
- *   → plan de acción global
+ * El informe son OCHO secciones de primer nivel, cada una un `<section>` con su
+ * `id`, que es lo que hace navegable el índice (`INDICE`):
  *
- * Si hay que cambiar el orden, se cambia AQUÍ y en el frontend original, no en
- * uno solo: los dos tienen que enseñar lo mismo.
+ *   1. diagnostico-global   nota + titular + verdict-tag + áreas + avisos
+ *   2. metodologia          las preguntas lanzadas (va justo tras el diagnóstico)
+ *   3. visibilidad-en-ia    veredicto, resumen, modelo por modelo, memoria vs. web
+ *   4. cuota-de-voz         donuts y mapa competitivo completo
+ *   5. dimensiones          las 4 dimensiones del sondeo, en pestañas
+ *   6. cimientos-tecnicos   SEO técnico (5 tarjetas)
+ *   7. huella-externa       presencia, E-E-A-T-C, fuentes y dónde ganar presencia
+ *   8. plan-de-accion       gaps, oportunidades, citas, planes y KPIs
+ *
+ * `metodologia` y `cuota-de-voz` son las dos secciones exceptuadas del rediseño:
+ * conservan su estructura, solo heredan la paleta y la tipografía nuevas.
+ *
+ * El índice es un sidebar fijo a la IZQUIERDA (260px, numerado, con el GEO Score
+ * al pie); el contenido, una columna de lectura de 840px. Dentro sigue habiendo
+ * rejillas de tarjetas: no son columnas del documento, son piezas homogéneas que
+ * se comparan entre sí. La prosa se ajusta a su contenedor.
+ *
+ * ACCESIBILIDAD
+ * El estado nunca viaja solo en el color: cada punto y cada métrica llevan glifo
+ * (decorativo) más el estado en texto para lectores de pantalla. La jerarquía es
+ * h1 (la página) → h2 (sección) → h3 (bloque). Hay foco visible, respeto a
+ * prefers-reduced-motion y hoja de impresión.
  *
  * Honestidad (docs/00): lo que el agente no pudo rellenar se dice ("sin datos"),
  * no se oculta ni se convierte en un 0. `no_verificable` se pinta en gris.
@@ -114,81 +135,347 @@ export function InformeCompletoView({ informe }: { informe: InformeCompleto }) {
     sondeo.conocimiento?.confusion_entidad,
   ].filter((x): x is ConfusionEntidad => !!x?.detectada);
 
+  const inf = informe.informe_llm ?? {};
+  const nivel = inf.veredicto_visibilidad?.nivel;
+
   return (
-    <div className="informe informe-completo">
-      <p className="meta">{cabecera}</p>
+    <article className="informe informe-completo">
+      <div className="con-indice">
+        <IndiceInforme entradas={INDICE} nota={num(score.global)} />
 
-      {/* Confusión de entidad: según el prompt del agente es MÁS grave que la
-          ausencia, así que va antes que la nota. */}
-      {confusiones.length > 0 && (
-        <div className="errbox">
-          <h3>Confusión de entidad detectada</h3>
-          <p>
-            {confusiones
-              .map((x) => x.detalle)
-              .filter(Boolean)
-              .join(" ") ||
-              "Al menos un modelo describe una empresa homónima distinta de la auditada."}
-          </p>
+        <div>
+          {/* La cabecera y el aviso van DENTRO de la columna de contenido, no
+              como hijos sueltos del informe: si no, se estiran a todo el ancho
+              (sidebar incluido) y la línea de meta, alineada a la derecha,
+              sobresalía por encima del diagnóstico. */}
+          <p className="meta">{cabecera}</p>
+
+          {/* Confusión de entidad: según el prompt del agente es MÁS grave que la
+              ausencia, así que va antes que la nota. */}
+          {confusiones.length > 0 && (
+            <aside className="errbox" role="note" aria-labelledby="confusion-t">
+              <h2 id="confusion-t">Confusión de entidad detectada</h2>
+              <p>
+                {confusiones
+                  .map((x) => x.detalle)
+                  .filter(Boolean)
+                  .join(" ") ||
+                  "Al menos un modelo describe una empresa homónima distinta de la auditada."}
+              </p>
+            </aside>
+          )}
+
+          {/* ===== 1. Diagnóstico ===== */}
+          {/* El hero lleva el título dentro (como el mockup), así que esta
+              sección no usa la cabecera de SeccionInforme: sería duplicarlo. */}
+          <section id="diagnostico-global" aria-labelledby="diagnostico-t" tabIndex={-1}>
+            <div className="dark">
+              <div className="score-row">
+                <ScoreRing nota={num(score.global)} />
+                <div>
+                  <span className="eyebrow">Diagnóstico global</span>
+                  {/* h2: es la cabecera de la primera sección; mantiene la
+                      jerarquía h1(página) → h2(sección) → h3(bloque). */}
+                  <h2 id="diagnostico-t" className="hero-verdict">
+                    Así te ve hoy la inteligencia artificial
+                    {nivel && (
+                      <span className={`verdict-tag n-${nivel}`}>{nivel}</span>
+                    )}
+                  </h2>
+                  {/* El titular del informe: dos o tres frases. El detalle de
+                      mercado y competidores vive en el resumen ejecutivo, más
+                      abajo; aquí solo va el resultado global. */}
+                  <p className="diagnostico">
+                    {sintesis.diagnostico_ejecutivo || "Auditoría completada."}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <AreaTiles por_area={score.por_area ?? {}} enlaces={ANCLA_AREA} />
+
+            {/* El informe puede traer avisos de honestidad (docs/00): se
+                muestran tal cual, nunca se filtran. */}
+            <Avisos avisos={(informe as { avisos?: string[] }).avisos} />
+
+            {/* Módulos que no se completaron (E3): se dicen, no se esconden. */}
+            <ModulosIncompletos estados={informe.estados_modulos} />
+          </section>
+
+          {/* ===== 2. Metodología (las 16 preguntas): va justo tras el
+              diagnóstico, no al final. Sigue siendo la sección exceptuada del
+              rediseño; solo cambia de sitio. ===== */}
+          <SeccionInforme
+            id="metodologia"
+            eyebrow="Metodología"
+            titulo="Cómo se ha medido"
+            sub="Las preguntas exactas que se lanzaron a los modelos. Son las mismas para todos, formuladas como las haría un cliente real."
+          >
+            <PreguntasLanzadas
+              preguntas={informe.preguntas}
+              descubrimiento={sondeo.descubrimiento}
+            />
+          </SeccionInforme>
+
+          {/* ===== 3. Visibilidad en IA ===== */}
+          <SeccionInforme
+            id="visibilidad-en-ia"
+            eyebrow="Motores generativos"
+            titulo="Tu visibilidad en las respuestas de la IA"
+            sub={`${informe.meta?.preguntas_lanzadas ?? ""} preguntas de usuario real lanzadas a ChatGPT, Claude, Gemini y Perplexity, evaluadas por cuatro agentes especializados.`.trim()}
+          >
+            {/* Una columna: primero el veredicto, que es el dato con peso, y
+                debajo el resumen. La prosa se acota con --measure, no
+                partiendo la página en dos. */}
+            {nivel && (
+              <div className="verdict">
+                <div className={`v-chip v-${nivel}`}>{nivel}</div>
+                <p>{inf.veredicto_visibilidad?.justificacion || ""}</p>
+              </div>
+            )}
+            {inf.resumen_ejecutivo && (
+              <div className="exec">{inf.resumen_ejecutivo}</div>
+            )}
+
+            {(inf.tabla_visibilidad?.length ?? 0) > 0 && (
+              <div className="panel">
+                <h3>Modelo por modelo</h3>
+                <Tabla
+                  id="tabla-modelos"
+                  titulo="Qué sabe cada modelo de la marca"
+                  cabeceras={[
+                    "Modelo",
+                    "Descubrimiento",
+                    "Conoce la marca",
+                    "Sentimiento",
+                    "Observación",
+                  ]}
+                  filas={inf.tabla_visibilidad!.map((t) => ({
+                    celdas: [
+                      t.modelo || "",
+                      t.aparece_descubrimiento || "–",
+                      t.conoce_marca || "–",
+                      t.sentimiento || "–",
+                      t.observacion || "",
+                    ],
+                  }))}
+                />
+              </div>
+            )}
+
+            {inf.divergencia_parametrico_grounded && (
+              <div className="panel">
+                <span className="eyebrow">Memoria vs. web actual</span>
+                <h3>Lo que el modelo recuerda no es lo que la web dice hoy</h3>
+                <p className="card-text">
+                  {inf.divergencia_parametrico_grounded}
+                </p>
+              </div>
+            )}
+          </SeccionInforme>
+
+          {/* ===== 4. Cuota de voz ===== */}
+          <SeccionInforme
+            id="cuota-de-voz"
+            eyebrow="Cuota de voz"
+            titulo="Quién ocupa tu espacio en las respuestas de la IA"
+            sub="Reparto de menciones entre tu marca y sus competidores, motor por motor. Tu marca aparece siempre, aunque su cuota sea cero."
+          >
+            {/* Ancho completo: los 5 donuts y una tabla de 7 columnas no caben
+                en media pantalla sin scroll horizontal. */}
+            <CuotaDeVoz informe={informe} />
+          </SeccionInforme>
+
+          {/* ===== 5. Las 4 dimensiones ===== */}
+          <SeccionInforme
+            id="dimensiones"
+            eyebrow="Las 4 dimensiones"
+            titulo="De qué se compone tu visibilidad"
+            sub="Cada dimensión se sondea por separado con su propio agente: qué te descubre, con quién te compara, qué sabe de ti y en qué tono habla."
+          >
+            <Dimensiones informe={informe} />
+          </SeccionInforme>
+
+          {/* ===== 6. Cimientos técnicos ===== */}
+          <SeccionInforme
+            id="cimientos-tecnicos"
+            eyebrow="Cimientos"
+            titulo="SEO técnico"
+            sub="La base que decide si la IA puede encontrarte, leerte y entenderte. Verificado contra fuentes reales: tu servidor y el validador oficial de schema.org."
+          >
+            {/* Rejilla: cinco tarjetas del mismo tipo que se comparan por su
+                punto de estado. */}
+            <div className="rejilla">
+              <TarjetaRastreo informe={informe} />
+              <TarjetaIndexacion informe={informe} />
+              <TarjetaDatosEstructurados informe={informe} />
+              <TarjetaContenido informe={informe} />
+              <TarjetaSemantica informe={informe} />
+            </div>
+          </SeccionInforme>
+
+          {/* ===== 7. Huella externa ===== */}
+          <SeccionInforme
+            id="huella-externa"
+            eyebrow="Off-page"
+            titulo="Tu huella fuera de tu web"
+            sub="Dónde te mencionan, con cuánta fuerza y si la IA te reconoce como autoridad. Investigación orgánica y global, sin filtro de país."
+          >
+            <div className="rejilla">
+              <TarjetaPresenciaExterna huella={informe.huella_digital} />
+              <TarjetaEeatc huella={informe.huella_digital} />
+            </div>
+            <FuentesDelSector informe={informe} />
+            <DondeGanarPresencia
+              recomendaciones={informe.recomendaciones_huella}
+              competidores={informe.mapa_competitivo}
+            />
+          </SeccionInforme>
+
+          {/* ===== 8. Qué hacer ===== */}
+          <SeccionInforme
+            id="plan-de-accion"
+            eyebrow="Qué hacer"
+            titulo="Por dónde empezar"
+            sub="Ordenado por impacto. Cada acción sale de un hallazgo concreto de este informe."
+          >
+            <GapsYOportunidades informe={informe} />
+            <Citas informe={informe} />
+            <PlanesYKpis informe={informe} />
+            <PlanGlobal sintesis={sintesis} />
+          </SeccionInforme>
+
+          {/* Versionado del análisis (E2): sella con qué pipeline, scoring y
+              prompts se generó, para poder comparar ejecuciones. */}
+          <VersionFoot meta={meta} />
         </div>
-      )}
-
-      {/* ===== GEO Score ===== */}
-      <div className="dark">
-        <div className="score-row">
-          <ScoreRing nota={num(score.global)} />
-          <div>
-            <span className="eyebrow eyebrow-dark">Diagnóstico global</span>
-            <h3>Así te ve hoy la inteligencia artificial</h3>
-            <p>{sintesis.diagnostico_ejecutivo || "Auditoría completada."}</p>
-          </div>
-        </div>
       </div>
-
-      <AreaTiles por_area={score.por_area ?? {}} />
-
-      {/* El informe puede traer avisos de honestidad (docs/00): se muestran tal
-          cual, nunca se filtran. */}
-      <Avisos avisos={(informe as { avisos?: string[] }).avisos} />
-
-      <PreguntasLanzadas
-        preguntas={informe.preguntas}
-        descubrimiento={sondeo.descubrimiento}
-      />
-
-      {/* ===== CIMIENTOS ===== */}
-      <Seccion
-        eyebrow="Cimientos"
-        titulo="SEO Técnico"
-        sub="La base técnica que decide si la IA puede encontrarte, leerte y entenderte. Verificado contra fuentes reales: tu servidor y el validador oficial de schema.org."
-      />
-      <div className="grid-cards">
-        <TarjetaRastreo informe={informe} />
-        <TarjetaIndexacion informe={informe} />
-        <TarjetaDatosEstructurados informe={informe} />
-        <TarjetaContenido informe={informe} />
-        <TarjetaSemantica informe={informe} />
-      </div>
-
-      {/* ===== OFF-PAGE ===== */}
-      <Seccion
-        eyebrow="Off-page"
-        titulo="Huella digital externa"
-        sub="Tu presencia fuera de tu propia web: dónde te mencionan, con cuánta fuerza y si la IA te reconoce como autoridad. Investigación orgánica y global, sin filtro de país."
-      />
-      <div className="grid-cards">
-        <TarjetaPresenciaExterna huella={informe.huella_digital} />
-        <TarjetaEeatc huella={informe.huella_digital} />
-      </div>
-
-      {/* ===== MOTORES GENERATIVOS ===== */}
-      <MotoresGenerativos informe={informe} />
-
-      {/* ===== Plan de acción global ===== */}
-      <PlanGlobal sintesis={sintesis} />
-    </div>
+    </article>
   );
 }
+
+/** Etiqueta legible de cada módulo del análisis. */
+const ETIQUETA_MODULO: Record<string, string> = {
+  seo_tecnico: "SEO técnico",
+  infraestructura_geo: "Infraestructura GEO",
+  contenido_geo: "Contenido",
+  huella_digital: "Huella externa",
+  fuentes_sector: "Fuentes del sector",
+  descubrimiento: "Descubrimiento",
+  competitivo: "Competitivo",
+  conocimiento: "Conocimiento",
+  reputacion: "Reputación",
+  informe_llm: "Informe de visibilidad",
+  sintesis: "Síntesis",
+};
+
+/**
+ * Aviso de módulos incompletos (E3). Solo se pinta si algún módulo quedó
+ * `partial` o `failed`; cuando todo corrió bien no aparece nada. Distingue "se
+ * pudo medir a medias" de "no se pudo": no es lo mismo y el cliente debe saberlo.
+ */
+function ModulosIncompletos({
+  estados,
+}: {
+  estados?: Record<string, string>;
+}) {
+  if (!estados) return null;
+  const parciales = Object.entries(estados)
+    .filter(([, v]) => v === "partial")
+    .map(([k]) => ETIQUETA_MODULO[k] ?? k);
+  const fallidos = Object.entries(estados)
+    .filter(([, v]) => v === "failed")
+    .map(([k]) => ETIQUETA_MODULO[k] ?? k);
+  if (parciales.length === 0 && fallidos.length === 0) return null;
+
+  return (
+    <aside className="avisos" role="note" aria-label="Módulos incompletos">
+      {fallidos.length > 0 && (
+        <div className="aviso">
+          <span className="aviso-ico">!</span>
+          <span>
+            <b>No se pudo completar:</b> {fallidos.join(", ")}. El resto del
+            informe es válido; estos bloques no se han podido medir en esta
+            ejecución.
+          </span>
+        </div>
+      )}
+      {parciales.length > 0 && (
+        <div className="aviso">
+          <span className="aviso-ico">!</span>
+          <span>
+            <b>Medido a medias:</b> {parciales.join(", ")}. Corrieron pero sin
+            datos suficientes; tómalos como orientativos.
+          </span>
+        </div>
+      )}
+    </aside>
+  );
+}
+
+/** Pie discreto con las versiones del análisis (E2). */
+function VersionFoot({ meta }: { meta: InformeCompleto["meta"] }) {
+  const partes = [
+    meta.analysis_version && `análisis ${meta.analysis_version}`,
+    meta.scoring_version && `scoring ${meta.scoring_version}`,
+    meta.prompt_version && `prompts ${meta.prompt_version}`,
+  ].filter(Boolean);
+  if (partes.length === 0) return null;
+  return <p className="version-foot">{partes.join(" · ")}</p>;
+}
+
+/**
+ * A qué sección lleva cada nota de área. Convierte las cuatro cifras de
+ * cabecera en enlaces al bloque que las explica.
+ */
+const ANCLA_AREA: Record<string, string> = {
+  seo_tecnico: "cimientos-tecnicos",
+  contenido: "cimientos-tecnicos",
+  sov: "visibilidad-en-ia",
+  huella: "huella-externa",
+};
+
+/**
+ * A qué sección lleva cada KPI.
+ *
+ * Los KPI los redacta un agente en texto libre ("Cuota de voz en
+ * descubrimiento", "Dominios del sector que te citan"...), así que no hay clave
+ * por la que mapear: se resuelve por palabras. Si ninguna casa, el KPI se queda
+ * como texto plano — mejor eso que un enlace que lleva al sitio equivocado.
+ */
+const PALABRAS_ANCLA: Array<[RegExp, string]> = [
+  [/cuota|share|sov|menciones|competid|rival|comparativa/i, "cuota-de-voz"],
+  [/schema|json-?ld|robots|bot|rastreo|index|render|encabezado|sitemap|llms\.txt|t[eé]cnic/i, "cimientos-tecnicos"],
+  [
+    /huella|directorio|medio|foro|rese[ñn]a|autoridad|e-?e-?a-?t|backlink|credibilidad|extern|cita.*dominio|dominio.*cita/i,
+    "huella-externa",
+  ],
+  [
+    /visibilidad|aparic|aparec|descubrimiento|discovery|posici|modelo|chatgpt|claude|gemini|perplexity|respuesta/i,
+    "visibilidad-en-ia",
+  ],
+  [
+    /conocimiento|reputaci|sentimiento|alucinaci|objeci|consistencia|descripci|coheren/i,
+    "dimensiones",
+  ],
+];
+
+function anclaDeKpi(texto: string): string | null {
+  for (const [re, ancla] of PALABRAS_ANCLA) if (re.test(texto)) return ancla;
+  return null;
+}
+
+/** Índice navegable. El orden es el del informe; las anclas, las de cada sección. */
+const INDICE: Array<{ texto: string; ancla: string }> = [
+  { texto: "Diagnóstico", ancla: "diagnostico-global" },
+  { texto: "Metodología", ancla: "metodologia" },
+  { texto: "Visibilidad en IA", ancla: "visibilidad-en-ia" },
+  { texto: "Cuota de voz", ancla: "cuota-de-voz" },
+  { texto: "Las 4 dimensiones", ancla: "dimensiones" },
+  { texto: "Cimientos técnicos", ancla: "cimientos-tecnicos" },
+  { texto: "Huella externa", ancla: "huella-externa" },
+  { texto: "Qué hacer", ancla: "plan-de-accion" },
+];
 
 // ============================================================
 // Metodología
@@ -377,10 +664,12 @@ function TarjetaIndexacion({ informe }: { informe: InformeCompleto }) {
         estado={est(g(seo, "jerarquia_contenido.estado"))}
         detalle={txt(g(seo, "jerarquia_contenido.detalle"))}
       />
-      {/* Detalle página por página: en el informe se pierde si no se pinta. */}
+      {/* Detalle página por página: bloque denso, plegado por defecto. */}
       {paginas.length > 0 && (
-        <>
-          <p className="m-detail">Análisis página por página:</p>
+        <Desplegable
+          titulo="Análisis página por página"
+          cuenta={`${paginas.length} ${paginas.length === 1 ? "página" : "páginas"}`}
+        >
           {paginas.slice(0, 15).map((pg, i) => (
             <Metrica
               key={i}
@@ -397,7 +686,7 @@ function TarjetaIndexacion({ informe }: { informe: InformeCompleto }) {
               detalle={txt(pg.detalle)}
             />
           ))}
-        </>
+        </Desplegable>
       )}
     </Ficha>
   );
@@ -487,6 +776,23 @@ function TarjetaContenido({ informe }: { informe: InformeCompleto }) {
         estado={est(g(cont, "intent_match.estado"))}
         detalle={txt(g(cont, "intent_match.detalle"))}
       />
+      {/* [B2] answer-first e intent-mismatch: informativos e INFERIDOS por el
+          LLM. Fuera del estado de la Ficha (no pesan en la nota). Solo se pintan
+          si el informe los trae (prompt-v2+): un informe viejo no los inventa. */}
+      {g(cont, "answer_first.estado") ? (
+        <Metrica
+          etiqueta="Answer-first (inferido por IA)"
+          estado={est(g(cont, "answer_first.estado"))}
+          detalle={txt(g(cont, "answer_first.detalle"))}
+        />
+      ) : null}
+      {g(cont, "intent_mismatch.estado") ? (
+        <Metrica
+          etiqueta="Coincidencia de intención (inferido por IA)"
+          estado={est(g(cont, "intent_mismatch.estado"))}
+          detalle={txt(g(cont, "intent_mismatch.detalle"))}
+        />
+      ) : null}
       <Metrica
         etiqueta="Chunks autocontenidos"
         estado={est(g(cont, "estructura_extraccion.estado"))}
@@ -671,130 +977,139 @@ function TarjetaEeatc({ huella }: { huella?: HuellaDigital }) {
 // Motores generativos
 // ============================================================
 
-function MotoresGenerativos({ informe }: { informe: InformeCompleto }) {
+/**
+ * Gaps y oportunidades.
+ *
+ * En rejilla porque son fichas homogéneas que se comparan entre sí; a ancho
+ * completo cada una quedaba en dos líneas de 130 caracteres.
+ *
+ * Y en DOS paneles, no en uno: antes las oportunidades vivían anidadas dentro
+ * del panel de gaps y solo se pintaban si había gaps, así que un informe sin
+ * gaps se comía también las oportunidades.
+ */
+function GapsYOportunidades({ informe }: { informe: InformeCompleto }) {
   const inf = informe.informe_llm ?? {};
-  const mapa = (informe.mapa_competitivo ?? []).filter((x) => x?.empresa);
-  const nivel = inf.veredicto_visibilidad?.nivel;
-
-  if (!inf.resumen_ejecutivo && !nivel && mapa.length === 0) return null;
+  const gaps = inf.gaps_criticos ?? [];
+  const oportunidades = inf.oportunidades ?? [];
+  if (gaps.length === 0 && oportunidades.length === 0) return null;
 
   return (
     <>
-      <Seccion
-        eyebrow="Motores generativos"
-        titulo="Tu visibilidad en las respuestas de la IA"
-        sub={`${informe.meta?.preguntas_lanzadas ?? ""} preguntas de usuario real lanzadas a ChatGPT, Claude, Gemini y Perplexity, evaluadas por cuatro agentes especializados.`.trim()}
-      />
-
-      {nivel && (
-        <div className="verdict">
-          <div className={`v-chip v-${nivel}`}>{nivel}</div>
-          <p>{inf.veredicto_visibilidad?.justificacion || ""}</p>
-        </div>
-      )}
-      {inf.resumen_ejecutivo && <div className="exec">{inf.resumen_ejecutivo}</div>}
-
-      {(inf.tabla_visibilidad?.length ?? 0) > 0 && (
-        <div className="panel">
-          <h3>Modelo por modelo</h3>
-          <Tabla
-            cabeceras={[
-              "Modelo",
-              "Descubrimiento",
-              "Conoce la marca",
-              "Sentimiento",
-              "Observación",
-            ]}
-            filas={inf.tabla_visibilidad!.map((t) => ({
-              celdas: [
-                t.modelo || "",
-                t.aparece_descubrimiento || "–",
-                t.conoce_marca || "–",
-                t.sentimiento || "–",
-                t.observacion || "",
-              ],
-            }))}
-          />
-        </div>
-      )}
-
-      <CuotaDeVoz informe={informe} />
-      <Dimensiones informe={informe} />
-
-      {inf.divergencia_parametrico_grounded && (
-        <div className="panel">
-          <span className="eyebrow">Memoria vs. web actual</span>
-          <h3>Lo que el modelo recuerda no es lo que la web dice hoy</h3>
-          <p className="card-text">{inf.divergencia_parametrico_grounded}</p>
-        </div>
-      )}
-
-      <FuentesDelSector informe={informe} />
-      <DondeGanarPresencia
-        recomendaciones={informe.recomendaciones_huella}
-        competidores={informe.mapa_competitivo}
-      />
-
-      {(inf.gaps_criticos?.length ?? 0) > 0 && (
+      {gaps.length > 0 && (
         <div className="panel">
           <span className="eyebrow">Los agujeros</span>
           <h3>Gaps críticos</h3>
-          {inf.gaps_criticos!.map((x, i) => (
-            <div className="gap" key={i}>
-              <div className="g-t">{x.gap || ""}</div>
-              {x.evidencia && <div className="g-b">{`Evidencia: ${x.evidencia}`}</div>}
-              {x.impacto && <div className="g-b">{`Impacto: ${x.impacto}`}</div>}
-            </div>
-          ))}
-          {(inf.oportunidades?.length ?? 0) > 0 && (
-            <div className="wins">
-              <h4>Oportunidades</h4>
-              <ul>
-                {inf.oportunidades!.map((o, i) => (
-                  <li key={i}>{o}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <div className="rejilla">
+            {gaps.map((x, i) => (
+              <div className="card gap" key={i}>
+                <div className="g-t">{x.gap || ""}</div>
+                {x.evidencia && (
+                  <div className="g-b">{`Evidencia: ${x.evidencia}`}</div>
+                )}
+                {x.impacto && <div className="g-b">{`Impacto: ${x.impacto}`}</div>}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
-      {(inf.citas_destacadas?.length ?? 0) > 0 && (
+      {oportunidades.length > 0 && (
         <div className="panel">
-          <span className="eyebrow">Textual</span>
-          <h3>Lo que la IA dice de ti, literalmente</h3>
-          {/* Orden: la pregunta arriba (contexto), la respuesta debajo y el
-              modelo como fuente al pie. La respuesta conserva el tamaño grande:
-              es lo que hay que leer, la pregunta solo la sitúa. */}
-          {inf.citas_destacadas!.map((x, i) => (
-            <div className="quote" key={i}>
-              {x.pregunta && <p className="q-p">{x.pregunta}</p>}
-              <p className="q-t">{`“${entrecomillar(x.cita)}”`}</p>
-              {x.modelo && <p className="q-m">{x.modelo}</p>}
-            </div>
-          ))}
+          <span className="eyebrow">Lo que juega a favor</span>
+          <h3>Oportunidades</h3>
+          <div className="wins">
+            <ul>
+              {oportunidades.map((o, i) => (
+                <li key={i}>{o}</li>
+              ))}
+            </ul>
+          </div>
         </div>
       )}
+    </>
+  );
+}
 
-      {(inf.plan_accion_llm?.length ?? 0) > 0 && (
+/**
+ * Lo que la IA dice, literalmente.
+ *
+ * Rejilla de tarjetas: las citas son muy desiguales (de 10 a 65 caracteres) y
+ * una cita corta estirada a todo el ancho rompe el ritmo una y otra vez.
+ */
+function Citas({ informe }: { informe: InformeCompleto }) {
+  const citas = informe.informe_llm?.citas_destacadas ?? [];
+  if (citas.length === 0) return null;
+
+  return (
+    <div className="panel">
+      <span className="eyebrow">Textual</span>
+      <h3>Lo que la IA dice de ti, literalmente</h3>
+      {/* Orden: la pregunta arriba (contexto), la respuesta debajo y el modelo
+          como fuente al pie. La respuesta conserva el tamaño grande: es lo que
+          hay que leer, la pregunta solo la sitúa. */}
+      <div className="rejilla">
+        {citas.map((x, i) => (
+          <blockquote className="quote" key={i}>
+            {x.pregunta && <p className="q-p">{x.pregunta}</p>}
+            <p className="q-t">{`“${entrecomillar(x.cita)}”`}</p>
+            {x.modelo && <p className="q-m">{x.modelo}</p>}
+          </blockquote>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Plan del agente de informe y KPIs.
+ *
+ * A UNA columna a propósito: es una lista priorizada y numerada, y el orden es
+ * el mensaje. En dos columnas el lector no sabe si leer en Z o en columna y la
+ * secuencia se pierde. La tabla de KPIs también va a ancho completo: dos de sus
+ * tres columnas son frases, no cifras.
+ */
+function PlanesYKpis({ informe }: { informe: InformeCompleto }) {
+  const inf = informe.informe_llm ?? {};
+  const plan = inf.plan_accion_llm ?? [];
+  const kpis = inf.kpis_seguimiento ?? [];
+  if (plan.length === 0 && kpis.length === 0) return null;
+
+  return (
+    <>
+      {plan.length > 0 && (
         <div className="panel">
-          <span className="eyebrow">Qué hacer</span>
-          <h3>Plan para ganar visibilidad en IA</h3>
-          {inf.plan_accion_llm!.map((a, i) => (
+          <span className="eyebrow">Visibilidad en IA</span>
+          <h3>Plan para ganar visibilidad</h3>
+          {plan.map((a, i) => (
             <Accion a={a} i={i} key={i} />
           ))}
         </div>
       )}
 
-      {(inf.kpis_seguimiento?.length ?? 0) > 0 && (
+      {kpis.length > 0 && (
         <div className="panel">
           <span className="eyebrow">Medición</span>
           <h3>KPIs para la próxima auditoría</h3>
           <Tabla
+            id="tabla-kpis"
+            titulo="Indicadores a vigilar, con su valor de hoy y el objetivo"
             cabeceras={["KPI", "Hoy", "Objetivo"]}
-            filas={inf.kpis_seguimiento!.map((k) => ({
-              celdas: [k.kpi || "", k.valor_actual || "–", k.objetivo || "–"],
-            }))}
+            filas={kpis.map((k) => {
+              const ancla = anclaDeKpi(k.kpi || "");
+              return {
+                celdas: [
+                  ancla ? (
+                    <a href={`#${ancla}`} key="k">
+                      {k.kpi}
+                    </a>
+                  ) : (
+                    k.kpi || ""
+                  ),
+                  k.valor_actual || "–",
+                  k.objetivo || "–",
+                ],
+              };
+            })}
           />
         </div>
       )}
@@ -883,14 +1198,9 @@ function CuotaDeVoz({ informe }: { informe: InformeCompleto }) {
   }));
 
   return (
+    // El titulo y la entradilla los pone ya la seccion que lo envuelve: aqui
+    // repetirlos era decir dos veces lo mismo con dos jerarquias distintas.
     <div className="panel panel-dark">
-      <span className="eyebrow">Cuota de voz</span>
-      <h3>Quién ocupa tu espacio en las respuestas de la IA</h3>
-      <p className="card-text">
-        Reparto de menciones entre tu marca y sus competidores, motor por motor.
-        Tu marca aparece siempre, aunque su cuota sea cero.
-      </p>
-
       <div className="donuts">
         <Donut titulo="Total" porciones={porciones((e) => e.menciones)} />
         {MODELOS.map(([mk, ml]) => (
@@ -949,32 +1259,93 @@ const DIMENSIONES: Array<[
   ["reputacion", "Reputación", "Qué dicen ante una objeción"],
 ];
 
+/** Estado de una dimensión a partir de su nota, para el punto de color. */
+function estadoDim(v: number | null): "ok" | "warning" | "error" | "" {
+  if (v === null) return "";
+  return v >= 75 ? "ok" : v >= 50 ? "warning" : "error";
+}
+
+/**
+ * Las 4 dimensiones en PESTAÑAS (como el mockup): una tab por dimensión con su
+ * punto de estado, y el detalle debajo. Es un patrón tab/tabpanel accesible:
+ * flechas del teclado mueven entre pestañas, cada panel se asocia a su tab.
+ */
 function Dimensiones({ informe }: { informe: InformeCompleto }) {
   const inf = informe.informe_llm ?? {};
   const bl = informe.sondeo_llm ?? {};
+  const desglose = informe.score?.desglose_sov;
 
-  const tarjetas = DIMENSIONES.map(([k, eyebrow, titulo]) => {
-    const dd = inf.analisis_por_dimension?.[k];
-    if (!dd) return null;
-    return (
-      <Ficha key={k} eyebrow={eyebrow} titulo={titulo} sinPunto>
-        {dd.resumen && <p className="card-text">{dd.resumen}</p>}
-        {dd.implicacion_negocio && (
-          <p className="card-text">
-            <b>Qué significa: </b>
-            {dd.implicacion_negocio}
-          </p>
-        )}
-        {k === "descubrimiento" && <DetalleDescubrimiento b={bl.descubrimiento} />}
-        {k === "competitivo" && <DetalleCompetitivo b={bl.competitivo} />}
-        {k === "conocimiento" && <DetalleConocimiento b={bl.conocimiento} />}
-        {k === "reputacion" && <DetalleReputacion b={bl.reputacion} />}
-      </Ficha>
-    );
-  }).filter(Boolean);
+  const disponibles = DIMENSIONES.filter(([k]) => inf.analisis_por_dimension?.[k]);
+  const [activa, setActiva] = useState(0);
+  if (disponibles.length === 0) return null;
+  const idx = Math.min(activa, disponibles.length - 1);
 
-  if (tarjetas.length === 0) return null;
-  return <div className="grid-cards">{tarjetas}</div>;
+  const detalle = (k: string) => {
+    if (k === "descubrimiento") return <DetalleDescubrimiento b={bl.descubrimiento} />;
+    if (k === "competitivo") return <DetalleCompetitivo b={bl.competitivo} />;
+    if (k === "conocimiento") return <DetalleConocimiento b={bl.conocimiento} />;
+    if (k === "reputacion") return <DetalleReputacion b={bl.reputacion} />;
+    return null;
+  };
+
+  return (
+    <div className="panel">
+      <div className="tabs" role="tablist" aria-label="Las 4 dimensiones">
+        {disponibles.map(([k, eyebrow], i) => {
+          const st = estadoDim(num(desglose?.[k]));
+          return (
+            <button
+              key={k}
+              type="button"
+              role="tab"
+              id={`tab-${k}`}
+              aria-selected={i === idx}
+              aria-controls={`panel-${k}`}
+              tabIndex={i === idx ? 0 : -1}
+              className={`tab${st ? ` st-${st}` : ""}`}
+              onClick={() => setActiva(i)}
+              onKeyDown={(e) => {
+                if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+                  e.preventDefault();
+                  const d = e.key === "ArrowRight" ? 1 : -1;
+                  setActiva((i + d + disponibles.length) % disponibles.length);
+                }
+              }}
+            >
+              <span className="d" aria-hidden="true" />
+              {eyebrow}
+            </button>
+          );
+        })}
+      </div>
+
+      {disponibles.map(([k, , titulo], i) => {
+        const dd = inf.analisis_por_dimension?.[k];
+        return (
+          <div
+            key={k}
+            id={`panel-${k}`}
+            role="tabpanel"
+            aria-labelledby={`tab-${k}`}
+            hidden={i !== idx}
+            className="tab-panel"
+          >
+            <div className="card">
+              <h3 className="sr-only">{titulo}</h3>
+              {dd?.resumen && <p className="card-text">{dd.resumen}</p>}
+              {dd?.implicacion_negocio && (
+                <div className="dim-impl">
+                  <b>Qué significa: </b>
+                  {dd.implicacion_negocio}
+                </div>
+              )}
+              {detalle(k)}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 function DetalleDescubrimiento({ b }: { b?: BloqueDescubrimiento }) {
@@ -1289,13 +1660,18 @@ function FuentesDelSector({ informe }: { informe: InformeCompleto }) {
         }
       />
       {dominios.length > 0 && (
-        <div className="tags">
-          {dominios.slice(0, 15).map((x, i) => (
-            <span className="tag" key={i}>
-              {`${x.dominio}${x.veces ? ` ×${x.veces}` : ""}`}
-            </span>
-          ))}
-        </div>
+        <Desplegable
+          titulo="Dominios que la IA cita en tu sector"
+          cuenta={`${dominios.length} ${dominios.length === 1 ? "dominio" : "dominios"}`}
+        >
+          <div className="tags">
+            {dominios.slice(0, 15).map((x, i) => (
+              <span className="tag" key={i}>
+                {`${x.dominio}${x.veces ? ` ×${x.veces}` : ""}`}
+              </span>
+            ))}
+          </div>
+        </Desplegable>
       )}
     </div>
   );
@@ -1358,6 +1734,12 @@ function DondeGanarPresencia({
       .map((c) => nucleoDominio(c.empresa.replace(/\s+/g, ""))),
   );
 
+  const totalSitios = CANALES_RECO.reduce(
+    (n, [clave]) =>
+      n + ((recomendaciones[clave] as SitioRecomendado[] | undefined)?.length ?? 0),
+    0,
+  );
+
   return (
     <div className="panel">
       <span className="eyebrow">Plan de enlaces</span>
@@ -1365,11 +1747,15 @@ function DondeGanarPresencia({
       {recomendaciones.resumen && (
         <p className="card-text">{recomendaciones.resumen}</p>
       )}
-      {CANALES_RECO.map(([clave, lab]) => {
-        const sitios = (recomendaciones[clave] as SitioRecomendado[]) ?? [];
-        if (!sitios.length) return null;
-        return (
-          <div className="reco-group" key={String(clave)}>
+      <Desplegable
+        titulo="Sitios donde ganar presencia"
+        cuenta={`${totalSitios} ${totalSitios === 1 ? "sitio" : "sitios"}`}
+      >
+        {CANALES_RECO.map(([clave, lab]) => {
+          const sitios = (recomendaciones[clave] as SitioRecomendado[]) ?? [];
+          if (!sitios.length) return null;
+          return (
+            <div className="reco-group" key={String(clave)}>
             <div className="reco-cat">{lab}</div>
             {sitios.map((x, i) => {
               const dom = String(x.sitio ?? x.dominio ?? "");
@@ -1430,7 +1816,8 @@ function DondeGanarPresencia({
             })}
           </div>
         );
-      })}
+        })}
+      </Desplegable>
       {(recomendaciones.ya_presente_en ?? []).length > 0 && (
         <p className="m-detail">
           {`No se repiten los sitios donde ya tienes presencia: ${recomendaciones

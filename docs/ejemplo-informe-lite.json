@@ -374,5 +374,21 @@
     "citas_huella": 6,
     "marca_tokens": "brandevs",
     "marca_distintivo": "brandevs"
+  },
+  "estados_modulos": {
+    "seo_tecnico": "completed",
+    "huella_digital": "completed",
+    "visibilidad": "completed",
+    "informe": "completed"
+  },
+  "variantes_marca": {
+    "deteccion": [
+      "brandevs"
+    ],
+    "observadas": [
+      "BranDevs",
+      "Brandevs",
+      "Brand Devs"
+    ]
   }
 }

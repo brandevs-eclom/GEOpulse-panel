@@ -21,6 +21,31 @@ const ICONO: Record<EstadoNorm, string> = {
   no_verificable: "–",
 };
 
+/**
+ * El estado, en palabras.
+ *
+ * El glifo y el color no bastan: un lector de pantalla anuncia "✓" como "marca
+ * de verificación" y con daltonismo rojo-verde el ok y el error son el mismo
+ * tono. Cada estado viaja además como texto para lectores de pantalla.
+ */
+export const ETIQUETA_ESTADO: Record<EstadoNorm, string> = {
+  ok: "Correcto",
+  warning: "Aviso",
+  error: "Error",
+  no_verificable: "No se pudo medir",
+};
+
+/** Glifo decorativo + estado en texto solo para lectores de pantalla. */
+export function EstadoAccesible({ estado }: { estado?: EstadoBruto }) {
+  const n = normEstado(estado);
+  return (
+    <>
+      <span aria-hidden="true">{ICONO[n]}</span>
+      <span className="sr-only">{ETIQUETA_ESTADO[n]}. </span>
+    </>
+  );
+}
+
 export function normEstado(e: EstadoBruto): EstadoNorm {
   return e === "ok" || e === "warning" || e === "error" ? e : "no_verificable";
 }
@@ -64,12 +89,14 @@ export function Metrica({
     .slice(0, 4);
 
   return (
-    <div className="metric">
+    // El estado va en el contenedor para pintar el carril de color de la
+    // izquierda (::before en el CSS): antes solo estaba en el valor.
+    <div className={`metric st-${normEstado(estado)}`}>
       <div className={`m-row${largo ? " m-row-stack" : ""}`}>
         <span className="m-lbl">{etiqueta}</span>
         <span className={`m-val ${claseValor(estado)}`}>
-          {ICONO[normEstado(estado)]}{" "}
-          {valor || normEstado(estado).replace("_", " ")}
+          <EstadoAccesible estado={estado} />{" "}
+          {valor || ETIQUETA_ESTADO[normEstado(estado)].toLowerCase()}
         </span>
       </div>
       {detalle && <p className="m-detail">{detalle}</p>}
@@ -101,11 +128,32 @@ export function Ficha({
   sinPunto?: boolean;
   children?: React.ReactNode;
 }) {
+  // El punto de estado llevaba la información SOLO en su color de fondo: para un
+  // lector de pantalla no existía y con daltonismo el ok y el error coinciden.
+  const glifo: Record<string, string> = {
+    ok: "✓",
+    warning: "!",
+    error: "✕",
+    muted: "–",
+  };
+  const palabra: Record<string, string> = {
+    ok: "Correcto",
+    warning: "Aviso",
+    error: "Error",
+    muted: "No se pudo medir",
+  };
+  const e = estado || "muted";
+
   return (
     <div className="card">
       <div className="card-top">
         <span className="card-eyebrow">{eyebrow}</span>
-        {!sinPunto && <span className={`dot dot-${estado || "muted"}`} />}
+        {!sinPunto && (
+          <span className={`dot dot-${e}`}>
+            <span aria-hidden="true">{glifo[e]}</span>
+            <span className="sr-only">{`Estado: ${palabra[e]}`}</span>
+          </span>
+        )}
       </div>
       <h3>{titulo}</h3>
       {children}
@@ -113,8 +161,138 @@ export function Ficha({
   );
 }
 
+/**
+ * Una sección de primer nivel del informe: destino de ancla del índice.
+ *
+ * Es lo que hace posible "las secciones hipervinculadas": antes todo el render
+ * eran `<div>` sin un solo `id`, así que no había a dónde enlazar. El `h2` lleva
+ * el id que lo etiqueta y el `tabIndex={-1}` permite que el foco aterrice aquí
+ * al saltar desde el índice (si no, el lector de pantalla sigue donde estaba).
+ */
+export function SeccionInforme({
+  id,
+  eyebrow,
+  titulo,
+  sub,
+  children,
+}: {
+  id: string;
+  eyebrow: string;
+  titulo: string;
+  sub?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section id={id} aria-labelledby={`${id}-t`} tabIndex={-1}>
+      <div className="sec">
+        <span className="eyebrow">{eyebrow}</span>
+        <h2 id={`${id}-t`}>{titulo}</h2>
+        {sub && <p>{sub}</p>}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/**
+ * Índice navegable. En pantalla ancha es un sidebar fijo a la izquierda
+ * (numerado, con el GEO Score al pie), como el mockup. En movil, una tira de
+ * píldoras sobre el contenido.
+ */
+export function IndiceInforme({
+  entradas,
+  nota,
+}: {
+  entradas: Array<{ texto: string; ancla: string }>;
+  /** GEO Score, para el mini-anillo del pie. null = no se pinta. */
+  nota?: number | null;
+}) {
+  return (
+    <nav className="indice" aria-labelledby="indice-t">
+      <h2 id="indice-t">En este informe</h2>
+      <ol>
+        {entradas.map((e) => (
+          <li key={e.ancla}>
+            <a href={`#${e.ancla}`}>{e.texto}</a>
+          </li>
+        ))}
+      </ol>
+      {typeof nota === "number" && <MiniScore nota={nota} />}
+    </nav>
+  );
+}
+
+/** Mini-anillo del GEO Score al pie del sidebar. */
+function MiniScore({ nota }: { nota: number }) {
+  const R = 20;
+  const C = 2 * Math.PI * R;
+  const color = nota >= 75 ? "var(--ok)" : nota >= 50 ? "var(--warn)" : "var(--err)";
+  return (
+    <div className="sb-score">
+      <div className="sb-score-ring">
+        <svg width="48" height="48" viewBox="0 0 48 48" aria-hidden="true">
+          <circle cx="24" cy="24" r={R} fill="none" stroke="var(--line-c)" strokeWidth="4" />
+          <circle
+            cx="24"
+            cy="24"
+            r={R}
+            fill="none"
+            stroke={color}
+            strokeWidth="4"
+            strokeLinecap="round"
+            strokeDasharray={C.toFixed(1)}
+            strokeDashoffset={(C * (1 - Math.max(0, Math.min(100, nota)) / 100)).toFixed(1)}
+            transform="rotate(-90 24 24)"
+          />
+        </svg>
+        <div className="sb-score-n">{nota}</div>
+      </div>
+      <div className="sb-score-l">
+        GEO Score
+        <b>{nota} / 100</b>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Bloque desplegable (patrón `<details>` del mockup). Es HTML nativo, así que es
+ * accesible por teclado y lector de pantalla sin JavaScript, y en la impresión a
+ * PDF se fuerza abierto desde el CSS. Arranca CERRADO por defecto (por petición:
+ * el informe abre compacto y el usuario despliega lo que quiera ver).
+ */
+export function Desplegable({
+  titulo,
+  cuenta,
+  abierto = false,
+  children,
+}: {
+  titulo: string;
+  /** Contador que va a la derecha del título ("13 páginas"). */
+  cuenta?: string;
+  abierto?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <details className="disc" open={abierto}>
+      <summary>
+        <span className="chev" aria-hidden="true">
+          ▸
+        </span>
+        {titulo}
+        {cuenta && <span className="count">{cuenta}</span>}
+      </summary>
+      <div className="disc-body">{children}</div>
+    </details>
+  );
+}
+
 export interface FilaTabla {
-  celdas: Array<string | number>;
+  /**
+   * El contenido de cada celda. Admite nodos, no solo texto, porque hay tablas
+   * cuya primera columna es un enlace a la sección que explica ese dato.
+   */
+  celdas: React.ReactNode[];
   marca?: boolean;
 }
 
@@ -131,23 +309,32 @@ export function Tabla({
   filas,
   visibles,
   etiquetaResto,
+  titulo,
+  id,
 }: {
   cabeceras: string[];
   filas: FilaTabla[];
   visibles?: number;
   etiquetaResto?: (n: number) => string;
+  /** Se pinta como <caption> oculto: con 7 columnas hace falta contexto. */
+  titulo?: string;
+  id?: string;
 }) {
   const [abierta, setAbierta] = useState(false);
   const ocultas = visibles && filas.length > visibles ? filas.length - visibles : 0;
+  const idTabla = id ?? "tabla";
 
   return (
     <>
       <div className="tw">
-        <table>
+        <table id={idTabla}>
+          {titulo && <caption className="sr-only">{titulo}</caption>}
           <thead>
             <tr>
               {cabeceras.map((h, i) => (
-                <th key={i}>{h}</th>
+                <th key={i} scope="col">
+                  {h}
+                </th>
               ))}
             </tr>
           </thead>
@@ -186,6 +373,8 @@ export function Tabla({
         <button
           type="button"
           className="toggle"
+          aria-expanded={abierta}
+          aria-controls={idTabla}
           onClick={() => setAbierta((x) => !x)}
         >
           <span>
@@ -195,7 +384,9 @@ export function Tabla({
                 ? etiquetaResto(ocultas)
                 : `Ver las ${ocultas} filas restantes`}
           </span>
-          <span className="pm">{abierta ? "–" : "+"}</span>
+          <span className="pm" aria-hidden="true">
+            {abierta ? "–" : "+"}
+          </span>
         </button>
       )}
     </>

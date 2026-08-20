@@ -516,7 +516,8 @@ const r = $input.first().json;
 const esquema = '{"resumen_hallazgos":"","veredicto":"parcial","indice_autoridad":{"estado":"warning","detalle":""},'
   + '"semantica":{"claridad_nucleo":0,"entidades":[]},'
   + '"eeatc":{"experiencia":0,"expertise":0,"autoridad":0,"confianza":0,"citabilidad":0,"puntuacion_global":0},'
-  + '"mapa_competitivo":[{"empresa":"","es_marca":false,"menciones":0,"por_modelo":{"chatgpt":0,"claude":0,"gemini":0,"perplexity":0}}]}';
+  + '"mapa_competitivo":[{"empresa":"","es_marca":false,"menciones":0,"por_modelo":{"chatgpt":0,"claude":0,"gemini":0,"perplexity":0}}],'
+  + '"variantes_marca":[]}';
 
 const prompt_sistema = [
   'Eres un analista de visibilidad de marca en motores de IA (GEO). Recibes: el contenido real de la home de una marca,',
@@ -535,6 +536,9 @@ const prompt_sistema = [
   '6) mapa_competitivo: empresas mencionadas en las respuestas, con menciones totales y desglose por modelo.',
   '   Cuenta una marca como mencionada aunque aparezca con nombre abreviado o variante, y unifica esas variantes en una',
   '   sola entrada. Incluye SIEMPRE la marca auditada aunque tenga 0 menciones. Máximo 10.',
+  '7) variantes_marca: las grafías, abreviaturas o erratas LITERALES con que los modelos escribieron SOLO la marca',
+  '   auditada (NUNCA competidores) en sus respuestas. Copia el texto tal cual apareció. Si no viste ninguna variante,',
+  '   deja la lista vacía; no inventes ni normalices: solo lo que aparezca literalmente en las respuestas recibidas.',
   '',
   'Si el contenido de la home llega vacío, no inventes: pon los campos que dependan de él a 0 y dilo en resumen_hallazgos.',
   '',
@@ -653,10 +657,182 @@ else if (dg.csr) avisos.push('Tu home entrega muy poco HTML inicial y pinta el c
 if ((ap.total_validas || 0) === 0) avisos.push('Ningún modelo devolvió respuesta en esta ejecución, así que la visibilidad no es concluyente.');
 else if ((ap.total_validas || 0) < 9) avisos.push('Solo ' + ap.total_validas + ' de 9 sondeos devolvieron respuesta.');
 
+// [E3] Estado por modulo (completed|partial|failed). Mismo contrato que el
+// COMPLETO para que ambos informes sean comparables. Un modulo caido (un modelo
+// que no respondio, un bloque sin datos) NO invalida el resto: se marca y el
+// render lo dice, en vez de fingir un 0.
+const ES_ESTADO = new Set(['ok', 'warning', 'error', 'no_verificable']);
+function estadoModulo(b, opts) {
+  opts = opts || {};
+  if (b === null || b === undefined || typeof b !== 'object') return 'failed';
+  if (b._error) return 'failed';
+  const claves = Object.keys(b).filter(k => k[0] !== '_');
+  if (!claves.length) return 'failed';                       // objeto vacio = no se pudo
+  // Modulo de sondeo (visibilidad): parcial si ningun modelo respondio.
+  if (opts.dimension) return (Number(b.total_validas) || 0) === 0 ? 'partial' : 'completed';
+  // Modulo con lista de puntos (seo_tecnico): mirar los estados de los puntos.
+  const puntos = Array.isArray(b.puntos) ? b.puntos : (Array.isArray(b) ? b : null);
+  if (puntos) {
+    const est = puntos.map(p => p && p.estado).filter(e => ES_ESTADO.has(e));
+    if (!est.length) return 'failed';
+    return est.every(e => e === 'no_verificable') ? 'partial' : 'completed';
+  }
+  // Fallback generico {clave:{estado}} (igual que el COMPLETO).
+  const est = [];
+  for (const k of claves) { const v = b[k]; if (v && typeof v === 'object' && ES_ESTADO.has(v.estado)) est.push(v.estado); }
+  return (est.length && est.every(e => e === 'no_verificable')) ? 'partial' : 'completed';
+}
+
+// [C2] ¿La grafia v parece la marca AUDITADA (y no un competidor)? Mismo criterio
+// determinista que el parche es_marca: nombre exacto, contiene/esta contenida en
+// el distintivo, o comparte un prefijo largo con el (erratas). Conservador a
+// proposito: antes dejar fuera una errata rara que colar un competidor como "tu
+// marca" (bug es_marca). Auto-contenida (normaliza dentro) para poder testearla.
+function pareceMarca(v, distintivo, brand) {
+  const nm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '');
+  const n = nm(v), d = nm(distintivo), b = nm(brand);
+  if (!n) return false;
+  if (b.length > 2 && n === b) return true;
+  if (!d) return false;
+  // Una errata/variante tiene longitud PARECIDA a la de la marca. Un nombre
+  // compuesto mucho mas largo que contenga el distintivo (p.ej. un competidor
+  // 'BrandevsKiller') NO es una variante: se rechaza para no repetir es_marca.
+  if (n.length > Math.max(b.length, d.length) + 3) return false;
+  if (n.includes(d) || d.includes(n)) return true;
+  let i = 0; while (i < n.length && i < d.length && n[i] === d[i]) i++;
+  return i >= Math.max(4, Math.ceil(d.length * 0.6));
+}
+
+// [E1] Coste por ejecucion. Igual que en el COMPLETO: tokens MEDIDOS (usage real
+// de cada API) + coste ESTIMADO desde una tabla editable; un modelo sin precio no
+// se inventa (se lista en 'sin_precio' y el total es un suelo). En LITE TODAS las
+// llamadas son HTTP crudo con usage, asi que no hay hueco 'no_medido'.
+const PRECIOS = {                          // USD por 1M tokens (estimado, editable en el builder)
+  'gpt-5.4-mini':     { in: 0.25, out: 2.00 },
+  'gpt-5.6-luna':     { in: 0.50, out: 3.00 },   // sonda del tier gratuito (panel)
+  'claude-haiku-4-5': { in: 1.00, out: 5.00 },
+  'gemini-2.5-flash': { in: 0.30, out: 2.50 },
+  'gemini-3.5-flash': { in: 0.40, out: 3.00 },   // sonda del tier gratuito (panel)
+  'sonar':            { in: 1.00, out: 1.00 },
+};
+const PRECIOS_META = { estimado: true, fecha: '2026-08', fuente: 'tarifa publica aproximada; ajustar en build_lite2.py' };
+function tokensDe(body) {
+  if (!body || typeof body !== 'object') return null;
+  const um = body.usageMetadata;
+  if (um) return { in: um.promptTokenCount || 0, out: um.candidatesTokenCount || 0 };
+  const u = body.usage;
+  if (!u || typeof u !== 'object') return null;
+  if (u.input_tokens != null || u.output_tokens != null) return { in: u.input_tokens || 0, out: u.output_tokens || 0 };
+  if (u.prompt_tokens != null || u.completion_tokens != null) return { in: u.prompt_tokens || 0, out: u.completion_tokens || 0 };
+  return null;
+}
+// Modelo REALMENTE usado segun lo que reporta la API (openai/anthropic/perplexity
+// en body.model; gemini en body.modelVersion). El panel cambia la sonda a otro
+// modelo que el builder (p.ej. gemini-3.5-flash), asi que fiarse de la etiqueta
+// hardcodeada mentiria; el fallback solo se usa si la respuesta no trae modelo.
+function modeloDe(body, fallback) {
+  if (body && typeof body === 'object') {
+    const m = body.model || body.modelVersion;
+    if (m) return String(m).replace(/^models\//, '');
+  }
+  return fallback;
+}
+// Tarifa por coincidencia exacta o por prefijo (absorbe sufijos de version tipo
+// 'gpt-5.6-luna-2026-08'). Sin coincidencia -> null (el modelo va a sin_precio).
+function precioDe(modelo) {
+  if (PRECIOS[modelo]) return PRECIOS[modelo];
+  let mejor = null;
+  for (const k in PRECIOS) if (modelo && modelo.startsWith(k) && (!mejor || k.length > mejor.length)) mejor = k;
+  return mejor ? PRECIOS[mejor] : null;
+}
+function agregarCoste(muestras) {
+  const r6 = x => Math.round(x * 1e6) / 1e6;
+  const porModelo = {};
+  const sinPrecio = new Set();
+  let requests = 0, fallos = 0, inTot = 0, outTot = 0, costeTot = 0;
+  for (const m of (muestras || [])) {
+    requests++;
+    if (m.error || !m.tokens) { fallos++; continue; }
+    const ti = m.tokens.in || 0, to = m.tokens.out || 0;
+    inTot += ti; outTot += to;
+    const p = precioDe(m.modelo);
+    const coste = p ? (ti / 1e6) * p.in + (to / 1e6) * p.out : 0;
+    if (p) costeTot += coste; else sinPrecio.add(m.modelo);
+    const pm = porModelo[m.modelo] || (porModelo[m.modelo] =
+      { modelo: m.modelo, requests: 0, input: 0, output: 0, coste_usd: 0, sin_precio: !p });
+    pm.requests++; pm.input += ti; pm.output += to; pm.coste_usd += coste;
+  }
+  for (const k in porModelo) porModelo[k].coste_usd = r6(porModelo[k].coste_usd);
+  return {
+    token_usage: { input: inTot, output: outTot, total: inTot + outTot },
+    estimated_cost_usd: r6(costeTot), completo: sinPrecio.size === 0,
+    request_count: requests, fallos, reintentos: 0,
+    por_modelo: Object.values(porModelo), sin_precio: [...sinPrecio], precios: PRECIOS_META,
+  };
+}
+// <<<FIN-HELPERS-TESTABLES>>>
+function leerNodo(nombre) {
+  try { return $(nombre).all().map(i => i.json); } catch (e) { return null; }
+}
+const NODOS_LLM = [
+  { nodo: 'Sonda - ChatGPT', modelo: 'gpt-5.4-mini' },
+  { nodo: 'Sonda - Claude', modelo: 'claude-haiku-4-5' },
+  { nodo: 'Sonda - Gemini', modelo: 'gemini-2.5-flash' },
+  { nodo: 'Sonda - Perplexity', modelo: 'sonar' },
+  { nodo: 'Huella - Perplexity', modelo: 'sonar' },
+  { nodo: 'Informe ChatGPT', modelo: 'gpt-5.4-mini' },
+];
+const muestrasCoste = [];
+for (const { nodo, modelo } of NODOS_LLM) {
+  const items = leerNodo(nodo);
+  if (items === null) continue;
+  for (const it of items) {
+    const body = (it && it.body !== undefined) ? it.body : it;
+    const errApi = (it && it.statusCode && it.statusCode >= 400) || (body && body.error);
+    const tk = errApi ? null : tokensDe(body);
+    muestrasCoste.push({ modelo: modeloDe(body, modelo), tokens: tk, error: !!errApi || !tk });
+  }
+}
+const coste = agregarCoste(muestrasCoste);
+
+// [E3] Estado de cada modulo del informe LITE.
+const estados_modulos = {
+  seo_tecnico: estadoModulo({ puntos: [r.punto_bots, r.punto_jerarquia, r.punto_schema,
+    { estado: estAut },
+    { estado: claridad === null ? 'no_verificable' : claridad >= 75 ? 'ok' : claridad >= 50 ? 'warning' : 'error' }] }),
+  huella_digital: (!((pe.enlaces || []).length) && !['experiencia', 'expertise', 'autoridad', 'confianza', 'citabilidad'].some(k => typeof eeatc[k] === 'number')) ? 'partial' : 'completed',
+  visibilidad: estadoModulo(ap, { dimension: true }),
+  // 'informe' = el analisis del agente LLM. Si devolvio JSON no parseable, A={} y
+  // hoy quedaria invisible: E3 lo saca a la superficie como 'failed'. Es el caso
+  // NUEVO que los avisos no cubren.
+  informe: (A && Object.keys(A).length) ? 'completed' : 'failed',
+};
+
+// [C2] Variantes/erratas de marca. Separa lo MEDIDO (tokens deterministas de
+// deteccion, derivados del nombre) de lo INFERIDO (las grafias que los modelos
+// dicen haber usado). Las inferidas se FILTRAN con el mismo criterio que es_marca
+// para que un competidor no se cuele como "tu marca". No tocan menciones ni SoV.
+const _distintivoC2 = dg.marca_distintivo || '';
+const variantes_marca = {
+  deteccion: [...new Set([...(String(dg.marca_tokens || '').split('|')), _distintivoC2].map(x => x.trim()).filter(Boolean))],
+  observadas: [...new Set((Array.isArray(A.variantes_marca) ? A.variantes_marca : [])
+    .map(v => String(v || '').trim())
+    .filter(v => v && pareceMarca(v, _distintivoC2, r.brand)))].slice(0, 12),
+};
+
 return [{ json: {
   meta: { brand: r.brand, domain: r.domain, host: r.host, keyword: r.keyword, mercado: r.mercado,
           version: 'lite2', fecha: new Date().toISOString(),
+          // [E2] Versionado del analisis: distingue ejecuciones cuando cambia el
+          // pipeline, el scoring o los prompts. scoring_version se mantiene igual
+          // que en el COMPLETO porque la nota debe ser comparable entre ambos.
+          analysis_version: 'lite-v2', scoring_version: 'score-v1', prompt_version: 'prompt-v2',  // v2: variantes_marca (C2)
+          // [E1] Resumen de coste en meta (el detalle va en el bloque 'coste').
+          estimated_cost_usd: coste.estimated_cost_usd, coste_completo: coste.completo,
+          tokens_total: coste.token_usage.total,
           modelos: ['ChatGPT','Claude','Perplexity'], preguntas_lanzadas: 3, sondeos: ap.total_validas ?? 0 },
+  coste,
+  estados_modulos,
   nota, por_area,
   resumen_hallazgos: A.resumen_hallazgos || '',
   posicionamiento: { veredicto },
@@ -671,6 +847,7 @@ return [{ json: {
   preguntas: r.preguntas_detalle,
   aparicion: ap,
   mapa_competitivo: mapa.slice(0, 10),
+  variantes_marca,
   _diag: r._diag || {}
 } }];"""
 

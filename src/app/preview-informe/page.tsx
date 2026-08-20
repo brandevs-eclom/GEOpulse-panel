@@ -60,6 +60,14 @@ export default async function PreviewInforme({
         </Link>
       </div>
 
+      {/* La jerarquia del informe empieza en h2 (cada seccion). Sin un h1 en la
+          pagina, el documento arrancaria en h2 y el indice de encabezados de un
+          lector de pantalla quedaria descabezado. El detalle de ejecucion ya
+          tiene el suyo. */}
+      <h1 className="gp-h2" style={{ marginBottom: 18 }}>
+        Previsualización del informe {completo ? "COMPLETO" : "LITE"}
+      </h1>
+
       {completo ? (
         <InformeCompletoView
           informe={fixtureCompleto as unknown as InformeCompleto}

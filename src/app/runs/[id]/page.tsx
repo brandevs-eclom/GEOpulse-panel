@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 
 import { EstadoBadge } from "@/components/EstadoBadge";
 import { ApiError, eliminarRun, fetchRun } from "@/lib/client/api";
+import { informeAFilaCsv, informeAJson, nombreFichero } from "@/lib/report/export";
 import { InformeCompletoView, JsonCrudo } from "@/lib/report/InformeCompletoView";
 import { InformeLiteView } from "@/lib/report/InformeLiteView";
 import type { RunDetail } from "@/lib/shared/dto";
@@ -30,6 +31,7 @@ export default function RunDetailPage() {
     <main className="gp-main">
       <Link
         href="/"
+        className="gp-no-print"
         style={{ color: "var(--text-muted)", fontSize: 14, textDecoration: "none" }}
       >
         ← Ejecuciones
@@ -56,6 +58,56 @@ function fechaLarga(iso: string | null): string {
   return Number.isNaN(d.getTime()) ? iso : d.toLocaleString("es-ES");
 }
 
+/** Descarga un texto como fichero, 100% en cliente (sin endpoint). */
+function descargar(contenido: string, tipo: string, nombre: string): void {
+  const url = URL.createObjectURL(new Blob([contenido], { type: tipo }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = nombre;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/** Botones de export (G12). Solo si hay informe que descargar. */
+function ExportBotones({ run }: { run: RunDetail }) {
+  if (run.informe == null) return null;
+  const btn = { padding: "8px 14px", fontSize: "0.72rem" } as const;
+  return (
+    <div className="gp-no-print" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      <button
+        type="button"
+        className="gp-btn gp-btn-ghost"
+        style={btn}
+        onClick={() =>
+          descargar(informeAJson(run), "application/json", nombreFichero(run, "json"))
+        }
+      >
+        Descargar JSON
+      </button>
+      <button
+        type="button"
+        className="gp-btn gp-btn-ghost"
+        style={btn}
+        onClick={() =>
+          descargar(informeAFilaCsv(run), "text/csv;charset=utf-8", nombreFichero(run, "csv"))
+        }
+      >
+        Descargar CSV
+      </button>
+      <button
+        type="button"
+        className="gp-btn gp-btn-ghost"
+        style={btn}
+        onClick={() => window.print()}
+      >
+        Imprimir / PDF
+      </button>
+    </div>
+  );
+}
+
 function Detalle({ run }: { run: RunDetail }) {
   const router = useRouter();
   const qc = useQueryClient();
@@ -69,8 +121,8 @@ function Detalle({ run }: { run: RunDetail }) {
 
   return (
     <div style={{ marginTop: 16 }}>
-      {/* Cabecera */}
-      <div className="gp-card">
+      {/* Cabecera (chrome del panel: fuera del PDF; el informe trae su propia cabecera). */}
+      <div className="gp-card gp-no-print">
         <div
           style={{
             display: "flex",
@@ -100,6 +152,7 @@ function Detalle({ run }: { run: RunDetail }) {
           >
             {borrar.isPending ? "Eliminando…" : "Eliminar"}
           </button>
+          <ExportBotones run={run} />
         </div>
         <p className="gp-sub" style={{ margin: "8px 0 0" }}>
           {run.domain} · {run.keyword}
@@ -143,8 +196,8 @@ function Detalle({ run }: { run: RunDetail }) {
         )}
       </div>
 
-      {/* Detalle técnico (plegado) */}
-      <details style={{ marginTop: 22 }}>
+      {/* Detalle técnico (plegado; chrome, fuera del PDF) */}
+      <details className="gp-no-print" style={{ marginTop: 22 }}>
         <summary
           style={{
             cursor: "pointer",

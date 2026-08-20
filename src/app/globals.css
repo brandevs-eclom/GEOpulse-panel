@@ -55,6 +55,18 @@ body {
   margin: 0;
 }
 
+/* Desplazamiento suave al saltar por los enlaces del índice del informe.
+   Se desactiva solo si el usuario pidió menos movimiento. `scroll-padding-top`
+   deja hueco para la cabecera fija del panel al aterrizar en un ancla. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+html {
+  scroll-padding-top: 76px;
+}
+
 body {
   background: var(--bg);
   color: var(--text);
@@ -75,4 +87,19 @@ h3 {
 
 a {
   color: inherit;
+}
+
+/* Impresión / PDF (G12). Oculta el chrome del panel para que el PDF sea solo el
+   informe. .gp-no-print lo marcan las piezas que no deben salir (cabecera del
+   detalle, botones, detalle técnico); .gp-header es la barra global del layout.
+   report-completo.css (generado) trae su propio @media print para el COMPLETO;
+   report.css el del LITE. Aquí solo el chrome, para no tocar el CSS generado. */
+@media print {
+  .gp-no-print,
+  .gp-header {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
 }
