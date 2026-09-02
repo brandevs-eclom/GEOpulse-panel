@@ -302,10 +302,27 @@ heredan la paleta y Space Grotesk para que el documento sea coherente.
 
 ### Accesibilidad
 
-### Accesibilidad
-
 - **El estado nunca viaja solo en el color.** Cada punto de tarjeta y cada métrica llevan glifo (`aria-hidden`) más la palabra del estado para lectores de pantalla. Con daltonismo rojo-verde, el `ok` y el `error` eran el mismo tono.
-- **Contraste AA en todo el texto.** `--muted #9C9791` daba 2,90:1 sobre blanco y era el color por defecto de casi todo el texto secundario; ahora es `#6E675F` (5,57:1). Verde y ámbar de estado también se oscurecieron. Medido en el navegador: los diez pares dudosos pasan.
+- **Contraste AA en todo el texto**, medido par a par (no «a ojo»). Sobre el papel `#FAF7F4`:
+  `--ink #17130F` 17,31:1 · `--ink-soft`/`--muted #6E675F` 5,22:1 · `--faint #76716A` 4,53:1 ·
+  `--accent-ink #C62C38` 5,15:1 · `--ok #17734B` 5,48:1 · `--warn #8C6510` 4,94:1 · `--err #B42318` 6,16:1.
+  Con blanco encima del color de estado: 5,85 · 5,27 · 6,57. Sobre `--dark #100E0C`, blanco 19,26:1.
+
+  > **Corrección de una versión anterior de este README**, que daba el contraste por resuelto y no lo estaba:
+  > la corrección de `--muted` solo se había aplicado dentro de `.informe-completo`, así que el informe LITE
+  > y el chrome del panel seguían pintando texto secundario a **2,90:1**. Y `--ok #1E8A5B` (4,34), `--warn
+  > #B67E12` (3,51) y `--err #EF3B2D` (3,94) tampoco pasaban sobre blanco. Ahora la corrección está en
+  > `:root`, o sea en las tres hojas a la vez.
+
+- **La regla de los dos rojos.** `--accent #E74C57` es el rojo de la web y da 3,53:1 sobre el papel: vale para
+  fondos, iconos y trazos, **nunca para texto**. Cuando el acento es texto se usa `--accent-ink #C62C38`
+  (5,15:1). El coral `--accent-2 #FF6A3D` (2,67:1) es solo relleno de degradado en claro; sobre el bloque
+  oscuro sí vale como texto (6,77:1). Saltarse esto es la forma más fácil de romper el AA sin darse cuenta.
+- **Dentro del bloque oscuro los estados cambian de valor.** Los colores de estado están calculados para
+  leerse sobre papel; sobre `--dark` se quedan cortos (`--err` daba 2,93:1, o sea que el anillo de un GEO
+  Score bajo casi no se veía). `.dark` y `.panel-dark` los reasignan a la variante clara del mismo tono.
+  Como `tono()` devuelve `var(--ok)`/`var(--warn)`/`var(--err)`, el anillo pintado desde React hereda la
+  sustitución sin tocar TSX.
 - **Jerarquía correcta**: h1 (página) → h2 (sección) → h3 (bloque). Antes el informe abría en h3 y los h2 aparecían después.
 - **Landmarks**: `<article>`, `<section>` con `aria-labelledby`, `<nav>` para el índice, `<aside role="note">` para la confusión de entidad.
 - **Foco visible** (no había ni una regla en el proyecto), `aria-expanded`/`aria-controls` en los plegables, `scope` y `<caption>` en las tablas, y respeto a `prefers-reduced-motion`.

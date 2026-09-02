@@ -10,43 +10,98 @@
   font-family: var(--ui);
   line-height: 1.65;
 }
+/* Eyebrow de brandevs.com: punto rojo de 7px + versalitas con tracking .16em.
+   El punto se pinta con ::before para no tocar el markup del render. Va en
+   --accent-ink porque es TEXTO: el --accent de la web da 3,53:1 y no pasa AA.
+   El punto sí es --accent: ahí el rojo es una forma, no una letra.
+   En la web el punto pulsa solo donde hay una acción que hacer; un informe no
+   la tiene, así que aquí nunca pulsa. */
 .informe .eyebrow {
-  display: inline-block;
-  font: 600 11px var(--ui);
-  letter-spacing: 0.14em;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font: 600 11.5px/1 var(--ui);
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 8px;
+  color: var(--accent-ink);
+  margin-bottom: 12px;
+}
+.informe .eyebrow::before {
+  content: "";
+  /* inline-block, no el inline por defecto: si el padre no es flex (p.ej. el
+     eyebrow del bloque oscuro, que es display:block) un ::before inline ignora
+     width/height y el punto desaparece sin avisar. */
+  display: inline-block;
+  vertical-align: middle;
+  margin-bottom: 1px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: 0 0 7px;
 }
 
 .informe .sec {
-  margin: 40px 0 16px;
+  margin: 48px 0 20px;
   text-align: center;
 }
 .informe .sec .eyebrow {
-  display: block;
+  display: inline-flex;
 }
 .informe .sec h2 {
   font-family: var(--display);
-  font-weight: 800;
-  font-size: 1.5rem;
-  letter-spacing: -0.01em;
+  font-weight: 600;
+  font-size: clamp(1.5rem, 3.2vw, 1.85rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
   margin: 0;
 }
 .informe .sec p {
   color: var(--text-muted);
-  font-size: 0.93rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
   max-width: 620px;
-  margin: 8px auto 0;
+  margin: 10px auto 0;
 }
 
-/* Diagnóstico global: ring + resumen */
+/* Diagnóstico global: ring + resumen.
+   El bloque oscuro de la web lleva siempre un halo rojo radial que entra desde
+   arriba y se recorta con overflow:hidden. Se reproduce con ::before para no
+   tocar el markup. */
 .informe .dark {
+  position: relative;
+  overflow: hidden;
   background: var(--dark);
-  border-radius: var(--r);
-  padding: 32px;
-  color: #fff;
+  border-radius: var(--r-lg);
+  padding: clamp(26px, 4vw, 40px);
+  color: var(--on-dark);
   margin-bottom: 14px;
+}
+.informe .dark::before {
+  content: "";
+  position: absolute;
+  top: -150px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 520px;
+  height: 380px;
+  background: radial-gradient(circle, rgba(231, 76, 87, 0.3), transparent 70%);
+  pointer-events: none;
+}
+.informe .dark > * {
+  position: relative;
+}
+/* Los colores de estado están calculados para leerse sobre PAPEL. Dentro del
+   bloque oscuro se quedan cortos: --err #B42318 sobre #100E0C da 2,93:1, o sea
+   que el anillo de un GEO Score bajo casi no se vería. Aquí se reasignan a la
+   variante clara del mismo tono. Como tono() devuelve var(--ok)/var(--warn)/
+   var(--err), la sustitución la hereda también el anillo pintado desde React,
+   sin tocar una línea de TSX. */
+.informe .dark {
+  --ok: #35b07a;
+  --warn: #d9a340;
+  --err: #f0736a;
+  --muted: #9e978c;
 }
 .informe .score-row {
   display: flex;
@@ -75,7 +130,7 @@
 .informe .ring-num {
   font-family: var(--display);
   font-size: 2.3rem;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1;
 }
 .informe .ring-lbl {
@@ -87,15 +142,17 @@
 }
 .informe .dark h3 {
   font-family: var(--display);
-  font-weight: 800;
-  font-size: 1.2rem;
-  margin: 0 0 6px;
+  font-weight: 600;
+  font-size: clamp(1.2rem, 2.6vw, 1.45rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 0 0 8px;
 }
 .informe .dark .eyebrow {
   color: var(--accent);
 }
 .informe .dark p {
-  color: #edebe7;
+  color: var(--on-dark-muted);
   font-size: 0.93rem;
   line-height: 1.7;
   margin: 0;
@@ -124,7 +181,7 @@
 .informe .t-val {
   font-family: var(--display);
   font-size: 1.6rem;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.1;
 }
 .informe .bar {
@@ -149,12 +206,12 @@
   gap: 10px;
   align-items: flex-start;
   background: var(--warn-soft);
-  border: 1px solid #f0ddb8;
+  border: 1px solid var(--warn-borde);
   border-radius: var(--r-sm);
   padding: 12px 15px;
   margin-bottom: 7px;
   font-size: 0.85rem;
-  color: #7a4e00;
+  color: var(--warn);
   line-height: 1.6;
   overflow-wrap: anywhere;
 }
@@ -164,7 +221,7 @@
   height: 18px;
   border-radius: 50%;
   background: var(--warn);
-  color: #fff;
+  color: var(--on-dark);
   font: 700 11px var(--ui);
   display: flex;
   align-items: center;
@@ -194,7 +251,8 @@
   min-width: 0;
 }
 .informe .pt-title {
-  font: 700 1rem var(--display);
+  font: 600 1.05rem var(--display);
+  letter-spacing: -0.02em;
 }
 .informe .pt-r {
   display: flex;
@@ -272,7 +330,7 @@
 }
 .informe .tag-accent {
   background: var(--accent-soft);
-  border-color: #f6c9c4;
+  border-color: var(--accent-borde);
   color: var(--accent-dark);
 }
 /* Chip de dato INFERIDO por el LLM (C2): borde discontinuo para distinguirlo a
@@ -454,7 +512,7 @@
 .informe .ee-global b {
   font-family: var(--display);
   font-size: 1.9rem;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 /* Matriz de aparición + donut competitivo */
@@ -585,5 +643,8 @@
   .informe .dark {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+  .informe .dark::before {
+    display: none;
   }
 }

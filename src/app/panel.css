@@ -15,7 +15,7 @@
 }
 .gp-logo {
   font-family: var(--display);
-  font-weight: 800;
+  font-weight: 600;
   font-size: 1.05rem;
   letter-spacing: -0.01em;
   text-decoration: none;
@@ -43,7 +43,7 @@
 
 .gp-h2 {
   font-family: var(--display);
-  font-weight: 800;
+  font-weight: 600;
   font-size: 1.15rem;
   margin: 0 0 4px;
 }
@@ -106,31 +106,48 @@
   border-color: var(--err);
 }
 
+/* Botón primario de brandevs.com: píldora con el degradado 90deg del rojo al
+   coral y una sombra roja, no neutra. En la web además lleva una pastilla
+   circular con flecha al final; aquí no, porque los botones del panel son
+   acciones de formulario, no CTA de marketing. */
 .gp-btn {
-  background: var(--accent);
-  color: #fff;
+  background: var(--degradado);
+  color: var(--on-dark);
   border: none;
-  border-radius: var(--r-sm);
-  padding: 12px 20px;
-  font: 700 0.82rem var(--ui);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  border-radius: var(--pill);
+  padding: 13px 26px;
+  font: 600 0.86rem var(--ui);
+  letter-spacing: 0.02em;
   cursor: pointer;
+  box-shadow: 0 16px 32px -14px rgba(231, 76, 87, 0.55);
+  transition:
+    transform 0.3s,
+    box-shadow 0.3s;
 }
 .gp-btn:hover {
-  background: var(--accent-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 24px 46px -14px rgba(231, 76, 87, 0.8);
 }
 .gp-btn:disabled {
   opacity: 0.55;
   cursor: default;
+  transform: none;
+  box-shadow: none;
 }
+/* El secundario de la web es un botón outline de 1.5px que al pasar por encima
+   se rellena de acento. */
 .gp-btn-ghost {
   background: transparent;
   color: var(--text);
-  border: 1px solid var(--border-strong);
+  border: 1.5px solid var(--text);
+  box-shadow: none;
 }
 .gp-btn-ghost:hover {
-  background: var(--muted-soft);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-dark);
+  transform: none;
+  box-shadow: none;
 }
 
 .gp-seg {
@@ -149,7 +166,7 @@
 }
 .gp-seg button[aria-pressed="true"] {
   background: var(--dark);
-  color: #fff;
+  color: var(--on-dark);
 }
 
 /* Tabla */
@@ -187,7 +204,7 @@
 }
 .gp-nota {
   font-family: var(--display);
-  font-weight: 800;
+  font-weight: 600;
 }
 
 /* Chips */
@@ -234,7 +251,7 @@
 }
 .gp-error-box {
   background: var(--err-soft);
-  border: 1px solid #f0c4bf;
+  border: 1px solid var(--accent-borde);
   color: var(--err);
   border-radius: var(--r-sm);
   padding: 12px 14px;
@@ -330,7 +347,7 @@
 .gp-aviso-info {
   margin-top: 18px;
   background: var(--warn-soft);
-  border-color: #eedcba;
+  border-color: var(--warn-borde);
   color: var(--warn);
 }
 
@@ -357,7 +374,7 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   background: var(--dark);
-  color: #fff;
+  color: var(--on-dark);
   padding: 2px 7px;
   border-radius: var(--pill);
 }
@@ -373,7 +390,7 @@
 }
 .gp-peligro {
   color: var(--err);
-  border-color: #f0c4bf;
+  border-color: var(--accent-borde);
 }
 .gp-peligro:disabled {
   opacity: 0.45;

@@ -501,7 +501,7 @@ export function Donut({
           cy={CY}
           r={R}
           fill="none"
-          stroke="#3D3B37"
+          stroke="var(--dark-soft)"
           strokeWidth={15}
         />
         {arcos}
@@ -511,7 +511,7 @@ export function Donut({
           textAnchor="middle"
           dominantBaseline="middle"
           className="d-pct"
-          fill={!total ? "#7C776F" : "#FF6152"}
+          fill={!total ? "var(--on-dark-faint)" : "var(--accent-2)"}
         >
           {total ? `${pct}%` : "–"}
         </text>

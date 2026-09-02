@@ -34,8 +34,16 @@ export default async function RootLayout({
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
+        {/*
+          Las tres familias de brandevs.com: Space Grotesk en titulares, Manrope
+          en cuerpo y Newsreader cursiva para el acento rojo dentro de un titular.
+          Inter se ha quitado: ya no lo usa nadie desde que el cuerpo es Manrope.
+          Space Grotesk llega hasta 700 y ningún titular pide más — si algún día
+          se vuelve a pedir 800, hay que añadirlo aquí o el navegador lo dibuja
+          engordando la cara de 700 (negrita sintética).
+        */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Newsreader:ital,wght@1,400;1,500;1,600&display=swap"
           rel="stylesheet"
         />
       </head>
