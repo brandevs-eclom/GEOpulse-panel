@@ -1,48 +1,84 @@
 /*
- * Design tokens de BranDevs, portados literalmente desde los frontends de
- * referencia (workflows/geopulse-lite2.html y geopulse-frontend-brandevs.html).
- * Mantenerlos idénticos es lo que hace que el panel se sienta de la misma familia
- * que los informes públicos, y permite reutilizar el render sin retocar colores.
+ * Design tokens de BranDevs, tomados del sistema visual de brandevs.com (la web
+ * de la agencia). Mantenerlos idénticos es lo que hace que el panel y los
+ * informes se sientan de la misma familia que la web, y es lo que permite que
+ * un informe LITE se pueda servir dentro de la propia web sin retocarlo.
+ *
+ * REGLA DE LOS DOS ROJOS (no se puede saltar sin romper el contraste AA):
+ *   --accent (#E74C57) es el rojo de la web y da 3,53:1 sobre el papel. Vale
+ *   para FONDOS, iconos, trazos y bordes; NUNCA para texto.
+ *   --accent-ink (#C62C38) es el mismo tono con menos luz: 5,15:1 sobre papel y
+ *   5,50:1 sobre blanco. Es el que se usa cuando el acento es texto.
+ * El coral --accent-2 (#FF6A3D) da 2,67:1 sobre blanco: en claro es solo relleno
+ * de degradado o fondo con texto oscuro encima. Sobre --dark sí vale (6,77:1).
+ *
+ * Los colores de estado NO salen de la web: la web solo tiene verde y resuelve
+ * cualquier aviso con su propio rojo. Un informe necesita ok/warning/error/no
+ * verificable distinguibles entre sí, así que se conservan los del informe,
+ * oscurecidos hasta pasar AA sobre los fondos nuevos.
  */
 :root {
-  --accent: #ef3b2d;
-  --accent-dark: #d22c1f;
-  --accent-light: #ff6152;
-  --accent-soft: #fdecea;
+  --accent: #e74c57;
+  --accent-2: #ff6a3d;
+  --accent-ink: #c62c38;
+  --accent-dark: var(--accent-ink);
+  --accent-light: var(--accent-2);
+  --accent-soft: #fcecee;
+  --degradado: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) 100%);
 
-  --bg: #f6f5f2;
+  --bg: #faf7f4;
   --surface: #ffffff;
+  --panel: #f0ece8;
 
-  --dark: #262523;
-  --dark-soft: #3d3b37;
-  --dark-line: #403e3a;
+  --dark: #100e0c;
+  --dark-soft: rgba(255, 255, 255, 0.14);
+  --dark-line: rgba(255, 255, 255, 0.12);
 
-  --text: #121212;
-  --text-muted: #6e6b66;
-  --muted: #9c9791;
-  --muted-soft: #f0eeea;
+  --text: #17130f;
+  --text-muted: #6e675f;
+  /* Antes #9c9791 = 2,90:1 sobre blanco. Era el color por defecto de casi todo
+     el texto secundario del LITE y del panel: el README daba por corregido ese
+     contraste, pero la corrección solo estaba dentro de .informe-completo. */
+  --muted: #6e675f;
+  --muted-soft: #f1eee9;
   --on-dark: #ffffff;
-  --on-dark-muted: #b4b0a9;
+  --on-dark-muted: rgba(255, 255, 255, 0.66);
+  --on-dark-faint: rgba(255, 255, 255, 0.55);
 
-  /* Estados: los mismos que usa el informe para ok/warning/error.
-     'no_verificable' se pinta con --muted a propósito: no es un fallo,
+  /* Estados. 'no_verificable' se pinta con --muted a propósito: no es un fallo,
      es "no se pudo medir" y no debe parecer un 0. */
-  --ok: #17915b;
-  --ok-soft: #e6f4ed;
-  --warn: #c07600;
-  --warn-soft: #fbf1e0;
+  --ok: #17734b;
+  --ok-soft: #e9f3ee;
+  --warn: #8c6510;
+  --warn-soft: #faf1df;
   --err: #b42318;
-  --err-soft: #fdeceb;
+  --err-soft: #fbecea;
 
-  --border: #e7e4de;
-  --border-strong: #d6d2c9;
+  /* El borde de un fondo suave. Antes eran ocho hex sueltos repartidos por tres
+     hojas (y dos verdes y dos rosas distintos para lo mismo). Cada uno es su
+     color de estado mezclado al 30% sobre su propio fondo suave. */
+  --ok-borde: #aacdbd;
+  --warn-borde: #d9c7a1;
+  --err-borde: #e6b0ab;
+  --accent-borde: #f6bcc1;
 
-  --r: 14px;
-  --r-sm: 10px;
-  --pill: 999px;
+  --border: rgba(23, 19, 15, 0.1);
+  --border-strong: rgba(23, 19, 15, 0.46);
+  --track: #e6e0d8;
 
-  --display: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Escala de radios de la web: el radio crece con el padding del elemento. */
+  --r: 18px;
+  --r-sm: 12px;
+  --r-lg: 26px;
+  --pill: 100px;
+
+  --display: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ui: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --serif: "Newsreader", Georgia, serif;
+
+  --curva: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --sombra-hover: 0 36px 64px -32px rgba(231, 76, 87, 0.42);
+  --sombra-panel: 0 30px 70px -46px rgba(23, 19, 15, 0.45);
 }
 
 * {
@@ -76,13 +112,29 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Peso 600, no 800: es el de los titulares de brandevs.com, y además Space
+   Grotesk solo se carga hasta 700 (ver layout.tsx), así que un 800 lo dibujaba
+   el navegador engordando la cara de 700 — negrita sintética, no la real. */
 h1,
 h2,
 h3 {
   font-family: var(--display);
-  font-weight: 800;
-  letter-spacing: -0.01em;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   margin: 0;
+}
+
+/* Acento en Newsreader cursiva dentro de un titular: el gesto tipográfico de la
+   marca. Va en --accent-ink (es texto) y sin heredar el tracking negativo del
+   titular, igual que en la web. */
+h1 em,
+h2 em,
+h3 em {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: normal;
+  color: var(--accent-ink);
 }
 
 a {

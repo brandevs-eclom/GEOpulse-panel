@@ -743,7 +743,7 @@ function Donut({ mapa, total }: { mapa: CompetidorMapa[]; total: number }) {
           fill="none"
           stroke={
             x.es_marca
-              ? "#EF3B2D"
+              ? "var(--accent)"
               : PALETA_COMPETIDORES[i % PALETA_COMPETIDORES.length]
           }
           strokeWidth="6"
@@ -765,7 +765,7 @@ function Donut({ mapa, total }: { mapa: CompetidorMapa[]; total: number }) {
         cy="21"
         r={R}
         fill="none"
-        stroke="#F0EEEA"
+        stroke="var(--track)"
         strokeWidth="6"
       />
       {segmentos}
@@ -774,9 +774,9 @@ function Donut({ mapa, total }: { mapa: CompetidorMapa[]; total: number }) {
         y="21.5"
         textAnchor="middle"
         fontSize="7"
-        fontWeight="800"
-        fontFamily="Manrope,sans-serif"
-        fill={pct > 0 ? "#121212" : "#9C9791"}
+        fontWeight="600"
+        fontFamily="Space Grotesk,sans-serif"
+        fill={pct > 0 ? "var(--text)" : "var(--muted)"}
       >
         {pct}%
       </text>
@@ -786,8 +786,8 @@ function Donut({ mapa, total }: { mapa: CompetidorMapa[]; total: number }) {
         textAnchor="middle"
         fontSize="2.6"
         fontWeight="600"
-        fontFamily="Inter,sans-serif"
-        fill="#9C9791"
+        fontFamily="Manrope,sans-serif"
+        fill="var(--muted)"
         letterSpacing="0.2"
       >
         {pct > 0 ? "TU CUOTA" : "NO APARECES"}
