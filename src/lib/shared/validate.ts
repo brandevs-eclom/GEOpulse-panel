@@ -26,6 +26,18 @@ export function validarLanzarRun(body: unknown): ValidacionRun {
   if (!domain) errores.domain = "El dominio es obligatorio";
   if (!keyword) errores.keyword = "El sector (keyword) es obligatorio";
 
+  // Longitudes máximas (seguridad): estos campos entran en el prompt de ~14
+  // llamadas de pago; sin tope, 1 MB en `brand` multiplica el coste de un análisis
+  // (docs/08 §1.4). El webhook de n8n valida otra vez con .slice(), porque es
+  // alcanzable sin pasar por aquí.
+  const region = trim(b.region);
+  const pais = trim(b.pais);
+  if (brand.length > MAX.brand) errores.brand = `La marca no puede superar ${MAX.brand} caracteres`;
+  if (domain.length > MAX.domain) errores.domain = `El dominio no puede superar ${MAX.domain} caracteres`;
+  if (keyword.length > MAX.keyword) errores.keyword = `El sector no puede superar ${MAX.keyword} caracteres`;
+  if (region.length > MAX.region) errores.region = `La región no puede superar ${MAX.region} caracteres`;
+  if (pais && !/^[A-Za-z]{2}$/.test(pais)) errores.pais = "El país debe ser un código de 2 letras (p. ej. ES)";
+
   const tipo = trim(b.tipo) as RunTipo;
   if (!RUN_TIPOS.includes(tipo)) {
     errores.tipo = "Tipo inválido (lite | completo)";
@@ -33,7 +45,6 @@ export function validarLanzarRun(body: unknown): ValidacionRun {
 
   if (Object.keys(errores).length > 0) return { ok: false, errores };
 
-  const region = trim(b.region);
   return {
     ok: true,
     value: {
@@ -41,8 +52,11 @@ export function validarLanzarRun(body: unknown): ValidacionRun {
       brand,
       domain,
       keyword,
-      pais: trim(b.pais) || "ES",
+      pais: (pais || "ES").toUpperCase(),
       ...(region ? { region } : {}),
     },
   };
 }
+
+/** Topes de longitud (caracteres). También se aplican con .slice() en n8n. */
+export const MAX = { brand: 80, domain: 253, keyword: 120, region: 80 } as const;

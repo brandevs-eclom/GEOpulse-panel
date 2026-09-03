@@ -67,22 +67,34 @@ const b = $json.body || $json;
 for (const f of ['brand', 'domain', 'keyword']) {
   if (!b[f] || !String(b[f]).trim()) throw new Error('Falta el campo obligatorio: ' + f);
 }
-let d = String(b.domain).trim();
-if (!/^https?:\/\//i.test(d)) d = 'https://' + d;
+// Longitudes máximas (seguridad docs/08 §1.4): estos campos entran en el prompt de
+// ~14 llamadas de pago; sin tope, un valor gigante multiplica el coste. El panel ya
+// valida, pero el webhook es alcanzable sin pasar por él, así que se recorta aquí.
+const brand = String(b.brand).trim().slice(0, 80);
+const keyword = String(b.keyword).trim().slice(0, 120);
+const region = String(b.region || '').trim().slice(0, 80);
+let d = String(b.domain).trim().slice(0, 253);
+// Forzar https: no degradar a http y descartar esquemas raros (file:, gopher:...).
+d = d.replace(/^http:\/\//i, 'https://');
+if (!/^https:\/\//i.test(d)) d = 'https://' + d;
 d = d.replace(/\/+$/, '');
-const m = d.match(/^(https?:\/\/[^\/]+)/i);
+const m = d.match(/^(https:\/\/[^\/]+)/i);
 if (!m) throw new Error('Dominio no válido: ' + b.domain);
 const origin = m[1].toLowerCase();
-const host = origin.replace(/^https?:\/\//, '').replace(/^www\./, '');
+const host = origin.replace(/^https:\/\//, '').replace(/^www\./, '');
+// Blocklist SSRF: el motor hace fetch del dominio (home, sitemap, enlaces). Sin
+// esto, un POST podría apuntar el análisis a la red interna o al metadata del cloud.
+if (/:\d+$/.test(host)) throw new Error('Dominio no permitido: puerto explícito');
+if (!host.includes('.') || /\.(local|internal)$/i.test(host)) throw new Error('Dominio no público');
+if (/^(127\.|10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.|169\.254\.|0\.|\[?::1)/.test(host)) throw new Error('Dominio no público (IP privada o loopback)');
 const PAISES = { ES:'España', MX:'México', AR:'Argentina', CO:'Colombia', CL:'Chile', PE:'Perú',
   US:'Estados Unidos', GB:'Reino Unido', FR:'Francia', DE:'Alemania', IT:'Italia', PT:'Portugal' };
 const cc = String(b.pais || b.country || 'ES').trim().toUpperCase();
 const paisNom = PAISES[cc] || cc || 'España';
-const region = String(b.region || '').trim();
 const mercado = region ? region + ', ' + paisNom : paisNom;
 return [{ json: {
-  brand: String(b.brand).trim(), domain: origin, host, home_url: d,
-  keyword: String(b.keyword).trim(), pais: paisNom, mercado,
+  brand, domain: origin, host, home_url: d,
+  keyword, pais: paisNom, mercado,
   geo: { user_location: region ? { country: cc, region } : { country: cc } }
 } }];"""
 

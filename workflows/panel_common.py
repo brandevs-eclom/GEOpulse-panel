@@ -395,7 +395,10 @@ SQL_COMPLETADO = (
     "error_mensaje = null, "
     "duracion_ms = (extract(epoch from (now() - coalesce(started_at, created_at))) * 1000)::int, "
     "nota = $2, veredicto = $3, sov = $4, sondeos = $5, tiene_avisos = $6 "
-    "where id = $1"
+    # Guarda de inmutabilidad (seguridad docs/08 §2): solo una fila 'pendiente' o
+    # 'en_curso' pasa a 'completado'. Un segundo callback de n8n (reintento, doble
+    # ejecucion) no puede pisar un informe ya cerrado ni resucitar uno fallado.
+    "where id = $1 and estado in ('pendiente', 'en_curso')"
 )
 
 # Forma explicita en vez de una funcion flecha: las expresiones de n8n con arrow

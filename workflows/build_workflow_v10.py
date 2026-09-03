@@ -262,13 +262,22 @@ const b = $json.body || $json;
 for (const f of ['brand', 'domain', 'keyword']) {
   if (!b[f] || !String(b[f]).trim()) throw new Error('Falta el campo obligatorio: ' + f);
 }
-let d = String(b.domain).trim();
-if (!/^https?:\/\//i.test(d)) d = 'https://' + d;
+// Seguridad docs/08 §1.4: recorta longitudes (entran en ~14 llamadas de pago) y
+// fuerza https descartando esquemas raros (file:, gopher:...).
+let d = String(b.domain).trim().slice(0, 253);
+d = d.replace(/^http:\/\//i, 'https://');
+if (!/^https:\/\//i.test(d)) d = 'https://' + d;
 d = d.replace(/\/+$/, '');
-const m = d.match(/^(https?:\/\/[^\/]+)/i);
+const m = d.match(/^(https:\/\/[^\/]+)/i);
 if (!m) throw new Error('Dominio no válido: ' + b.domain);
 const origin = m[1].toLowerCase();
-const competitors = String(b.competitors || '').split(',').map(s => s.trim()).filter(Boolean);
+// Blocklist SSRF: el motor hace fetch del dominio (home, sitemap, landings, enlaces).
+// Sin esto, un POST podría apuntar el análisis a la red interna o al metadata del cloud.
+const host = origin.replace(/^https:\/\//, '').replace(/^www\./, '');
+if (/:\d+$/.test(host)) throw new Error('Dominio no permitido: puerto explícito');
+if (!host.includes('.') || /\.(local|internal)$/i.test(host)) throw new Error('Dominio no público');
+if (/^(127\.|10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.|169\.254\.|0\.|\[?::1)/.test(host)) throw new Error('Dominio no público (IP privada o loopback)');
+const competitors = String(b.competitors || '').split(',').map(s => s.trim().slice(0, 80)).filter(Boolean).slice(0, 20);
 
 // --- Geolocalización del mercado ---
 const PAISES = {
@@ -292,7 +301,7 @@ const PAISES = {
 };
 const pais = String(b.pais || 'ES').trim().toUpperCase().slice(0, 2);
 const info = PAISES[pais] || { es: pais, en: pais, idioma: 'en' };
-const region = String(b.region || '').trim();
+const region = String(b.region || '').trim().slice(0, 80);
 // Idioma de las PREGUNTAS a los modelos (el informe siempre se redacta en español)
 const idioma = (b.idioma === 'es' || b.idioma === 'en') ? b.idioma : info.idioma;
 
@@ -316,8 +325,8 @@ const email = String(b.email || '').trim().toLowerCase();
 const email_valido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 return [{ json: {
-  brand: String(b.brand).trim(),
-  keyword: String(b.keyword).trim(),
+  brand: String(b.brand).trim().slice(0, 80),
+  keyword: String(b.keyword).trim().slice(0, 120),
   competitors,
   domain: origin,
   // La home DE VERDAD, siempre la raiz.
