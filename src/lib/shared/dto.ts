@@ -74,6 +74,12 @@ export interface N8nWebhookPayload {
   keyword: string;
   pais: string;
   region?: string;
+  /**
+   * Solo canal público (landing): email al que enviar el informe. Viaja en el
+   * payload y se guarda en runs.payload; el envío del correo se activa aparte y
+   * no es parte de este flujo. El panel interno no lo usa.
+   */
+  email?: string;
 }
 
 /** Fila del listado: solo lo que se necesita para la tabla, sin el informe. */
@@ -129,4 +135,24 @@ export interface RunsAtCapacity {
   error: "at_capacity";
   activos: number;
   max: number;
+}
+
+/** Respuesta de POST /api/publico/lite: se responde YA con el token de sondeo. */
+export interface LanzarPublicoResponse {
+  token: string;
+  estado: RunEstado;
+}
+
+/**
+ * Respuesta de GET /api/publico/runs/:token — lo que sondea la landing.
+ * No lleva id, dueño ni payload: el canal público solo conoce su token.
+ */
+export interface EstadoPublico {
+  estado: RunEstado;
+  /** Fase actual 0..6 que reporta el workflow LITE. null hasta la primera señal. */
+  progresoIdx: number | null;
+  /** El informe completo, solo cuando estado='completado'. null mientras corre. */
+  informe: unknown | null;
+  /** Motivo del fallo cuando estado='error'. */
+  errorMensaje: string | null;
 }
