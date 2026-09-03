@@ -2657,14 +2657,16 @@ nodes.append(code("Parsear Ficha", CODE_PARSEAR_FICHA, [6580, 1300]))
 nodes.append(code("Paginas a Revisar", CODE_PAGINAS, [6140, 1480]))
 nodes.append({"parameters": {"url": "={{ $json.url }}", "method": "GET",
     "sendHeaders": True, "headerParameters": {"parameters": [{"name": "User-Agent", "value": UA_CHROME}]},
-    "options": {"timeout": 15000, "response": {"response": {"fullResponse": True, "neverError": True,
+    "options": {"timeout": 15000, "batching": {"batch": {"batchSize": 5, "batchInterval": 400}},
+        "response": {"response": {"fullResponse": True, "neverError": True,
         "responseFormat": "text", "outputPropertyName": "body"}}}},
     "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "onError": "continueRegularOutput",
     "position": [6260, 1560], "name": "GET Pagina"})
 nodes.append(code("Extraer Enlaces", CODE_EXTRAER_ENLACES, [6360, 1480]))
 nodes.append({"parameters": {"url": "={{ $json.url }}", "method": "GET",
     "sendHeaders": True, "headerParameters": {"parameters": [{"name": "User-Agent", "value": UA_CHROME}]},
-    "options": {"timeout": 12000, "response": {"response": {"fullResponse": True, "neverError": True,
+    "options": {"timeout": 12000, "batching": {"batch": {"batchSize": 5, "batchInterval": 400}},
+        "response": {"response": {"fullResponse": True, "neverError": True,
         "responseFormat": "text", "outputPropertyName": "body"}}}},
     "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "onError": "continueRegularOutput",
     "position": [6580, 1480], "name": "Comprobar Enlace"})

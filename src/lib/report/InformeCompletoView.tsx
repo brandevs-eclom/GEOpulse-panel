@@ -486,7 +486,20 @@ function EnlacesRotosCompleta({
 }: {
   enlaces?: InformeCompleto["enlaces_rotos"];
 }) {
-  if (!enlaces || enlaces.revisados === 0) return null;
+  if (!enlaces) return null;
+  // Se crawlearon páginas pero no se pudo extraer/comprobar enlaces: se dice, no se
+  // esconde (suele ser bloqueo anti-bot del sitio o contenido cargado por JS).
+  if (enlaces.revisados === 0) {
+    return (
+      <Ficha eyebrow="Cimientos" titulo="Enlaces rotos (404)" estado="muted">
+        <p className="m-detail">
+          {enlaces.paginas_revisadas > 0
+            ? `Se recorrieron ${enlaces.paginas_revisadas} páginas pero no se pudo extraer ningún enlace para comprobar: el sitio pudo bloquear el rastreo automático o carga el contenido con JavaScript.`
+            : "No se encontraron enlaces para revisar."}
+        </p>
+      </Ficha>
+    );
+  }
   const hayRotos = enlaces.total_rotos > 0;
   const estado = hayRotos
     ? enlaces.internos_rotos > 0

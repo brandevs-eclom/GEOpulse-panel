@@ -301,7 +301,29 @@ function ModulosIncompletos({
  * avisa si solo se revisó una muestra (cap).
  */
 function EnlacesRotosCard({ enlaces }: { enlaces?: InformeLite["enlaces_rotos"] }) {
-  if (!enlaces || enlaces.revisados === 0) return null;
+  if (!enlaces) return null;
+  // Se crawlearon páginas pero no se pudo extraer/comprobar ningún enlace: se dice,
+  // no se esconde (suele ser bloqueo anti-bot del sitio o contenido cargado por JS).
+  if (enlaces.revisados === 0) {
+    return (
+      <div className="card">
+        <div className="pt-head">
+          <div className="pt-l">
+            <span className="dot d-no_verificable" />
+            <span className="pt-title">Enlaces rotos (404)</span>
+          </div>
+          <div className="pt-r">
+            <span className="pt-val">No verificable</span>
+          </div>
+        </div>
+        <div className="pt-detail">
+          {enlaces.paginas_revisadas > 0
+            ? `Se recorrieron ${enlaces.paginas_revisadas} páginas pero no se pudo extraer ningún enlace para comprobar: el sitio pudo bloquear el rastreo automático o carga el contenido con JavaScript.`
+            : "No se encontraron enlaces para revisar."}
+        </div>
+      </div>
+    );
+  }
   const hayRotos = enlaces.total_rotos > 0;
   const estado = hayRotos ? (enlaces.internos_rotos > 0 ? "error" : "warning") : "ok";
   return (

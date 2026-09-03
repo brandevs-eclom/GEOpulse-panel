@@ -551,6 +551,12 @@
         },
         "options": {
           "timeout": 15000,
+          "batching": {
+            "batch": {
+              "batchSize": 5,
+              "batchInterval": 400
+            }
+          },
           "response": {
             "response": {
               "fullResponse": true,
@@ -597,6 +603,12 @@
         },
         "options": {
           "timeout": 12000,
+          "batching": {
+            "batch": {
+              "batchSize": 5,
+              "batchInterval": 400
+            }
+          },
           "response": {
             "response": {
               "fullResponse": true,
