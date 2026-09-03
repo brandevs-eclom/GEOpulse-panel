@@ -29,6 +29,12 @@ export type PanelDbOp =
   | "get_run"
   | "delete_run"
   | "fail_run"
+  // Flujo público (landing)
+  | "migrate_publico"
+  | "create_public_run"
+  | "get_public_run"
+  | "progreso_run"
+  | "count_public_today"
   // Usuarios
   | "count_users"
   | "count_admins"

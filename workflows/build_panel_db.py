@@ -68,6 +68,27 @@ def leer_migraciones() -> str:
 
 MIGRACION_SQL = leer_migraciones()
 
+# Columnas del flujo publico (landing). Se aplican con una op IDEMPOTENTE
+# ('add column if not exists'), asi que a diferencia de 'migrate' se pueden correr
+# sobre la BD ya poblada sin fallar. NO se anaden a schema.ts/drizzle a proposito:
+# son columnas operativas del canal publico, no del modelo del panel, y meterlas en
+# la migracion 0000 obligaria a recrear tablas. Si algun dia se consolidan, se
+# migran a schema.ts y se retira esta op.
+#   origen        'panel' | 'publico' — de donde salio el run (tope de gasto, docs/08 §4)
+#   token         identificador opaco para que la landing sondee sin exponer el id
+#   progreso_idx  fase actual 0..6 que reporta el workflow (monotona)
+#   ip            para el rate-limit por IP del lanzamiento publico
+MIGRACION_PUBLICO_SQL = "\n--> statement-breakpoint\n".join(
+    [
+        "alter table runs add column if not exists origen text not null default 'panel'",
+        "alter table runs add column if not exists token text",
+        "alter table runs add column if not exists progreso_idx integer",
+        "alter table runs add column if not exists ip text",
+        "create unique index if not exists runs_token_key on runs (token)",
+        "create index if not exists runs_origen_created_at_idx on runs (origen, created_at desc)",
+    ]
+)
+
 # ============================================================
 # CODE NODES
 # ============================================================
@@ -82,6 +103,10 @@ const params = (entrada.params && typeof entrada.params === 'object') ? entrada.
 
 const MIGRACION = """
     + json.dumps(MIGRACION_SQL)
+    + r""";
+
+const MIGRACION_PUBLICO = """
+    + json.dumps(MIGRACION_PUBLICO_SQL)
     + r""";
 
 // Cada operacion declara su SQL y como ordenar sus parametros para $1,$2...
@@ -122,6 +147,15 @@ const OPS = {
     // Se parte en una sentencia por item (mas abajo). No idempotente a proposito:
     // si las tablas ya existen, falla en vez de fingir. Cada item lleva params [].
     sql: MIGRACION,
+    requiere: [],
+    orden: () => []
+  },
+  migrate_publico: {
+    // Anade a runs las columnas del flujo publico (origen, token, progreso_idx, ip).
+    // IDEMPOTENTE ('add column if not exists'): se puede correr sobre una BD ya
+    // poblada sin romper, al reves que 'migrate'. Se parte en una sentencia por
+    // item mas abajo, igual que migrate.
+    sql: MIGRACION_PUBLICO,
     requiere: [],
     orden: () => []
   },
@@ -234,6 +268,68 @@ const OPS = {
     orden: (p) => [exigirUuid(p.id), String(p.mensaje).slice(0, 2000)]
   },
 
+  // --- Flujo publico (landing) ---
+  // El canal publico reutiliza la misma tabla runs pero con origen='publico' y un
+  // token opaco. NUNCA expone el id ni el filtro de dueno: la landing solo conoce
+  // su token. LITE-only por diseno (el publico no lanza completos, que cuestan).
+  create_public_run: {
+    // Como create_run pero fuerza tipo='lite', marca origen='publico', genera un
+    // token opaco (dos uuid sin guiones = 64 hex, ~244 bits) para el sondeo y
+    // guarda la IP para el rate-limit. NO acepta lanzado_por: un run publico no
+    // tiene dueno del panel.
+    requiere: ['brand', 'domain', 'keyword'],
+    sql: "insert into runs (tipo, brand, domain, keyword, pais, region, payload, estado, origen, token, ip) " +
+         "values ('lite', $1, $2, $3, $4, $5, $6::jsonb, 'pendiente', 'publico', " +
+         "replace(gen_random_uuid()::text, '-', '') || replace(gen_random_uuid()::text, '-', ''), $7) " +
+         "returning id, token, estado, created_at",
+    orden: (p) => {
+      const pais = (p.pais ? String(p.pais).trim().toUpperCase() : 'ES') || 'ES';
+      const region = p.region ? String(p.region).trim() : null;
+      const payload = JSON.stringify(p.payload && typeof p.payload === 'object' ? p.payload : {});
+      const ip = p.ip ? String(p.ip).trim().slice(0, 64) : null;
+      return [String(p.brand).trim(), String(p.domain).trim(),
+              String(p.keyword).trim(), pais, region, payload, ip];
+    }
+  },
+  get_public_run: {
+    // Sondeo de la landing por token. Solo alcanza runs publicos (origen='publico'),
+    // asi que un token filtrado no puede leer una ejecucion interna del panel.
+    // Devuelve estado, fase y el informe SOLO si ya esta guardado (join a informes).
+    // error_mensaje viaja para poder mapear el motivo a un err-* en la web.
+    requiere: ['token'],
+    sql: "select r.estado, r.progreso_idx, r.error_mensaje, r.finished_at, i.informe " +
+         "from runs r left join informes i on i.run_id = r.id " +
+         "where r.token = $1 and r.origen = 'publico'",
+    orden: (p) => [String(p.token).trim().slice(0, 128)]
+  },
+  progreso_run: {
+    // Avance de fase que reporta el propio workflow LITE en cada tramo. MONOTONO:
+    // solo avanza (nunca retrocede), asi que las ramas paralelas del analisis no
+    // hacen saltar la barra hacia atras. La primera senal marca started_at y pasa
+    // la fila a 'en_curso'. No toca una fila ya terminada (completado/error).
+    requiere: ['id', 'idx'],
+    sql: "update runs set progreso_idx = $2::int, " +
+         "estado = case when estado = 'pendiente' then 'en_curso' else estado end, " +
+         "started_at = coalesce(started_at, now()), updated_at = now() " +
+         "where id = $1 and estado in ('pendiente', 'en_curso') " +
+         "and $2::int > coalesce(progreso_idx, -1) returning id, progreso_idx",
+    orden: (p) => {
+      const idx = parseInt(p.idx, 10);
+      if (!Number.isFinite(idx) || idx < 0 || idx > 20) {
+        throw new Error('idx de fase invalido: ' + p.idx);
+      }
+      return [exigirUuid(p.id), idx];
+    }
+  },
+  count_public_today: {
+    // Rate-limit del lanzamiento publico: cuantos runs publicos lleva esta IP en
+    // las ultimas 24 h. La decision del limite se toma en el panel; aqui se cuenta.
+    requiere: ['ip'],
+    sql: "select count(*)::int as total from runs " +
+         "where origen = 'publico' and ip = $1 and created_at > now() - interval '24 hours'",
+    orden: (p) => [String(p.ip).trim().slice(0, 64)]
+  },
+
   // --- Usuarios ---
   // El panel NUNCA manda ni recibe contrasenas en claro por aqui: el hash se
   // calcula y se verifica en el panel (runtime Node, scrypt). Aqui solo viaja el
@@ -343,10 +439,11 @@ for (const campo of (def.requiere || [])) {
 // asi que emitimos N items y el nodo corre cada CREATE por separado, en orden.
 // Drizzle separa las sentencias con '--> statement-breakpoint', que es el corte
 // mas fiable (no parte por ';' que podria aparecer dentro de un literal).
-if (op === 'migrate') {
+if (op === 'migrate' || op === 'migrate_publico') {
+  const fuente = op === 'migrate' ? MIGRACION : MIGRACION_PUBLICO;
   const esSoloComentarios = (s) =>
     !s.split('\n').some(l => l.trim() && !l.trim().startsWith('--'));
-  const sentencias = MIGRACION
+  const sentencias = fuente
     .split('--> statement-breakpoint')
     .map(s => s.trim())
     .filter(s => s && !esSoloComentarios(s));
@@ -376,7 +473,7 @@ const rows = entradas
 const salida = { ok: true, op, rows };
 // En migrate cada sentencia es un item, asi que el nº de items ejecutados es
 // una confirmacion util de que se corrio la migracion entera y no solo la 1ª.
-if (op === 'migrate') salida.sentencias = entradas.length;
+if (op === 'migrate' || op === 'migrate_publico') salida.sentencias = entradas.length;
 
 return [{ json: salida }];"""
 
