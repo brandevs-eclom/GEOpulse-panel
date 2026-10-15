@@ -5,7 +5,6 @@
  */
 
 import type {
-  EstadoPublico,
   LanzarRunInput,
   N8nWebhookPayload,
   RunDetail,
@@ -199,65 +198,4 @@ export async function getRun(
     informe: obj(r.informe),
     rawBody: str(r.raw_body),
   };
-}
-
-// --- Canal público (landing) ---
-
-export interface RunPublicoCreado {
-  id: string;
-  token: string;
-  estado: RunEstado;
-  createdAt: string;
-}
-
-/**
- * Crea una ejecución LITE pública (origen='publico', sin dueño) y devuelve su
- * token de sondeo. El id NO se expone: la landing solo maneja el token.
- * `ip` se guarda para el rate-limit; el payload (que puede llevar email) se
- * guarda íntegro como jsonb.
- */
-export async function createPublicRun(
-  payload: N8nWebhookPayload,
-  ip: string | null,
-): Promise<RunPublicoCreado> {
-  const rows = await callPanelDb<DbRow>("create_public_run", {
-    brand: payload.brand,
-    domain: payload.domain,
-    keyword: payload.keyword,
-    pais: payload.pais,
-    region: payload.region ?? null,
-    payload,
-    ip: ip ?? null,
-  });
-  const r = rows[0];
-  if (!r) throw new Error("create_public_run no devolvió la fila creada");
-  return {
-    id: String(r.id),
-    token: String(r.token),
-    estado: String(r.estado) as RunEstado,
-    createdAt: String(r.created_at),
-  };
-}
-
-/**
- * Estado público de una ejecución por token, o null si el token no existe.
- * Solo alcanza runs con origen='publico': un token no puede leer una ejecución
- * interna del panel.
- */
-export async function getPublicRun(token: string): Promise<EstadoPublico | null> {
-  const rows = await callPanelDb<DbRow>("get_public_run", { token });
-  const r = rows[0];
-  if (!r) return null;
-  return {
-    estado: String(r.estado) as RunEstado,
-    progresoIdx: num(r.progreso_idx),
-    informe: obj(r.informe),
-    errorMensaje: str(r.error_mensaje),
-  };
-}
-
-/** Cuántos análisis públicos lleva esta IP en las últimas 24 h (rate-limit). */
-export async function countPublicToday(ip: string): Promise<number> {
-  const rows = await callPanelDb<{ total: number }>("count_public_today", { ip });
-  return num(rows[0]?.total) ?? 0;
 }

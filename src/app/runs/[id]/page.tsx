@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { EstadoBadge } from "@/components/EstadoBadge";
 import { ApiError, eliminarRun, fetchRun } from "@/lib/client/api";
@@ -58,9 +59,10 @@ function fechaLarga(iso: string | null): string {
   return Number.isNaN(d.getTime()) ? iso : d.toLocaleString("es-ES");
 }
 
-/** Descarga un texto como fichero, 100% en cliente (sin endpoint). */
-function descargar(contenido: string, tipo: string, nombre: string): void {
-  const url = URL.createObjectURL(new Blob([contenido], { type: tipo }));
+/** Descarga un contenido (texto o Blob) como fichero, en cliente. */
+function descargar(contenido: string | Blob, tipo: string, nombre: string): void {
+  const blob = contenido instanceof Blob ? contenido : new Blob([contenido], { type: tipo });
+  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = nombre;
@@ -72,8 +74,25 @@ function descargar(contenido: string, tipo: string, nombre: string): void {
 
 /** Botones de export (G12). Solo si hay informe que descargar. */
 function ExportBotones({ run }: { run: RunDetail }) {
+  // El PDF lo genera Gotenberg vía la ruta autenticada /api/runs/:id/pdf (misma
+  // plantilla que la landing y el correo), no window.print().
+  const [pdf, setPdf] = useState<"idle" | "loading" | "error">("idle");
   if (run.informe == null) return null;
   const btn = { padding: "8px 14px", fontSize: "0.72rem" } as const;
+
+  const descargarPdf = async () => {
+    setPdf("loading");
+    try {
+      const res = await fetch(`/api/runs/${run.id}/pdf`, { cache: "no-store" });
+      if (!res.ok) throw new Error(String(res.status));
+      descargar(await res.blob(), "application/pdf", nombreFichero(run, "pdf"));
+      setPdf("idle");
+    } catch {
+      setPdf("error");
+      setTimeout(() => setPdf("idle"), 2500);
+    }
+  };
+
   return (
     <div className="gp-no-print" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
       <button
@@ -100,9 +119,14 @@ function ExportBotones({ run }: { run: RunDetail }) {
         type="button"
         className="gp-btn gp-btn-ghost"
         style={btn}
-        onClick={() => window.print()}
+        disabled={pdf === "loading"}
+        onClick={descargarPdf}
       >
-        Imprimir / PDF
+        {pdf === "loading"
+          ? "Generando…"
+          : pdf === "error"
+            ? "Error, reintenta"
+            : "Descargar PDF"}
       </button>
     </div>
   );

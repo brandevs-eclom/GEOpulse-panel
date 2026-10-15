@@ -1,0 +1,144 @@
+{
+  "name": "GEOpulse estado (sondeo publico, solo lectura)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "geopulse-estado",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        300
+      ],
+      "name": "Webhook",
+      "webhookId": "geopulse-estado"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Extrae el token del query (?token=...). GET simple: sin cabeceras raras no hay\n// preflight, asi que el navegador puede sondear sin CORS de escritura.\nconst q = $json.query || {};\nconst token = String(q.token || '').trim().slice(0, 128);\nreturn [{ json: { token } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        380,
+        300
+      ],
+      "name": "Token"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select r.estado, r.progreso_idx as \"progresoIdx\", r.error_mensaje as \"errorMensaje\", i.informe from runs r left join informes i on i.run_id = r.id where r.token = $1 and r.origen = 'publico'",
+        "options": {
+          "queryReplacement": "={{ [$json.token] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        560,
+        300
+      ],
+      "name": "Leer Estado",
+      "credentials": {
+        "postgres": {
+          "name": "GEOpulse User"
+        }
+      },
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Forma estable para la landing. Si el token no existe (0 filas), estado=null y la\n// web sigue sondeando. Parsea el informe si viniera como string (segun driver).\nconst r = $json || {};\nlet informe = r.informe;\nif (typeof informe === 'string') { try { informe = JSON.parse(informe); } catch (e) { informe = null; } }\nreturn [{ json: {\n  estado: r.estado || null,\n  progresoIdx: (r.progresoIdx === undefined || r.progresoIdx === null) ? null : Number(r.progresoIdx),\n  informe: informe || null,\n  errorMensaje: r.errorMensaje || null\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        740,
+        300
+      ],
+      "name": "Formatear Estado"
+    },
+    {
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "X-Robots-Tag",
+                "value": "noindex, nofollow"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        920,
+        300
+      ],
+      "name": "Responder Estado"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token": {
+      "main": [
+        [
+          {
+            "node": "Leer Estado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Estado": {
+      "main": [
+        [
+          {
+            "node": "Formatear Estado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Estado": {
+      "main": [
+        [
+          {
+            "node": "Responder Estado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none"
+  }
+}

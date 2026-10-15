@@ -143,6 +143,10 @@ _cambios_head = pc.parchear_encabezados(nodes)
 wh = por_nombre["Webhook"]
 wh["parameters"]["path"] = WEBHOOK_PATH
 wh["webhookId"] = WEBHOOK_PATH
+# CORS: la web publica llama a este webhook desde otro dominio. allowedOrigins hace
+# que n8n responda al preflight OPTIONS y emita Access-Control-Allow-Origin. '*' es
+# lo mas permisivo (endpoint publico); se puede restringir al dominio de la web.
+wh["parameters"].setdefault("options", {})["allowedOrigins"] = "*"
 
 # 4. El 'Responder' original sobra: ya no devolvemos el informe por HTTP.
 pc.quitar_nodos(nodes, conns, ["Responder"])
@@ -155,6 +159,9 @@ def connect(a, b, idx=0):
     conns[a]["main"][0].append({"node": b, "type": "main", "index": idx})
 
 
+# autocrear=True: el MISMO webhook lo usa el panel (manda run_id) y la web publica
+# (llama directa, sin run_id). Cuando no viene, n8n crea la fila (origen='publico'
+# + token) en 'Asegurar Run', asi la web queda registrada y el panel la ve.
 pc.anadir_ciclo_de_vida(
     nodes,
     connect,
@@ -162,8 +169,35 @@ pc.anadir_ciclo_de_vida(
     nombre_webhook="Webhook",
     y_ack=200,
     x_fin=3560,
+    autocrear=True,
 )
-pc.rama_ack_primero(conns, "Webhook")
+pc.rama_ack_primero(conns, "Webhook", primero="Datos Web")
+
+# 6. Reporte de fase REAL para la landing publica. Cada tramo del analisis marca su
+#    fase en runs.progreso_idx (rama muerta, no altera el flujo); la landing lo
+#    sondea y mueve la barra con datos reales, no con un temporizador. El idx casa
+#    1:1 con el array FASES de la landing (0 leyendo ... 6 informe). Solo aqui: el
+#    webhook publico 'geopulse-lite2' es sincrono y no lleva run_id ni BD.
+pc.anadir_reporte_fases(
+    nodes,
+    connect,
+    [
+        ("Normalizar Input", 0, "Fase 0 - leyendo", [520, 620]),
+        ("Sondas", 1, "Fase 1 - motores", [2320, 40]),
+        ("Ficha Google", 2, "Fase 2 - ficha", [2760, 820]),
+        ("Paginas a Revisar", 3, "Fase 3 - rastreo", [1980, 1060]),
+        ("Extraer Enlaces", 4, "Fase 4 - enlaces", [2260, 1060]),
+        ("Recopilar Respuestas", 5, "Fase 5 - contando", [2860, 480]),
+        ("Preparar Informe", 6, "Fase 6 - informe", [3040, 480]),
+    ],
+)
+
+# 7. Correo automatico: al COMPLETAR el run, maqueta el informe con la plantilla
+#    compartida, lo pasa por Gotenberg y lo envia por email. Solo si el run trae un
+#    email valido (un lanzamiento interno del panel, sin email, no dispara correo).
+#    La rama cuelga de 'Marcar Completado', asi que el informe ya esta guardado
+#    aunque el correo fallara. Usa el informe de 'Ensamblar LITE2'.
+pc.anadir_correo_pdf(nodes, connect, "Marcar Completado", "Ensamblar LITE2")
 
 wf = {
     "name": "GEOpulse LITE - panel (asincrono, escribe en Postgres)",

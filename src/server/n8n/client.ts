@@ -29,12 +29,10 @@ export type PanelDbOp =
   | "get_run"
   | "delete_run"
   | "fail_run"
-  // Flujo público (landing)
+  // Migración de las columnas del canal público (origen/token/progreso_idx/ip).
+  // El resto del flujo público NO pasa por el panel: la web llama a n8n directo,
+  // que crea el run y sirve el estado con nodos Postgres locales.
   | "migrate_publico"
-  | "create_public_run"
-  | "get_public_run"
-  | "progreso_run"
-  | "count_public_today"
   // Usuarios
   | "count_users"
   | "count_admins"

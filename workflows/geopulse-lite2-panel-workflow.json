@@ -6,7 +6,9 @@
         "httpMethod": "POST",
         "path": "geopulse-lite2-panel",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "*"
+        }
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
@@ -671,12 +673,47 @@
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "// Ack inmediato para el panel. El run_id llega del panel; si no viene, el\n// analisis se ejecuta igual pero no se podra guardar (se avisa en la respuesta).\nconst b = $json.body || $json;\nconst run_id = String(b.run_id || '').trim();\nreturn [{ json: { ok: true, run_id: run_id || null, aceptado: !!run_id } }];"
+        "jsCode": "// Normaliza lo minimo del body para asegurar la fila del run. Corre en la rama del\n// ACK (antes que el analisis), asi que NO puede usar 'Normalizar Input': hace su\n// propia normalizacion ligera de lo que va a columnas del listado.\nconst b = $json.body || $json;\nconst h = $json.headers || {};\nconst run_id = String(b.run_id || '').trim();\nconst brand = String(b.brand || '').trim().slice(0, 80);\nlet d = String(b.domain || '').trim().slice(0, 253);\nd = d.replace(/^https?:\\/\\//i, '').replace(/\\/+$/, '').split('/')[0].replace(/^www\\./i, '').toLowerCase();\nconst keyword = String(b.keyword || '').trim().slice(0, 120);\nconst pais = (String(b.pais || 'ES').trim().toUpperCase().slice(0, 2)) || 'ES';\nconst region = String(b.region || '').trim().slice(0, 80) || null;\nconst ip = String(h['x-forwarded-for'] || '').split(',')[0].trim() || null;\nreturn [{ json: { run_id, brand, domain: d, keyword, pais, region, payload: JSON.stringify(b), ip } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        380,
+        300,
+        200
+      ],
+      "name": "Datos Web"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "insert into runs (id, tipo, brand, domain, keyword, pais, region, payload, estado, origen, token, ip) values (coalesce(nullif($1, '')::uuid, gen_random_uuid()), 'lite', $2, $3, $4, $5, $6, $7::jsonb, 'pendiente', case when nullif($1, '') is null then 'publico' else 'panel' end, case when nullif($1, '') is null then replace(gen_random_uuid()::text, '-', '') || replace(gen_random_uuid()::text, '-', '') else null end, $8) on conflict (id) do update set updated_at = now() returning id, token",
+        "options": {
+          "queryReplacement": "={{ [$json.run_id, $json.brand, $json.domain, $json.keyword, $json.pais, $json.region, $json.payload, $json.ip] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        460,
+        200
+      ],
+      "name": "Asegurar Run",
+      "credentials": {
+        "postgres": {
+          "name": "GEOpulse User"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Acuse inmediato. run_id/token vienen de 'Asegurar Run' (la fila ya existia\n// -panel- o se acaba de crear -web-). Con esto ni el panel ni la web se quedan sin\n// run_id, asi que 'Preparar Guardado' ya no puede fallar por falta de run_id.\nconst r = ($('Asegurar Run').first() || {}).json || {};\nconst run_id = r.id ? String(r.id) : null;\nconst token = r.token ? String(r.token) : null;\nreturn [{ json: { ok: !!run_id, run_id, token, aceptado: !!run_id } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        620,
         200
       ],
       "name": "Preparar Ack"
@@ -684,12 +721,21 @@
     {
       "parameters": {
         "respondWith": "firstIncomingItem",
-        "options": {}
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "X-Robots-Tag",
+                "value": "noindex, nofollow"
+              }
+            ]
+          }
+        }
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        560,
+        780,
         200
       ],
       "name": "Responder Ack"
@@ -705,7 +751,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        740,
+        960,
         200
       ],
       "name": "Marcar En Curso",
@@ -720,7 +766,7 @@
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "// Extrae a columnas lo que la tabla necesita y prepara el informe para guardar.\n// Tolerante a las DOS formas del informe:\n//   LITE     -> nota, por_area, posicionamiento.veredicto, meta.sondeos\n//   COMPLETO -> score.global, score.por_area, informe_llm.veredicto_visibilidad.nivel,\n//               meta.sondeos_totales\n// Si un dato no esta, se queda en null: el panel lo pinta como \"-\" en vez de\n// inventarse un 0 (principio de honestidad del informe).\nconst informe = $json;\nconst run_id = String($('Webhook').first().json.body.run_id || '').trim();\nif (!run_id) throw new Error('Falta run_id: el panel no lo envio en el body');\n\nconst num = (v) => (typeof v === 'number' && isFinite(v)) ? Math.round(v) : null;\nconst score = informe.score || {};\nconst meta = informe.meta || {};\n\nconst nota = num(informe.nota) ?? num(score.global);\nconst area = informe.por_area || score.por_area || {};\nconst sov = num(area.sov);\nconst sondeos = num(meta.sondeos) ?? num(meta.sondeos_totales);\n\nconst vLite = informe.posicionamiento && informe.posicionamiento.veredicto;\nconst vCompleto = informe.informe_llm\n  && informe.informe_llm.veredicto_visibilidad\n  && informe.informe_llm.veredicto_visibilidad.nivel;\nconst veredicto = vLite || vCompleto || null;\n\nconst avisos = Array.isArray(informe.avisos) ? informe.avisos : [];\n\nreturn [{ json: {\n  run_id,\n  informe_json: JSON.stringify(informe),\n  nota, veredicto, sov, sondeos,\n  tiene_avisos: avisos.length > 0\n} }];"
+        "jsCode": "// Extrae a columnas lo que la tabla necesita y prepara el informe para guardar.\n// Tolerante a las DOS formas del informe:\n//   LITE     -> nota, por_area, posicionamiento.veredicto, meta.sondeos\n//   COMPLETO -> score.global, score.por_area, informe_llm.veredicto_visibilidad.nivel,\n//               meta.sondeos_totales\n// Si un dato no esta, se queda en null: el panel lo pinta como \"-\" en vez de\n// inventarse un 0 (principio de honestidad del informe).\nconst informe = $json;\nconst run_id = String($('Preparar Ack').first().json.run_id || '').trim();\nif (!run_id) throw new Error('Falta run_id: el panel no lo envio en el body');\n\nconst num = (v) => (typeof v === 'number' && isFinite(v)) ? Math.round(v) : null;\nconst score = informe.score || {};\nconst meta = informe.meta || {};\n\nconst nota = num(informe.nota) ?? num(score.global);\nconst area = informe.por_area || score.por_area || {};\nconst sov = num(area.sov);\nconst sondeos = num(meta.sondeos) ?? num(meta.sondeos_totales);\n\nconst vLite = informe.posicionamiento && informe.posicionamiento.veredicto;\nconst vCompleto = informe.informe_llm\n  && informe.informe_llm.veredicto_visibilidad\n  && informe.informe_llm.veredicto_visibilidad.nivel;\nconst veredicto = vLite || vCompleto || null;\n\nconst avisos = Array.isArray(informe.avisos) ? informe.avisos : [];\n\nreturn [{ json: {\n  run_id,\n  informe_json: JSON.stringify(informe),\n  nota, veredicto, sov, sondeos,\n  tiene_avisos: avisos.length > 0\n} }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -773,6 +819,263 @@
         }
       },
       "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "update runs set progreso_idx = $2, estado = case when estado = 'pendiente' then 'en_curso' else estado end, started_at = coalesce(started_at, now()), updated_at = now() where id = $1 and estado in ('pendiente', 'en_curso') and $2 > coalesce(progreso_idx, -1)",
+        "options": {
+          "queryReplacement": "={{ [$('Preparar Ack').first().json.run_id, 0] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        520,
+        620
+      ],
+      "name": "Fase 0 - leyendo",
+      "credentials": {
+        "postgres": {
+          "name": "GEOpulse User"
+        }
+      },
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "update runs set progreso_idx = $2, estado = case when estado = 'pendiente' then 'en_curso' else estado end, started_at = coalesce(started_at, now()), updated_at = now() where id = $1 and estado in ('pendiente', 'en_curso') and $2 > coalesce(progreso_idx, -1)",
+        "options": {
+          "queryReplacement": "={{ [$('Preparar Ack').first().json.run_id, 1] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2320,
+        40
+      ],
+      "name": "Fase 1 - motores",
+      "credentials": {
+        "postgres": {
+          "name": "GEOpulse User"
+        }
+      },
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "update runs set progreso_idx = $2, estado = case when estado = 'pendiente' then 'en_curso' else estado end, started_at = coalesce(started_at, now()), updated_at = now() where id = $1 and estado in ('pendiente', 'en_curso') and $2 > coalesce(progreso_idx, -1)",
+        "options": {
+          "queryReplacement": "={{ [$('Preparar Ack').first().json.run_id, 2] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2760,
+        820
+      ],
+      "name": "Fase 2 - ficha",
+      "credentials": {
+        "postgres": {
+          "name": "GEOpulse User"
+        }
+      },
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "update runs set progreso_idx = $2, estado = case when estado = 'pendiente' then 'en_curso' else estado end, started_at = coalesce(started_at, now()), updated_at = now() where id = $1 and estado in ('pendiente', 'en_curso') and $2 > coalesce(progreso_idx, -1)",
+        "options": {
+          "queryReplacement": "={{ [$('Preparar Ack').first().json.run_id, 3] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1980,
+        1060
+      ],
+      "name": "Fase 3 - rastreo",
+      "credentials": {
+        "postgres": {
+          "name": "GEOpulse User"
+        }
+      },
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "update runs set progreso_idx = $2, estado = case when estado = 'pendiente' then 'en_curso' else estado end, started_at = coalesce(started_at, now()), updated_at = now() where id = $1 and estado in ('pendiente', 'en_curso') and $2 > coalesce(progreso_idx, -1)",
+        "options": {
+          "queryReplacement": "={{ [$('Preparar Ack').first().json.run_id, 4] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2260,
+        1060
+      ],
+      "name": "Fase 4 - enlaces",
+      "credentials": {
+        "postgres": {
+          "name": "GEOpulse User"
+        }
+      },
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "update runs set progreso_idx = $2, estado = case when estado = 'pendiente' then 'en_curso' else estado end, started_at = coalesce(started_at, now()), updated_at = now() where id = $1 and estado in ('pendiente', 'en_curso') and $2 > coalesce(progreso_idx, -1)",
+        "options": {
+          "queryReplacement": "={{ [$('Preparar Ack').first().json.run_id, 5] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2860,
+        480
+      ],
+      "name": "Fase 5 - contando",
+      "credentials": {
+        "postgres": {
+          "name": "GEOpulse User"
+        }
+      },
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "update runs set progreso_idx = $2, estado = case when estado = 'pendiente' then 'en_curso' else estado end, started_at = coalesce(started_at, now()), updated_at = now() where id = $1 and estado in ('pendiente', 'en_curso') and $2 > coalesce(progreso_idx, -1)",
+        "options": {
+          "queryReplacement": "={{ [$('Preparar Ack').first().json.run_id, 6] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        3040,
+        480
+      ],
+      "name": "Fase 6 - informe",
+      "credentials": {
+        "postgres": {
+          "name": "GEOpulse User"
+        }
+      },
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Si no hay email valido (p.ej. lanzamiento interno del panel), NO se envia.\nconst informe = $('Ensamblar LITE2').first().json;\nconst email = String((($('Webhook').first().json || {}).body || {}).email || '').trim();\nif (!email || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/.test(email)) return [];\nreturn [{ json: { informe, email } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3900,
+        520
+      ],
+      "name": "Datos Correo"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nlet r = ($json && $json.informe !== undefined) ? $json.informe : $json;\nif (typeof r === 'string') { try { r = JSON.parse(r); } catch (e) { r = {}; } }\nif (!r || typeof r !== 'object') r = {};\nconst email = ($json && $json.email) || (r.meta && r.meta.email) || '';\nconst esc = (s) => String(s == null ? '' : s).replace(/[&<>\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));\nconst num = (v) => (typeof v === 'number' && isFinite(v)) ? v : null;\n\n// mini-markdown para las respuestas de las IAs (vienen en md). Escapa PRIMERO.\nconst md = (raw) => {\n  let t = esc(raw == null ? '' : raw);\n  t = t.replace(/`([^`\\n]+)`/g, '<code>$1</code>');\n  t = t.replace(/\\[([^\\]\\n]+)\\]\\((https?:\\/\\/[^\\s)]+)\\)/g, '<a href=\"$2\">$1</a>');\n  t = t.replace(/\\*\\*([^*\\n]+)\\*\\*/g, '<strong>$1</strong>').replace(/__([^_\\n]+)__/g, '<strong>$1</strong>');\n  t = t.replace(/(^|[^*])\\*([^*\\n]+)\\*(?!\\*)/g, '$1<em>$2</em>');\n  const out = []; let lista = null;\n  const cerrar = () => { if (lista) { out.push('</' + lista + '>'); lista = null; } };\n  for (const ln of t.split('\\n')) {\n    const s2 = ln.trim();\n    if (!s2) { cerrar(); continue; }\n    let m;\n    if (m = s2.match(/^#{1,6}\\s+(.+)$/)) { cerrar(); out.push('<p class=\"h\">' + m[1] + '</p>'); }\n    else if (m = s2.match(/^[-*•]\\s+(.+)$/)) { if (lista !== 'ul') { cerrar(); out.push('<ul>'); lista = 'ul'; } out.push('<li>' + m[1] + '</li>'); }\n    else if (m = s2.match(/^\\d+[.)]\\s+(.+)$/)) { if (lista !== 'ol') { cerrar(); out.push('<ol>'); lista = 'ol'; } out.push('<li>' + m[1] + '</li>'); }\n    else { cerrar(); out.push('<p>' + s2 + '</p>'); }\n  }\n  cerrar();\n  return out.join('') || '<p class=\"muted\">Sin respuesta</p>';\n};\n\nconst meta = r.meta || {}, ap = r.aparicion || {}, area = r.por_area || {};\nconst VERED = { fuerte: 'Buena visibilidad en IA', parcial: 'Visibilidad parcial en IA', debil: 'Poca visibilidad en IA', ausente: 'La IA no te menciona' };\nconst nota = num(r.nota);\nconst veredicto = VERED[(r.posicionamiento || {}).veredicto] || 'Visibilidad en IA';\nconst filaKV = (t, v) => '<tr><td class=\"k\">' + esc(t) + '</td><td class=\"v\">' + esc(v == null ? '—' : v) + '</td></tr>';\nconst pct = (v) => (v == null ? '—' : Math.round(v) + '%');\n\nlet s = '';\ns += '<div class=\"head\"><div><div class=\"brand\">' + esc(meta.brand || '') + '</div>'\n  + '<div class=\"muted\">' + esc(meta.host || meta.domain || '') + (meta.keyword ? ' · ' + esc(meta.keyword) : '')\n  + (meta.mercado || meta.region || meta.pais ? ' · ' + esc(meta.mercado || meta.region || meta.pais) : '') + '</div></div>'\n  + '<div class=\"nota\"><span class=\"n\">' + (nota == null ? '—' : nota) + '</span><span class=\"d\">/100</span></div></div>';\ns += '<div class=\"vered\">' + esc(veredicto) + ' · te citan en ' + (ap.total_hits != null ? ap.total_hits : '—') + ' de ' + (ap.total_validas != null ? ap.total_validas : (meta.sondeos != null ? meta.sondeos : '—')) + ' sondeos</div>';\nif (r.resumen_hallazgos) s += '<p class=\"resumen\">' + esc(r.resumen_hallazgos) + '</p>';\nconst avisos = (r.avisos || []).filter(Boolean);\nif (avisos.length) s += '<div class=\"avisos\"><div class=\"lbl\">' + avisos.length + (avisos.length === 1 ? ' aviso' : ' avisos') + '</div><ul>'\n  + avisos.map(a => '<li>' + esc(typeof a === 'string' ? a : (a.texto || a.detalle || '')) + '</li>').join('') + '</ul></div>';\n\ns += '<h2>Por área</h2><table class=\"kv\">'\n  + filaKV('SEO técnico', num(area.seo_tecnico)) + filaKV('Contenido', num(area.contenido))\n  + filaKV('Cuota de voz', num(area.sov)) + filaKV('Huella digital', num(area.huella)) + '</table>';\n\nconst pm = ap.por_modelo || [];\nif (pm.length) s += '<h2>Visibilidad motor a motor</h2><table class=\"grid\"><thead><tr><th>Motor</th><th>Aparece</th><th>Tasa</th></tr></thead><tbody>'\n  + pm.map(m => '<tr><td>' + esc(m.modelo) + '</td><td>' + (m.apariciones != null ? m.apariciones : '—') + ' de ' + (m.preguntas_validas != null ? m.preguntas_validas : '—') + '</td><td>' + pct(m.tasa) + '</td></tr>').join('')\n  + '</tbody></table><p class=\"muted\">Tasa global ' + pct(ap.tasa_global) + '.</p>';\n\nconst mc = r.mapa_competitivo || [];\nif (mc.length) s += '<h2>Competencia (menciones)</h2><table class=\"grid\"><tbody>'\n  + mc.map(x => '<tr><td>' + esc(x.empresa) + (x.es_marca ? ' <strong>(tú)</strong>' : '') + '</td><td class=\"r\">' + (x.menciones || 0) + '</td></tr>').join('') + '</tbody></table>';\n\nconst pts = (r.seo_tecnico || {}).puntos || [];\nif (pts.length) s += '<h2>SEO técnico</h2><table class=\"grid\"><tbody>'\n  + pts.map(p => '<tr><td>' + esc(p.titulo) + (p.detalle ? '<br><span class=\"muted\">' + esc(p.detalle) + '</span>' : '') + '</td><td class=\"r\">' + esc(p.valor == null ? 'No verificable' : p.valor) + '</td></tr>').join('') + '</tbody></table>';\n\nconst hd = r.huella_digital || {}, ee = hd.eeatc || {};\nif (Object.keys(ee).length) {\n  s += '<h2>Huella digital (E-E-A-T-C)</h2><table class=\"kv\">'\n    + filaKV('Experiencia', num(ee.experiencia)) + filaKV('Especialización', num(ee.expertise))\n    + filaKV('Autoridad', num(ee.autoridad)) + filaKV('Confianza', num(ee.confianza))\n    + filaKV('Citabilidad', num(ee.citabilidad)) + '</table>';\n  if ((hd.enlaces || []).length) s += '<p class=\"muted\">Menciones: ' + hd.enlaces.map(l => esc(l.dominio || l.url)).join(', ') + '</p>';\n}\n\nconst fg = r.ficha_google || {}, er = r.enlaces_rotos || {};\ns += '<h2>Local y enlaces</h2><table class=\"kv\">';\ns += filaKV('Ficha de Google', fg.encontrada ? ((fg.rating != null ? fg.rating + '★' : '—') + ' · ' + (fg.resenas || 0) + ' reseñas') : 'No encontrada');\nif (fg.categoria) s += filaKV('Categoría', fg.categoria);\nif (er.revisados != null) s += filaKV('Enlaces rotos', (er.total_rotos || 0) + ' de ' + er.revisados + ' comprobados' + (er.cap_aplicado ? ' (límite)' : ''));\nif (er.no_verificables) s += filaKV('No verificables', er.no_verificables);\nif (meta.fecha) s += filaKV('Fecha', meta.fecha);\ns += '</table>';\n\nconst pr = r.preguntas || [];\nif (pr.length) {\n  s += '<h2>Preguntas y respuestas</h2>';\n  s += pr.map((p, i) => '<div class=\"q\"><div class=\"qt\">' + (i + 1) + '. ' + esc(p.pregunta) + '</div>'\n    + (p.respuestas || []).map(rs => '<div class=\"a\"><div class=\"am\">' + esc(rs.modelo) + ' · '\n      + (!rs.respondio ? 'sin respuesta' : (rs.aparece ? 'te cita' : 'no te cita')) + '</div>'\n      + '<div class=\"ar\">' + md(rs.respuesta || '') + '</div></div>').join('') + '</div>').join('');\n}\n\nconst CSS = '@page{margin:16mm}*{box-sizing:border-box}'\n  + 'body{margin:0;font:400 12px/1.5 Manrope,system-ui,sans-serif;color:#17130f;-webkit-print-color-adjust:exact;print-color-adjust:exact}'\n  + 'h2{font:600 14px \"Space Grotesk\",Manrope,sans-serif;margin:20px 0 8px;padding-bottom:4px;border-bottom:2px solid #E74C57}'\n  + '.head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid #17130f;padding-bottom:10px}'\n  + '.brand{font:700 20px \"Space Grotesk\",sans-serif}'\n  + '.nota .n{font:700 34px \"Space Grotesk\",sans-serif;color:#E74C57}.nota .d{font-size:12px;color:#8a8178}'\n  + '.vered{margin-top:6px;font-weight:600}.muted{color:#8a8178}'\n  + '.resumen{background:#f6f4f1;border-left:3px solid #E74C57;padding:10px 12px;margin:12px 0;border-radius:0 8px 8px 0}'\n  + '.avisos{background:#fdf6e6;border:1px solid #e6cf90;border-radius:8px;padding:8px 12px;margin:12px 0}'\n  + '.avisos .lbl{font-weight:700;color:#8c6510;font-size:10px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}'\n  + '.avisos ul,.ar ul,.ar ol{margin:4px 0;padding-left:18px}'\n  + 'table{width:100%;border-collapse:collapse;margin:4px 0}'\n  + 'table.kv td{padding:6px 8px;border-bottom:1px solid #eee}.kv .k{color:#5b544c}.kv .v{text-align:right;font-weight:600;white-space:nowrap}'\n  + 'table.grid th{background:#f6f4f1;text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#5b544c}'\n  + 'table.grid td{padding:6px 8px;border-bottom:1px solid #eee;vertical-align:top}.grid .r{text-align:right;white-space:nowrap;font-weight:600}'\n  + '.q{border:1px solid #e7e2db;border-radius:8px;padding:10px 12px;margin:8px 0;break-inside:avoid;page-break-inside:avoid}'\n  + '.qt{font-weight:700;margin-bottom:6px}.a{border-top:1px solid #eee;padding:6px 0}.a:first-of-type{border-top:0}'\n  + '.am{font:700 10px Manrope;text-transform:uppercase;letter-spacing:.05em;color:#5b544c;margin-bottom:3px}'\n  + '.ar p{margin:3px 0}.ar .h{font-weight:700;margin:6px 0 2px}.ar code{background:#f0ece7;border-radius:4px;padding:1px 4px;font-family:monospace}a{color:#E74C57}'\n  // --- Marca BranDevs: cabecera, marca de agua y pie ---\n  + '.wm{position:fixed;top:46%;left:50%;transform:translate(-50%,-50%) rotate(-27deg);font:800 96px \"Space Grotesk\",sans-serif;letter-spacing:-3px;color:#17130f;opacity:.045;z-index:0}'\n  + '.wm span{color:#E74C57}.doc{position:relative;z-index:1}'\n  + '.logo{font:800 16px \"Space Grotesk\",sans-serif;letter-spacing:-.5px}.logo i{color:#E74C57;font-style:normal}'\n  + '.agc{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding-bottom:8px;margin-bottom:12px}'\n  + '.agc-t{font-size:10px;color:#8a8178;text-transform:uppercase;letter-spacing:.1em}'\n  + '.ft{margin-top:26px;border-top:2px solid #17130f;padding-top:10px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;break-inside:avoid}'\n  + '.ft .logo{font-size:18px}.ft-d{font-size:10px;color:#5b544c;text-align:right;line-height:1.7}';\n\n// Marca de agua (fixed -> se repite en cada pagina en Chromium/Gotenberg), cabecera\n// de agencia y pie con contacto+direccion. Datos de brandevs.com (JSON-LD).\nconst marca = 'brandevs<i>.</i>';\nconst wm = '<div class=\"wm\">brandevs<span>.</span></div>';\nconst agc = '<div class=\"agc\"><span class=\"logo\">' + marca + '</span><span class=\"agc-t\">Informe GeoPulse · Auditoría GEO</span></div>';\nconst ft = '<div class=\"ft\"><div class=\"logo\">' + marca + '</div>'\n  + '<div class=\"ft-d\">Travesía de la Fragua 2, nº 7 · 28470 Cercedilla, Madrid · España<br>'\n  + '+34 918 523 960 · info@brandevs.com · brandevs.com</div></div>';\n\nconst html = '<!doctype html><html lang=\"es\"><head><meta charset=\"utf-8\"><title>Informe GeoPulse · brandevs</title>'\n  + '<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>'\n  + '<link href=\"https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap\" rel=\"stylesheet\">'\n  + '<style>' + CSS + '</style></head><body>' + wm + '<div class=\"doc\">' + agc + s + ft + '</div></body></html>';\n\nreturn [{ json: { html, email } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4080,
+        520
+      ],
+      "name": "Plantilla PDF Correo"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// HTML de la plantilla -> fichero binario 'index.html' para Gotenberg (su ruta\n// /forms/chromium/convert/html exige el fichero principal con ese nombre).\nconst html = String($json.html || '');\nreturn [{ json: { email: $json.email || '' },\n  binary: { index_html: { data: Buffer.from(html, 'utf8').toString('base64'),\n    mimeType: 'text/html', fileName: 'index.html' } } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4260,
+        520
+      ],
+      "name": "Preparar HTML Correo"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://85.31.237.167:3000/forms/chromium/convert/html",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "index_html"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4440,
+        520
+      ],
+      "name": "Gotenberg Correo"
+    },
+    {
+      "parameters": {
+        "fromEmail": "GEOpulse <info@brandevs.com>",
+        "toEmail": "={{ $('Datos Correo').first().json.email }}",
+        "subject": "Tu informe GEOpulse en PDF",
+        "emailFormat": "html",
+        "html": "<p>Hola,</p><p>Adjuntamos tu informe GEOpulse en PDF. Gracias por probar la herramienta.</p><p>— BranDevs</p>",
+        "options": {
+          "attachments": "data"
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        4620,
+        520
+      ],
+      "name": "Enviar Correo",
+      "credentials": {
+        "smtp": {
+          "name": "SMTP GEOpulse"
+        }
+      }
     }
   ],
   "connections": {
@@ -780,7 +1083,7 @@
       "main": [
         [
           {
-            "node": "Preparar Ack",
+            "node": "Datos Web",
             "type": "main",
             "index": 0
           },
@@ -797,6 +1100,11 @@
         [
           {
             "node": "GET Home",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fase 0 - leyendo",
             "type": "main",
             "index": 0
           }
@@ -924,6 +1232,11 @@
             "node": "Parsear Ficha",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Fase 2 - ficha",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -933,6 +1246,11 @@
         [
           {
             "node": "GET Pagina",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fase 3 - rastreo",
             "type": "main",
             "index": 0
           }
@@ -955,6 +1273,11 @@
         [
           {
             "node": "Comprobar Enlace",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fase 4 - enlaces",
             "type": "main",
             "index": 0
           }
@@ -992,6 +1315,11 @@
           },
           {
             "node": "Sonda - Perplexity",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fase 1 - motores",
             "type": "main",
             "index": 0
           }
@@ -1104,6 +1432,11 @@
             "node": "Preparar Informe",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Fase 5 - contando",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -1113,6 +1446,11 @@
         [
           {
             "node": "Informe ChatGPT",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fase 6 - informe",
             "type": "main",
             "index": 0
           }
@@ -1135,6 +1473,28 @@
         [
           {
             "node": "Preparar Guardado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Datos Web": {
+      "main": [
+        [
+          {
+            "node": "Asegurar Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asegurar Run": {
+      "main": [
+        [
+          {
+            "node": "Preparar Ack",
             "type": "main",
             "index": 0
           }
@@ -1179,6 +1539,61 @@
         [
           {
             "node": "Marcar Completado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar Completado": {
+      "main": [
+        [
+          {
+            "node": "Datos Correo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Datos Correo": {
+      "main": [
+        [
+          {
+            "node": "Plantilla PDF Correo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plantilla PDF Correo": {
+      "main": [
+        [
+          {
+            "node": "Preparar HTML Correo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar HTML Correo": {
+      "main": [
+        [
+          {
+            "node": "Gotenberg Correo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gotenberg Correo": {
+      "main": [
+        [
+          {
+            "node": "Enviar Correo",
             "type": "main",
             "index": 0
           }
