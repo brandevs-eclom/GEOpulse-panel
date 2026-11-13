@@ -39,11 +39,11 @@ PROMPT_A1_INFRA = """Eres un auditor técnico especializado en infraestructura G
 ENTRADA: JSON con: domain, home_url (la RAÍZ del dominio, que es lo que se ha analizado como "la home"), pagina_indicada (si no es null, una URL con path que el cliente pidió analizar además de la home), llms_txt (status HTTP, exists, parece_html, contenido), schema_existe (booleano determinista), jsonld (bloques de la home), schema_org_home y schema_org_sitio (comprobación DETERMINISTA de Organization/LocalBusiness, ver abajo), schema_landings (tipos de JSON-LD y comprobación org de cada página interna), validacion_schema_org ({disponible, num_errores, num_warnings, errores, warnings}; si disponible=false ignóralo sin penalizar) y sitemap_xml (status, exists, lastmod_mas_reciente).
 
 EVALÚA:
-1. llms_txt → "ok" si existe con formato correcto (Markdown: H1, blockquote resumen, secciones con enlaces). "warning" si existe pero pobre. "error" si no existe o parece_html=true (soft-404). IMPORTANTE: indica siempre en el detalle que llms.txt es una señal de adopción temprana sin efecto confirmado por los motores en 2026: recomendable por coste cero, pero no crítica.
+1. llms_txt → "ok" si existe con formato correcto (Markdown: H1, blockquote resumen, secciones con enlaces). "warning" si existe pero pobre. "error" si no existe o parece_html=true (soft-404). "no_verificable" si sin_respuesta=true (el servidor no respondio a tiempo: NO afirmes que no existe). IMPORTANTE: indica siempre en el detalle que llms.txt es una señal de adopción temprana sin efecto confirmado por los motores en 2026: recomendable por coste cero, pero no crítica.
 2. schema → DOS PASOS obligatorios:
    PASO 1 (existencia): usa schema_existe tal cual. Si es false → existe: false, estado "error", campos vacíos, y NO continúes.
    PASO 2 (calidad, solo si existe): a) CAMPOS DE Organization/LocalBusiness — NO los juzgues tú, ya vienen comprobados en código. Copia `campos_ausentes` EXACTAMENTE de `schema_org_home.ausentes` (lista de nombres de campo tal cual: "sameAs", "telephone"...). Tienes PROHIBIDO añadir a esa lista un campo que aparezca en `schema_org_home.presentes`, y prohibido reformularlos en prosa ("Organization en la home con name" NO es un nombre de campo). Si `schema_org_home.encontrado` es false pero `schema_org_sitio.encontrado` es true, dilo así en el detalle: el marcado existe en el sitio (cita `schema_org_sitio.mejor_en`) pero no en la home, que es donde más pesa. "ok" solo si `schema_org_home.ausentes` está vacío. b) VOCABULARIO: marca en propiedades_invalidas tipos o propiedades que no existen en schema.org o con erratas (schema.org es case-sensitive); si hay alguna, el estado no puede ser "ok". c) VALIDADOR OFICIAL: si disponible, num_errores > 0 → mínimo "warning" citando los errores. d) COBERTURA: usa schema_landings para valorar si el marcado vive solo en la home o también en las páginas de servicio. Si una landing trae es_fallback_home=true significa que no se pudieron muestrear páginas internas y se usó la home como respaldo: evalúala igualmente, pero indica en el detalle que la cobertura en páginas internas queda sin verificar (no la penalices como ausente).
-3. sitemap → "ok" si status 200 Y lastmod_mas_reciente dentro de los últimos 6 meses; "warning" si existe pero el lastmod es antiguo o no hay (los crawlers de IA priorizan contenido fresco); "error" si no responde.
+3. sitemap → "ok" si status 200 Y lastmod_mas_reciente dentro de los últimos 6 meses; "warning" si existe pero el lastmod es antiguo o no hay (los crawlers de IA priorizan contenido fresco); "error" si responde que no existe (404); "no_verificable" si sin_respuesta=true (timeout/conexion: no se pudo comprobar, no afirmes que falta).
 
 REGLAS: evalúa EXCLUSIVAMENTE los datos de entrada; "no_verificable" cuando falte el dato; sé concreto (campos y tipos exactos).
 
@@ -62,7 +62,7 @@ CONTEXTO 2026 — categorías de bots (puntúa por categoría, NO por bot suelto
 - "User-agent: *" con "Disallow: /" bloquea todo → "error".
 
 EVALÚA:
-1. rastreo_bots_ia → aplica las categorías al robots.txt real; cita las líneas exactas.
+1. rastreo_bots_ia → aplica las categorías al robots.txt real; cita las líneas exactas. Si robots_txt.sin_respuesta=true (el servidor no respondio a tiempo), el estado es "no_verificable": NO digas que no hay robots.txt ni que todo esta permitido.
 2. acceso_edge → el estado te viene DADO: copia `acceso_edge.veredicto` tal cual en el campo `estado`. NO lo recalcules ni lo empeores porque "suene grave". El razonamiento está en `acceso_edge.motivo`: úsalo como base del detalle, con estas reglas de redacción. a) Si el veredicto es "ok" porque solo hay bloqueados de TRAINING, dilo sin dramatizar: es una decisión legítima del cliente, probablemente un ajuste del hosting o de un plugin, y NO le cuesta citaciones; nómbralos y di explícitamente que los bots que deciden si le citan sí acceden. b) Si es "error", explica que el bloqueo es a nivel de servidor/CDN aunque el robots.txt lo permita, y qué motor concreto deja de poder citarle. c) Si es "no_verificable" (baseline_valido=false), NO afirmes nada sobre bloqueos: di que la comprobación no es concluyente porque la propia petición de referencia no pasó, y que eso suele ser el WAF filtrando por reputación de IP, no el cliente bloqueando bots. d) Un `posible_rate_limit` (429) NO es una política contra ese bot: menciónalo como límite de peticiones, nunca como bloqueo de IA. En `bots_bloqueados_edge` lista SOLO los que tengan bloqueado_edge=true.
 3. indexabilidad → "error" si meta_robots O x_robots_tag contienen noindex (el header cuenta igual que el meta). Menciona canonical cross-domain.
 4. renderizado → si sospecha_csr=true o hay spa_markers con ratio_texto_html muy bajo, "error"/"warning": el contenido depende de JavaScript y la mayoría de crawlers de IA no lo ejecutan, así que leen una página vacía.
@@ -756,7 +756,9 @@ const stripTags = (h) => h
 
 const llmsBody = asText(llms).slice(0, 4000);
 const llmsIsHtml = /<html|<!doctype/i.test(llmsBody);
-const llms_txt = { status: llms.statusCode ?? null,
+// sin_respuesta: no hubo respuesta HTTP (timeout / conexion abortada). NO es lo mismo
+// que 'no existe': el agente debe dar no_verificable, no error.
+const llms_txt = { status: llms.statusCode ?? null, sin_respuesta: llms.statusCode == null,
   exists: llms.statusCode === 200 && !llmsIsHtml && llmsBody.trim().length > 0,
   parece_html: llmsIsHtml, contenido: llmsBody.slice(0, 2500) };
 
@@ -771,12 +773,14 @@ const detectados = {};
 for (const [cat, list] of Object.entries(CATS)) {
   detectados[cat] = list.filter(bt => new RegExp(bt.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'i').test(robotsBody));
 }
-const robots_txt = { status: robots.statusCode ?? null, exists: robots.statusCode === 200,
+const robots_txt = { status: robots.statusCode ?? null, sin_respuesta: robots.statusCode == null,
+  exists: robots.statusCode === 200,
   bots_detectados_por_categoria: detectados, contenido: robotsBody };
 
 const smBody = asText(smPaginas);
 const lastmods = [...smBody.matchAll(/<lastmod>\s*([^<\s]+)\s*<\/lastmod>/gi)].map(x => x[1]).sort();
-const sitemap_xml = { status: sitemap.statusCode ?? null, exists: sitemap.statusCode === 200,
+const sitemap_xml = { status: sitemap.statusCode ?? null, sin_respuesta: sitemap.statusCode == null,
+  exists: sitemap.statusCode === 200,
   lastmod_mas_reciente: lastmods.length ? lastmods[lastmods.length - 1] : null };
 
 const html = asText(home).slice(0, 400000);
@@ -2580,9 +2584,16 @@ nodes.append({"parameters": {"httpMethod": "POST", "path": "geopulse-audit",
               "type": "n8n-nodes-base.webhook", "typeVersion": 2,
               "position": [-220, 300], "name": "Webhook GEOpulse"})
 nodes.append(code("Normalizar Input", CODE_NORMALIZAR, [0, 300]))
-nodes.append(http_get("GET llms.txt", "={{ $json.urls.llms_txt }}", [220, 300], ua=UA_CHROME))
-nodes.append(http_get("GET robots.txt", "={{ " + N + ".urls.robots_txt }}", [440, 300], ua=UA_CHROME))
-nodes.append(http_get("GET sitemap.xml", "={{ " + N + ".urls.sitemap }}", [660, 300], ua=UA_CHROME))
+# continueRegularOutput: neverError solo silencia errores HTTP (4xx/5xx), NO los de red.
+# Sin esto, un timeout del servidor del cliente en un fichero OPCIONAL (llms.txt,
+# robots.txt, sitemap) abortaba el analisis completo (error real, 2026-11). Asi el
+# nodo sigue sin statusCode y Consolidar lo marca sin_respuesta -> no_verificable.
+nodes.append(http_get("GET llms.txt", "={{ $json.urls.llms_txt }}", [220, 300],
+                      on_error="continueRegularOutput", ua=UA_CHROME))
+nodes.append(http_get("GET robots.txt", "={{ " + N + ".urls.robots_txt }}", [440, 300],
+                      on_error="continueRegularOutput", ua=UA_CHROME))
+nodes.append(http_get("GET sitemap.xml", "={{ " + N + ".urls.sitemap }}", [660, 300],
+                      on_error="continueRegularOutput", ua=UA_CHROME))
 nodes.append(http_get("GET Home", "={{ " + N + ".home_url }}", [880, 300], timeout=20000, ua=UA_CHROME))
 nodes.append(code("Preparar Fetch Bots", CODE_PREPARAR_BOTS, [1100, 300]))
 nodes.append(http_get("Fetch como Bot IA", "={{ " + N + ".home_url }}", [1320, 300],
@@ -2598,7 +2609,8 @@ nodes.append({"parameters": {
     "position": [1760, 300], "name": "Validar Schema.org"})
 nodes.append(code("Parsear Validación Schema", CODE_PARSEAR_VALIDACION, [1980, 300]))
 nodes.append(code("Elegir Sitemap", CODE_ELEGIR_SITEMAP, [2640, 300]))
-nodes.append(http_get("GET Sitemap Páginas", "={{ $json.sitemap_url }}", [2860, 300], ua=UA_CHROME))
+nodes.append(http_get("GET Sitemap Páginas", "={{ $json.sitemap_url }}", [2860, 300],
+                      on_error="continueRegularOutput", ua=UA_CHROME))
 nodes.append(code("Seleccionar Landings", CODE_SELECCIONAR_LANDINGS, [3080, 300]))
 nodes.append(http_get("GET Landing", "={{ $json.url }}", [3300, 300],
                       on_error="continueRegularOutput", ua=UA_CHROME))
@@ -2619,7 +2631,7 @@ user_a1 = ("={{ JSON.stringify({ domain: " + C + ".domain, home_url: " + C + ".h
            "sitemap_xml: " + C + ".sitemap_xml }) }}")
 nodes.append(openai_agent("Agente 1 - Infraestructura GEO", "gpt-5.4-mini", PROMPT_A1_INFRA, user_a1, [3960, 300]))
 
-user_a2 = ("={{ JSON.stringify({ robots_txt: { status: " + C + ".robots_txt.status, "
+user_a2 = ("={{ JSON.stringify({ robots_txt: { status: " + C + ".robots_txt.status, sin_respuesta: " + C + ".robots_txt.sin_respuesta, "
            "bots_detectados_por_categoria: " + C + ".robots_txt.bots_detectados_por_categoria, "
            "contenido: " + C + ".robots_txt.contenido }, acceso_edge: " + C + ".acceso_edge, "
            "landings: (" + C + ".landings || []).map(l => ({ url: l.url, status: l.status, title: l.title, headings: l.headings, es_fallback_home: !!l.es_fallback_home })), "
