@@ -6,7 +6,11 @@
 # DOS WEBHOOKS, MISMA TUBERIA (plantilla -> Gotenberg -> PDF):
 #   · geopulse-pdf        PUBLICO (landing). Busca por { token } y SOLO runs
 #                         origen='publico'. Sin auth: el token (opaco) es la credencial.
-#   · geopulse-pdf-panel  PANEL. Busca por { run_id } cualquier run. Protegido con la
+#   · geopulse-pdf-panel  PANEL. Recibe { run_id, html }: el informe TAL COMO SE VE en
+#                         el panel (LITE o COMPLETO), serializado en el navegador con
+#                         su CSS (src/lib/client/pdf-html.ts). NO usa la plantilla: la
+#                         plantilla esta hecha para la forma del informe LITE y con un
+#                         COMPLETO salia casi vacia (error real, 2026-11). Protegido con la
 #                         MISMA credencial Header Auth que 'panel-db' (x-panel-secret),
 #                         que el panel ya tiene configurada (N8N_PANEL_DB_SECRET). Lo
 #                         llama la ruta autenticada /api/runs/[id]/pdf, que ya ha
@@ -36,11 +40,6 @@ SQL_PUBLICO = (
     "from runs r join informes i on i.run_id = r.id "
     "where r.token = $1 and r.origen = 'publico' and r.estado = 'completado' limit 1"
 )
-SQL_PANEL = (
-    "select i.informe, (r.payload->>'email') as email "
-    "from runs r join informes i on i.run_id = r.id "
-    "where r.id = $1::uuid and r.estado = 'completado' limit 1"
-)
 
 CODE_DATOS_PUBLICO = r"""// Token del cuerpo. El informe NO viene del cliente: se lee de la BD por token,
 // asi la web no puede inyectar contenido en el PDF.
@@ -49,20 +48,19 @@ const token = String(b.token || '').trim().slice(0, 128);
 if (!token) throw new Error('Falta token');
 return [{ json: { clave: token } }];"""
 
-CODE_DATOS_PANEL = r"""// run_id del cuerpo. La autenticacion ya la hizo el Webhook (Header Auth): si la
-// peticion llega aqui, viene del panel. Se valida el formato para no meter texto
-// arbitrario en la consulta.
+CODE_DATOS_PANEL = r"""// HTML del informe ya maquetado por el panel. La autenticacion la hizo el Webhook
+// (Header Auth) y la ruta del panel ya comprobo sesion y propiedad del run.
 const b = $json.body || $json;
-const run_id = String(b.run_id || '').trim();
-if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(run_id)) {
-  throw new Error('run_id no valido');
-}
-return [{ json: { clave: run_id } }];"""
+const html = String(b.html || '');
+if (!html.startsWith('<!doctype html>')) throw new Error('Falta el HTML del informe');
+if (html.length > 15000000) throw new Error('HTML demasiado grande');
+return [{ json: { html, run_id: String(b.run_id || '') } }];"""
 
 CODE_ERR = r"""return [{ json: { ok: false, error: 'servicio' } }];"""
 
 
 def construir(nombre, path, webhook_extra, code_datos, sql, fichero):
+    """sql=None: el cuerpo ya trae el HTML (panel) y se salta Buscar/Plantilla."""
     nodes, conns = [], {}
 
     def connect(a, b, out=0):
@@ -84,8 +82,9 @@ def construir(nombre, path, webhook_extra, code_datos, sql, fichero):
         webhook["credentials"] = webhook_extra["credentials"]
     nodes.append(webhook)
     nodes.append(pc.code("Datos PDF", code_datos, [360, 300]))
-    nodes.append(pc.pg("Buscar Informe", sql, "={{ [$json.clave] }}", [540, 300]))
-    nodes.append(pc.code("Plantilla PDF", pc.CODE_PLANTILLA_PDF, [720, 300]))
+    if sql:
+        nodes.append(pc.pg("Buscar Informe", sql, "={{ [$json.clave] }}", [540, 300]))
+        nodes.append(pc.code("Plantilla PDF", pc.CODE_PLANTILLA_PDF, [720, 300]))
     nodes.append(pc.code("Preparar HTML", pc.CODE_PREP_HTML_PDF, [900, 300]))
     nodes.append(pc.nodo_gotenberg("Gotenberg PDF", [1080, 300]))  # onError continueErrorOutput
     nodes.append(
@@ -117,9 +116,12 @@ def construir(nombre, path, webhook_extra, code_datos, sql, fichero):
     nodes.append(err)
 
     connect("Webhook", "Datos PDF")
-    connect("Datos PDF", "Buscar Informe")
-    connect("Buscar Informe", "Plantilla PDF")
-    connect("Plantilla PDF", "Preparar HTML")
+    if sql:
+        connect("Datos PDF", "Buscar Informe")
+        connect("Buscar Informe", "Plantilla PDF")
+        connect("Plantilla PDF", "Preparar HTML")
+    else:
+        connect("Datos PDF", "Preparar HTML")
     connect("Preparar HTML", "Gotenberg PDF")
     connect("Gotenberg PDF", "Responder PDF", out=0)  # ok    -> devuelve el PDF
     connect("Gotenberg PDF", "Cuerpo Error", out=1)   # error -> json 502
@@ -147,14 +149,14 @@ construir(
     "geopulse-pdf-workflow.json",
 )
 construir(
-    "GEOpulse PDF panel (run_id + Header Auth -> plantilla + Gotenberg)",
+    "GEOpulse PDF panel (HTML del informe + Header Auth -> Gotenberg)",
     "geopulse-pdf-panel",
     {
         "parameters": {"authentication": "headerAuth", "options": {}},
         "credentials": {"httpHeaderAuth": {"name": CRED_HEADER_AUTH}},
     },
     CODE_DATOS_PANEL,
-    SQL_PANEL,
+    None,
     "geopulse-pdf-panel-workflow.json",
 )
 print("Gotenberg:", pc.GOTENBERG_URL)

@@ -681,11 +681,19 @@ def nodo_gotenberg(name, pos, on_error="continueErrorOutput"):
             "contentType": "multipart-form-data",
             "bodyParameters": {
                 "parameters": [
-                    {"parameterType": "formBinaryData", "name": "files", "inputDataFieldName": "index_html"}
+                    {"parameterType": "formBinaryData", "name": "files", "inputDataFieldName": "index_html"},
+                    # Sin printBackground Gotenberg NO imprime fondos ni colores (por
+                    # defecto false): tarjetas, barras y etiquetas salian en blanco.
+                    {"parameterType": "formData", "name": "printBackground", "value": "true"},
+                    # A4 (el defecto de Gotenberg es Carta/Letter).
+                    {"parameterType": "formData", "name": "paperWidth", "value": "8.27"},
+                    {"parameterType": "formData", "name": "paperHeight", "value": "11.7"},
+                    # Margen para que las fuentes web terminen de cargar.
+                    {"parameterType": "formData", "name": "waitDelay", "value": "1s"},
                 ]
             },
             "options": {
-                "timeout": 60000,
+                "timeout": 120000,
                 "response": {"response": {"responseFormat": "file", "outputPropertyName": "data"}},
             },
         },

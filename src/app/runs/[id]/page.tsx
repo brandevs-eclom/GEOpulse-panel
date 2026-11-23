@@ -7,6 +7,7 @@ import { useState } from "react";
 
 import { EstadoBadge } from "@/components/EstadoBadge";
 import { ApiError, eliminarRun, fetchRun } from "@/lib/client/api";
+import { htmlDelInforme } from "@/lib/client/pdf-html";
 import { informeAFilaCsv, informeAJson, nombreFichero } from "@/lib/report/export";
 import { InformeCompletoView, JsonCrudo } from "@/lib/report/InformeCompletoView";
 import { InformeLiteView } from "@/lib/report/InformeLiteView";
@@ -87,7 +88,20 @@ function ExportBotones({ run }: { run: RunDetail }) {
     setPdf("loading");
     setPdfError(null);
     try {
-      const res = await fetch(`/api/runs/${run.id}/pdf`, { cache: "no-store" });
+      // Se imprime EXACTAMENTE lo que se ve: el DOM del informe (LITE o COMPLETO)
+      // con su CSS, convertido por Gotenberg. Ver lib/client/pdf-html.ts.
+      const raiz = document.getElementById("gp-informe-pdf");
+      if (!raiz) throw new Error("No se encuentra el informe en la página.");
+      const html = htmlDelInforme(raiz);
+      if (html.length > 4_000_000) {
+        throw new Error("El informe es demasiado grande para generar el PDF.");
+      }
+      const res = await fetch(`/api/runs/${run.id}/pdf`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html }),
+        cache: "no-store",
+      });
       if (!res.ok) {
         const data = (await res.json().catch(() => null)) as { detalle?: string; error?: string } | null;
         throw new Error(
@@ -219,11 +233,16 @@ function Detalle({ run }: { run: RunDetail }) {
              se guardó con el tipo equivocado, manda el dato real. */
           esInformeCompleto(run.informe) ? (
             <>
-              <InformeCompletoView informe={run.informe as InformeCompleto} />
+              {/* #gp-informe-pdf: lo que se imprime en el PDF (sin el JSON crudo). */}
+              <div id="gp-informe-pdf">
+                <InformeCompletoView informe={run.informe as InformeCompleto} />
+              </div>
               <JsonCrudo informe={run.informe} />
             </>
           ) : (
-            <InformeLiteView informe={run.informe as unknown as InformeLite} />
+            <div id="gp-informe-pdf">
+              <InformeLiteView informe={run.informe as unknown as InformeLite} />
+            </div>
           )
         ) : (
           <div className="gp-empty">

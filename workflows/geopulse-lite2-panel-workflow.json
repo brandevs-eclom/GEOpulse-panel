@@ -1095,11 +1095,31 @@
               "parameterType": "formBinaryData",
               "name": "files",
               "inputDataFieldName": "index_html"
+            },
+            {
+              "parameterType": "formData",
+              "name": "printBackground",
+              "value": "true"
+            },
+            {
+              "parameterType": "formData",
+              "name": "paperWidth",
+              "value": "8.27"
+            },
+            {
+              "parameterType": "formData",
+              "name": "paperHeight",
+              "value": "11.7"
+            },
+            {
+              "parameterType": "formData",
+              "name": "waitDelay",
+              "value": "1s"
             }
           ]
         },
         "options": {
-          "timeout": 60000,
+          "timeout": 120000,
           "response": {
             "response": {
               "responseFormat": "file",

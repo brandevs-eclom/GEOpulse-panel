@@ -15,10 +15,12 @@ function fallo(error: string, detalle: string, status: number) {
 }
 
 /**
- * GET /api/runs/:id/pdf — descarga el PDF del informe.
+ * POST /api/runs/:id/pdf — genera el PDF del informe.  Body: { html }
  *
- * El PDF lo genera Gotenberg en n8n, con la misma plantilla que la landing y el
- * correo, a través del webhook `geopulse-pdf-panel`. Esta ruta es la cara
+ * El `html` es el informe TAL COMO SE VE en el panel (LITE o COMPLETO), serializado
+ * en el navegador con su CSS (lib/client/pdf-html.ts): así el PDF lleva exactamente
+ * todo el contenido del análisis. Gotenberg lo convierte en n8n a través del webhook
+ * `geopulse-pdf-panel`. Esta ruta es la cara
  * AUTENTICADA: exige sesión y que el run sea del usuario (o admin), y solo entonces
  * llama al webhook. El webhook está protegido con la MISMA credencial Header Auth
  * que `panel-db`, así que reutiliza `N8N_PANEL_DB_SECRET`: no hace falta ningún
@@ -28,8 +30,8 @@ function fallo(error: string, detalle: string, status: number) {
  * falla antes de llegar a su nodo de respuesta, n8n contesta 200 con el cuerpo
  * vacío, y darlo por bueno descargaba un fichero corrupto sin decir por qué.
  */
-export async function GET(
-  _req: Request,
+export async function POST(
+  req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const g = await exigirSesion();
@@ -46,6 +48,20 @@ export async function GET(
       return fallo("sin_informe", "Esta ejecución no tiene un informe completado.", 409);
     }
 
+    let html = "";
+    try {
+      const body = (await req.json()) as { html?: unknown };
+      html = typeof body.html === "string" ? body.html : "";
+    } catch {
+      return fallo("json_invalido", "Cuerpo de la petición no válido.", 400);
+    }
+    if (!html.startsWith("<!doctype html>")) {
+      return fallo("html_invalido", "Falta el HTML del informe.", 400);
+    }
+    if (html.length > 4_400_000) {
+      return fallo("html_grande", "El informe es demasiado grande para generar el PDF.", 413);
+    }
+
     const base = process.env.N8N_BASE_URL;
     const path = process.env.N8N_PDF_PANEL_PATH || "geopulse-pdf-panel";
     const secreto = process.env.N8N_PANEL_DB_SECRET;
@@ -58,7 +74,7 @@ export async function GET(
       res = await fetch(`${base.replace(/\/+$/, "")}/webhook/${path}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-panel-secret": secreto },
-        body: JSON.stringify({ run_id: id }),
+        body: JSON.stringify({ run_id: id, html }),
         cache: "no-store",
         signal: AbortSignal.timeout(90_000),
       });
