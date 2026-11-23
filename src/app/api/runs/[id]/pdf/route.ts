@@ -10,15 +10,23 @@ export const dynamic = "force-dynamic";
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+function fallo(error: string, detalle: string, status: number) {
+  return NextResponse.json({ error, detalle }, { status });
+}
+
 /**
  * GET /api/runs/:id/pdf — descarga el PDF del informe.
  *
- * El PDF lo genera Gotenberg a través del webhook `geopulse-pdf` (misma plantilla
- * que la landing y el correo). Esta ruta es la cara AUTENTICADA: exige sesión y que
- * el run sea del usuario (o que sea admin), y solo entonces llama al webhook con el
- * `run_id` + el secreto compartido. El webhook acepta el camino por `run_id` SOLO
- * con ese secreto, así que los informes de cliente no quedan descargables por
- * cualquiera que conozca un id (a diferencia del camino público por token).
+ * El PDF lo genera Gotenberg en n8n, con la misma plantilla que la landing y el
+ * correo, a través del webhook `geopulse-pdf-panel`. Esta ruta es la cara
+ * AUTENTICADA: exige sesión y que el run sea del usuario (o admin), y solo entonces
+ * llama al webhook. El webhook está protegido con la MISMA credencial Header Auth
+ * que `panel-db`, así que reutiliza `N8N_PANEL_DB_SECRET`: no hace falta ningún
+ * secreto nuevo.
+ *
+ * Se comprueba que lo recibido sea DE VERDAD un PDF: cuando un workflow de n8n
+ * falla antes de llegar a su nodo de respuesta, n8n contesta 200 con el cuerpo
+ * vacío, y darlo por bueno descargaba un fichero corrupto sin decir por qué.
  */
 export async function GET(
   _req: Request,
@@ -28,61 +36,65 @@ export async function GET(
   if (!g.ok) return g.res;
 
   const { id } = await params;
-  if (!UUID_RE.test(id)) {
-    return NextResponse.json({ error: "id_invalido" }, { status: 400 });
-  }
+  if (!UUID_RE.test(id)) return fallo("id_invalido", "Id de ejecución no válido.", 400);
 
   try {
-    // Comprobación de propiedad: la de otra persona devuelve 404 (igual que GET).
+    // Propiedad: la de otra persona devuelve 404 (igual que GET /api/runs/:id).
     const run = await getRun(id, filtroPropiedad(g.sesion));
-    if (!run) {
-      return NextResponse.json({ error: "no_encontrado" }, { status: 404 });
-    }
+    if (!run) return fallo("no_encontrado", "Esta ejecución no existe.", 404);
     if (run.estado !== "completado" || run.informe == null) {
-      return NextResponse.json({ error: "sin_informe" }, { status: 409 });
+      return fallo("sin_informe", "Esta ejecución no tiene un informe completado.", 409);
     }
 
     const base = process.env.N8N_BASE_URL;
-    const path = process.env.N8N_PDF_PATH || "geopulse-pdf";
-    const secreto = process.env.PDF_PANEL_SECRET;
+    const path = process.env.N8N_PDF_PANEL_PATH || "geopulse-pdf-panel";
+    const secreto = process.env.N8N_PANEL_DB_SECRET;
     if (!base || !secreto) {
-      // Falta configuración: sin base de n8n o sin el secreto compartido no se
-      // puede pedir el PDF. Se dice claro en vez de un 500 opaco.
-      return NextResponse.json(
-        { error: "config_pdf", detalle: "Falta N8N_BASE_URL o PDF_PANEL_SECRET" },
-        { status: 500 },
-      );
+      return fallo("config_pdf", "Falta N8N_BASE_URL o N8N_PANEL_DB_SECRET en el panel.", 500);
     }
 
-    const url = `${base.replace(/\/+$/, "")}/webhook/${path}`;
     let res: Response;
     try {
-      res = await fetch(url, {
+      res = await fetch(`${base.replace(/\/+$/, "")}/webhook/${path}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-panel-secret": secreto,
-        },
+        headers: { "Content-Type": "application/json", "x-panel-secret": secreto },
         body: JSON.stringify({ run_id: id }),
         cache: "no-store",
+        signal: AbortSignal.timeout(90_000),
       });
     } catch (err) {
-      const detalle = err instanceof Error ? err.message : String(err);
-      return NextResponse.json(
-        { error: "pdf_inaccesible", detalle },
-        { status: 503 },
-      );
+      const msg = err instanceof Error ? err.message : String(err);
+      return fallo("pdf_inaccesible", `No se pudo contactar con n8n: ${msg}`, 503);
     }
 
-    if (!res.ok) {
-      const cuerpo = await res.text().catch(() => "");
-      return NextResponse.json(
-        { error: "pdf_fallido", detalle: `geopulse-pdf devolvió ${res.status}: ${cuerpo.slice(0, 200)}` },
-        { status: 502 },
+    if (res.status === 404) {
+      return fallo(
+        "pdf_no_activo",
+        `El webhook "${path}" no está activo en n8n: importa workflows/geopulse-pdf-panel-workflow.json y actívalo.`,
+        502,
+      );
+    }
+    if (res.status === 401 || res.status === 403) {
+      return fallo(
+        "pdf_no_autorizado",
+        `n8n rechazó la llamada (${res.status}): el webhook "${path}" debe usar la credencial "GEOpulse Panel - Header Auth" (la misma que panel-db).`,
+        502,
       );
     }
 
     const buf = await res.arrayBuffer();
+    const cabecera = new TextDecoder().decode(buf.slice(0, 5));
+    if (!res.ok || !cabecera.startsWith("%PDF")) {
+      const texto = new TextDecoder().decode(buf.slice(0, 200)).trim();
+      return fallo(
+        "pdf_fallido",
+        texto
+          ? `n8n respondió ${res.status} sin PDF: ${texto}`
+          : `n8n respondió ${res.status} con el cuerpo vacío: el workflow "${path}" falló antes de responder. Mira su última ejecución en n8n (suele ser Gotenberg o la credencial de Postgres).`,
+        502,
+      );
+    }
+
     const slug =
       String(run.domain || "informe")
         .replace(/[^a-z0-9]+/gi, "-")

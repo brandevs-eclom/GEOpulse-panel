@@ -39,7 +39,19 @@
           "parameters": [
             {
               "name": "User-Agent",
-              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+            },
+            {
+              "name": "Accept",
+              "value": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "es-ES,es;q=0.9,en;q=0.8"
+            },
+            {
+              "name": "Upgrade-Insecure-Requests",
+              "value": "1"
             }
           ]
         },
@@ -62,7 +74,10 @@
         560,
         300
       ],
-      "name": "GET Home"
+      "name": "GET Home",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
@@ -84,7 +99,19 @@
           "parameters": [
             {
               "name": "User-Agent",
-              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+            },
+            {
+              "name": "Accept",
+              "value": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "es-ES,es;q=0.9,en;q=0.8"
+            },
+            {
+              "name": "Upgrade-Insecure-Requests",
+              "value": "1"
             }
           ]
         },
@@ -129,7 +156,19 @@
           "parameters": [
             {
               "name": "User-Agent",
-              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+            },
+            {
+              "name": "Accept",
+              "value": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "es-ES,es;q=0.9,en;q=0.8"
+            },
+            {
+              "name": "Upgrade-Insecure-Requests",
+              "value": "1"
             }
           ]
         },
@@ -493,7 +532,19 @@
           "parameters": [
             {
               "name": "User-Agent",
-              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+            },
+            {
+              "name": "Accept",
+              "value": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "es-ES,es;q=0.9,en;q=0.8"
+            },
+            {
+              "name": "Upgrade-Insecure-Requests",
+              "value": "1"
             }
           ]
         },
@@ -501,8 +552,8 @@
           "timeout": 15000,
           "batching": {
             "batch": {
-              "batchSize": 5,
-              "batchInterval": 400
+              "batchSize": 1,
+              "batchInterval": 900
             }
           },
           "response": {
@@ -526,7 +577,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Extrae los enlaces <a href> de TODAS las paginas crawleadas ('GET Pagina'),\n// resolviendo cada uno contra la URL de SU pagina. Clasifica interno/externo, dedup\n// entre paginas y CAPA a 120 (avisado). Un item por enlace; centinela si no hay.\nconst hostOf = u => { try { return new URL(u).host.replace(/^www\\./, '').toLowerCase(); } catch (e) { return ''; } };\nconst reg = h => h.split('.').slice(-2).join('.');\nconst paginasIn = $('Paginas a Revisar').all().map(i => i.json);\nconst htmls = $('GET Pagina').all().map(i => i.json);\nconst base = $('Consolidar Senales').first().json;\nconst homeUrl = base.home_url || base.domain || ('https://' + (base.host || ''));\nconst site = hostOf(homeUrl);\nconst CAP = 120;\nconst seen = new Set(), todos = [];\nfor (let pi = 0; pi < paginasIn.length; pi++) {\n  const pageUrl = (paginasIn[pi] && paginasIn[pi].url) || homeUrl;\n  const hj = htmls[pi];\n  const html = String((hj && (hj.body !== undefined ? hj.body : hj.data)) || '');\n  const re = /<a\\b[^>]*\\bhref\\s*=\\s*[\"']([^\"']+)[\"']/gi; let m;\n  while ((m = re.exec(html)) !== null) {\n    let href = String(m[1]).trim();\n    if (!href || /^(mailto:|tel:|javascript:|data:|#)/i.test(href)) continue;\n    let abs; try { abs = new URL(href, pageUrl).href.split('#')[0]; } catch (e) { continue; }\n    if (!/^https?:/i.test(abs) || seen.has(abs)) continue;\n    seen.add(abs);\n    const h = hostOf(abs);\n    todos.push({ url: abs, tipo: (h && site && reg(h) === reg(site)) ? 'interno' : 'externo' });\n  }\n}\nconst encontrados = todos.length;\nconst paginasRev = paginasIn.length;\nconst out = todos.slice(0, CAP);\nif (out.length === 0) return [{ json: { url: homeUrl, tipo: 'interno', _vacio: true, _encontrados: 0, _cap: CAP, _paginas: paginasRev } }];\nout[0]._encontrados = encontrados; out[0]._cap = CAP; out[0]._paginas = paginasRev;\nreturn out.map(e => ({ json: e }));"
+        "jsCode": "// Extrae los enlaces <a href> de TODAS las paginas crawleadas ('GET Pagina'),\n// resolviendo cada uno contra la URL de SU pagina. Clasifica interno/externo, dedup\n// entre paginas y CAPA a 60 (avisado; navegador.CAP_ENLACES). Un item por enlace; centinela si no hay.\nconst hostOf = u => { try { return new URL(u).host.replace(/^www\\./, '').toLowerCase(); } catch (e) { return ''; } };\nconst reg = h => h.split('.').slice(-2).join('.');\nconst paginasIn = $('Paginas a Revisar').all().map(i => i.json);\nconst htmls = $('GET Pagina').all().map(i => i.json);\nconst base = $('Consolidar Senales').first().json;\nconst homeUrl = base.home_url || base.domain || ('https://' + (base.host || ''));\nconst site = hostOf(homeUrl);\nconst CAP = 60;\nconst seen = new Set(), todos = [];\nfor (let pi = 0; pi < paginasIn.length; pi++) {\n  const pageUrl = (paginasIn[pi] && paginasIn[pi].url) || homeUrl;\n  const hj = htmls[pi];\n  const html = String((hj && (hj.body !== undefined ? hj.body : hj.data)) || '');\n  const re = /<a\\b[^>]*\\bhref\\s*=\\s*[\"']([^\"']+)[\"']/gi; let m;\n  while ((m = re.exec(html)) !== null) {\n    let href = String(m[1]).trim();\n    if (!href || /^(mailto:|tel:|javascript:|data:|#)/i.test(href)) continue;\n    let abs; try { abs = new URL(href, pageUrl).href.split('#')[0]; } catch (e) { continue; }\n    if (!/^https?:/i.test(abs) || seen.has(abs)) continue;\n    seen.add(abs);\n    const h = hostOf(abs);\n    todos.push({ url: abs, tipo: (h && site && reg(h) === reg(site)) ? 'interno' : 'externo' });\n  }\n}\nconst encontrados = todos.length;\nconst paginasRev = paginasIn.length;\nconst out = todos.slice(0, CAP);\nif (out.length === 0) return [{ json: { url: homeUrl, tipo: 'interno', _vacio: true, _encontrados: 0, _cap: CAP, _paginas: paginasRev } }];\nout[0]._encontrados = encontrados; out[0]._cap = CAP; out[0]._paginas = paginasRev;\nreturn out.map(e => ({ json: e }));"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -545,7 +596,19 @@
           "parameters": [
             {
               "name": "User-Agent",
-              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+            },
+            {
+              "name": "Accept",
+              "value": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "es-ES,es;q=0.9,en;q=0.8"
+            },
+            {
+              "name": "Upgrade-Insecure-Requests",
+              "value": "1"
             }
           ]
         },
@@ -553,8 +616,8 @@
           "timeout": 12000,
           "batching": {
             "batch": {
-              "batchSize": 5,
-              "batchInterval": 400
+              "batchSize": 1,
+              "batchInterval": 900
             }
           },
           "response": {
@@ -578,7 +641,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Clasifica el estado de cada enlace comprobado. HONESTIDAD: 404/410 = ROTO (seguro);\n// 403/429/5xx/timeout = NO VERIFICABLE (un WAF, un rate-limit o un lento NO es un enlace\n// roto). 2xx/3xx y otros 4xx = accesible. No se cuenta el centinela (_vacio).\nfunction clasificarStatus(sc) {\n  sc = Number(sc);\n  if (sc === 404 || sc === 410) return 'roto';\n  if (!sc || sc === 403 || sc === 429 || sc >= 500) return 'no_verificable';\n  return 'ok';\n}\n// <<<FIN-ENLACES-TESTABLE>>>\nconst entradas = $('Extraer Enlaces').all().map(i => i.json);\nconst resp = $('Comprobar Enlace').all().map(i => i.json);\nconst rotos = [];\nlet revisados = 0, noVerif = 0;\nconst cap = (entradas[0] && entradas[0]._cap) || 120;\nconst encontrados = (entradas[0] && entradas[0]._encontrados) || 0;\nconst paginas = (entradas[0] && entradas[0]._paginas) || 0;\nfor (let i = 0; i < entradas.length; i++) {\n  const e = entradas[i];\n  if (!e || e._vacio || !e.url) continue;\n  revisados++;\n  const r = resp[i] || {};\n  let sc = Number(r.statusCode);\n  if (!Number.isFinite(sc)) sc = 0;\n  const cls = clasificarStatus(sc);\n  if (cls === 'roto') rotos.push({ url: e.url, tipo: e.tipo, status: sc });\n  else if (cls === 'no_verificable') noVerif++;\n}\nreturn [{ json: { enlaces_rotos: {\n  revisados, encontrados, paginas_revisadas: paginas, cap_aplicado: encontrados > cap,\n  total_rotos: rotos.length,\n  internos_rotos: rotos.filter(x => x.tipo === 'interno').length,\n  externos_rotos: rotos.filter(x => x.tipo === 'externo').length,\n  no_verificables: noVerif,\n  rotos: rotos.slice(0, 20)\n} } }];"
+        "jsCode": "// Clasifica el estado de cada enlace comprobado. HONESTIDAD: 404/410 = ROTO (seguro);\n// 403/429/5xx/timeout = NO VERIFICABLE (un WAF, un rate-limit o un lento NO es un enlace\n// roto). 2xx/3xx y otros 4xx = accesible. No se cuenta el centinela (_vacio).\nfunction clasificarStatus(sc) {\n  sc = Number(sc);\n  if (sc === 404 || sc === 410) return 'roto';\n  if (!sc || sc === 403 || sc === 429 || sc >= 500) return 'no_verificable';\n  return 'ok';\n}\n// <<<FIN-ENLACES-TESTABLE>>>\nconst entradas = $('Extraer Enlaces').all().map(i => i.json);\nconst resp = $('Comprobar Enlace').all().map(i => i.json);\nconst rotos = [];\nlet revisados = 0, noVerif = 0;\nconst cap = (entradas[0] && entradas[0]._cap) || 60;\nconst encontrados = (entradas[0] && entradas[0]._encontrados) || 0;\nconst paginas = (entradas[0] && entradas[0]._paginas) || 0;\nfor (let i = 0; i < entradas.length; i++) {\n  const e = entradas[i];\n  if (!e || e._vacio || !e.url) continue;\n  revisados++;\n  const r = resp[i] || {};\n  let sc = Number(r.statusCode);\n  if (!Number.isFinite(sc)) sc = 0;\n  const cls = clasificarStatus(sc);\n  if (cls === 'roto') rotos.push({ url: e.url, tipo: e.tipo, status: sc });\n  else if (cls === 'no_verificable') noVerif++;\n}\nreturn [{ json: { enlaces_rotos: {\n  revisados, encontrados, paginas_revisadas: paginas, cap_aplicado: encontrados > cap,\n  total_rotos: rotos.length,\n  internos_rotos: rotos.filter(x => x.tipo === 'interno').length,\n  externos_rotos: rotos.filter(x => x.tipo === 'externo').length,\n  no_verificables: noVerif,\n  rotos: rotos.slice(0, 20)\n} } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,

@@ -12,8 +12,8 @@
 # Coste: 3 sondas x 3 modelos (9 llamadas) + 1 sonda de huella + 1 informe = 11 llamadas.
 import json
 
-UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-      "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36")
+import navegador as nav  # identidad + ritmo de las peticiones a la web (ver navegador.py)
+UA = nav.UA_NAVEGADOR
 
 # ============================================================
 # HELPERS JS REUTILIZADOS DEL INFORME AVANZADO (verbatim)
@@ -508,13 +508,13 @@ return paginas.map(url => ({ json: { url, _paginas_encontradas: todas.length, _c
 
 CODE_EXTRAER_ENLACES = r"""// Extrae los enlaces <a href> de TODAS las paginas crawleadas ('GET Pagina'),
 // resolviendo cada uno contra la URL de SU pagina. Clasifica interno/externo, dedup
-// entre paginas y CAPA a 120 (avisado). Un item por enlace; centinela si no hay.
+// entre paginas y CAPA a __CAP_ENLACES__ (avisado; navegador.CAP_ENLACES). Un item por enlace; centinela si no hay.
 """ + _HELPERS_ENLACES + r"""const paginasIn = $('Paginas a Revisar').all().map(i => i.json);
 const htmls = $('GET Pagina').all().map(i => i.json);
 const base = $('Consolidar Senales').first().json;
 const homeUrl = base.home_url || base.domain || ('https://' + (base.host || ''));
 const site = hostOf(homeUrl);
-const CAP = 120;
+const CAP = __CAP_ENLACES__;
 const seen = new Set(), todos = [];
 for (let pi = 0; pi < paginasIn.length; pi++) {
   const pageUrl = (paginasIn[pi] && paginasIn[pi].url) || homeUrl;
@@ -552,7 +552,7 @@ const entradas = $('Extraer Enlaces').all().map(i => i.json);
 const resp = $('Comprobar Enlace').all().map(i => i.json);
 const rotos = [];
 let revisados = 0, noVerif = 0;
-const cap = (entradas[0] && entradas[0]._cap) || 120;
+const cap = (entradas[0] && entradas[0]._cap) || __CAP_ENLACES__;
 const encontrados = (entradas[0] && entradas[0]._encontrados) || 0;
 const paginas = (entradas[0] && entradas[0]._paginas) || 0;
 for (let i = 0; i < entradas.length; i++) {
@@ -1032,15 +1032,17 @@ return [{ json: {
 def code(name, js, pos):
     return {"parameters": {"jsCode": js}, "type": "n8n-nodes-base.code", "typeVersion": 2, "position": pos, "name": name}
 
-def http_get(name, url_expr, pos):
+def http_get(name, url_expr, pos, reintentos=0):
     # Opciones IDENTICAS a los GET del informe avanzado (incluido outputPropertyName)
     # + User-Agent de navegador: sin el, muchos WAF devuelven 403 y todo el analisis sale vacio.
     return {"parameters": {"url": url_expr,
-        "sendHeaders": True, "headerParameters": {"parameters": [{"name": "User-Agent", "value": UA}]},
+        "sendHeaders": True, "headerParameters": {"parameters": nav.cabeceras()},
         "options": {"timeout": 20000, "response": {"response": {
             "fullResponse": True, "neverError": True, "responseFormat": "text", "outputPropertyName": "body"}}}},
         "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "onError": "continueRegularOutput",
-        "position": pos, "name": name}
+        "position": pos, "name": name,
+        # Un rate-limit puntual o un timeout aislado no debe dejar el analisis sin datos.
+        **({"retryOnFail": True, "maxTries": reintentos, "waitBetweenTries": 5000} if reintentos else {})}
 
 def nodo_chatgpt(name, pos):
     # GROUNDED: web search de OpenAI para gpt-5.x va por la Responses API con tools:[{web_search}],
@@ -1109,7 +1111,7 @@ nodes.append({"parameters": {"httpMethod": "POST", "path": "geopulse-lite2", "re
 nodes.append(code("Normalizar Input", CODE_NORMALIZAR, [380, 460]))
 # Cadena tecnica: cada GET va seguido de SU nodo de parseo, para poder inspeccionar
 # en n8n exactamente que se ha extraido de cada fuente antes de juzgar nada.
-nodes.append(http_get("GET Home", "={{ " + N + ".home_url }}", [560, 300]))
+nodes.append(http_get("GET Home", "={{ " + N + ".home_url }}", [560, 300], reintentos=3))
 nodes.append(code("Parsear Home", CODE_PARSEAR_HOME, [740, 300]))
 nodes.append(http_get("GET robots", "={{ " + N + ".domain }}/robots.txt", [920, 300]))
 nodes.append(code("Parsear Robots", CODE_PARSEAR_ROBOTS, [1100, 300]))
@@ -1144,21 +1146,21 @@ nodes.append(code("Parsear Ficha", CODE_PARSEAR_FICHA, [2640, 700]))
 # --- Enlaces rotos (404) en TODO el sitio --- rama paralela; se sincroniza en Merge Sondeos.
 nodes.append(code("Paginas a Revisar", CODE_PAGINAS, [1980, 860]))
 nodes.append({"parameters": {"url": "={{ $json.url }}", "method": "GET",
-    "sendHeaders": True, "headerParameters": {"parameters": [{"name": "User-Agent", "value": UA}]},
-    "options": {"timeout": 15000, "batching": {"batch": {"batchSize": 5, "batchInterval": 400}},
+    "sendHeaders": True, "headerParameters": {"parameters": nav.cabeceras()},
+    "options": {"timeout": 15000, "batching": nav.lote(),
         "response": {"response": {"fullResponse": True, "neverError": True,
         "responseFormat": "text", "outputPropertyName": "body"}}}},
     "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "onError": "continueRegularOutput",
     "position": [2100, 940], "name": "GET Pagina"})
-nodes.append(code("Extraer Enlaces", CODE_EXTRAER_ENLACES, [2200, 860]))
+nodes.append(code("Extraer Enlaces", CODE_EXTRAER_ENLACES.replace("__CAP_ENLACES__", str(nav.CAP_ENLACES)), [2200, 860]))
 nodes.append({"parameters": {"url": "={{ $json.url }}", "method": "GET",
-    "sendHeaders": True, "headerParameters": {"parameters": [{"name": "User-Agent", "value": UA}]},
-    "options": {"timeout": 12000, "batching": {"batch": {"batchSize": 5, "batchInterval": 400}},
+    "sendHeaders": True, "headerParameters": {"parameters": nav.cabeceras()},
+    "options": {"timeout": 12000, "batching": nav.lote(),
         "response": {"response": {"fullResponse": True, "neverError": True,
         "responseFormat": "text", "outputPropertyName": "body"}}}},
     "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "onError": "continueRegularOutput",
     "position": [2420, 860], "name": "Comprobar Enlace"})
-nodes.append(code("Clasificar Enlaces", CODE_CLASIFICAR_ENLACES, [2640, 860]))
+nodes.append(code("Clasificar Enlaces", CODE_CLASIFICAR_ENLACES.replace("__CAP_ENLACES__", str(nav.CAP_ENLACES)), [2640, 860]))
 
 nodes.append({"parameters": {"mode": "append", "numberInputs": 7}, "type": "n8n-nodes-base.merge",
     "typeVersion": 3, "position": [2660, 300], "name": "Merge Sondeos"})

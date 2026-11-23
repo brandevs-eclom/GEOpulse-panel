@@ -1,5 +1,5 @@
 {
-  "name": "GEOpulse PDF (plantilla + Gotenberg, descarga)",
+  "name": "GEOpulse PDF publico (token -> plantilla + Gotenberg)",
   "nodes": [
     {
       "parameters": {
@@ -22,7 +22,7 @@
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "// El informe NO viene del cliente: se lee de la BD. Dos vias:\n//  - PUBLICO: token (la landing). Via sin auth; el token es la credencial.\n//  - PANEL: run_id, pero SOLO si llega el secreto compartido en 'x-panel-secret'.\n//    Asi este webhook publico NO queda abierto a bajar cualquier run por id.\nconst b = $json.body || $json;\nconst h = $json.headers || {};\nconst token = String(b.token || '').trim().slice(0, 128);\nlet run_id = String(b.run_id || '').trim();\nconst secreto = String(h['x-panel-secret'] || '');\nconst porId = !!(run_id && secreto && secreto === String($env.PDF_PANEL_SECRET || ''));\nif (!porId) run_id = '';  // sin secreto valido, el run_id se ignora\nif (!token && !run_id) throw new Error('No autorizado: falta token (publico) o run_id + x-panel-secret (panel)');\nreturn [{ json: { token, run_id } }];"
+        "jsCode": "// Token del cuerpo. El informe NO viene del cliente: se lee de la BD por token,\n// asi la web no puede inyectar contenido en el PDF.\nconst b = $json.body || $json;\nconst token = String(b.token || '').trim().slice(0, 128);\nif (!token) throw new Error('Falta token');\nreturn [{ json: { clave: token } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -35,9 +35,9 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "select i.informe, (r.payload->>'email') as email from runs r join informes i on i.run_id = r.id where r.estado = 'completado' and (  (nullif($1, '') is not null and r.token = $1 and r.origen = 'publico')  or (r.id = nullif($2, '')::uuid)) limit 1",
+        "query": "select i.informe, (r.payload->>'email') as email from runs r join informes i on i.run_id = r.id where r.token = $1 and r.origen = 'publico' and r.estado = 'completado' limit 1",
         "options": {
-          "queryReplacement": "={{ [$json.token, $json.run_id] }}"
+          "queryReplacement": "={{ [$json.clave] }}"
         }
       },
       "type": "n8n-nodes-base.postgres",
@@ -122,6 +122,10 @@
           "responseHeaders": {
             "entries": [
               {
+                "name": "Content-Type",
+                "value": "application/pdf"
+              },
+              {
                 "name": "Content-Disposition",
                 "value": "attachment; filename=\"informe-geopulse.pdf\""
               },
@@ -165,7 +169,8 @@
                 "value": "noindex, nofollow"
               }
             ]
-          }
+          },
+          "responseCode": 502
         }
       },
       "type": "n8n-nodes-base.respondToWebhook",

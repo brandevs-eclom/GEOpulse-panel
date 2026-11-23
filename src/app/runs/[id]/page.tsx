@@ -76,25 +76,36 @@ function descargar(contenido: string | Blob, tipo: string, nombre: string): void
 function ExportBotones({ run }: { run: RunDetail }) {
   // El PDF lo genera Gotenberg vía la ruta autenticada /api/runs/:id/pdf (misma
   // plantilla que la landing y el correo), no window.print().
-  const [pdf, setPdf] = useState<"idle" | "loading" | "error">("idle");
+  const [pdf, setPdf] = useState<"idle" | "loading">("idle");
+  // Motivo REAL del fallo (lo da la ruta), no un "error" genérico: así se sabe
+  // qué eslabón falla (configuración, webhook inactivo, Gotenberg...).
+  const [pdfError, setPdfError] = useState<string | null>(null);
   if (run.informe == null) return null;
   const btn = { padding: "8px 14px", fontSize: "0.72rem" } as const;
 
   const descargarPdf = async () => {
     setPdf("loading");
+    setPdfError(null);
     try {
       const res = await fetch(`/api/runs/${run.id}/pdf`, { cache: "no-store" });
-      if (!res.ok) throw new Error(String(res.status));
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { detalle?: string; error?: string } | null;
+        throw new Error(
+          res.status === 401
+            ? "La sesión ha caducado: vuelve a entrar."
+            : data?.detalle || data?.error || `Error ${res.status}`,
+        );
+      }
       descargar(await res.blob(), "application/pdf", nombreFichero(run, "pdf"));
+    } catch (err) {
+      setPdfError(err instanceof Error ? err.message : String(err));
+    } finally {
       setPdf("idle");
-    } catch {
-      setPdf("error");
-      setTimeout(() => setPdf("idle"), 2500);
     }
   };
 
   return (
-    <div className="gp-no-print" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+    <div className="gp-no-print" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
       <button
         type="button"
         className="gp-btn gp-btn-ghost"
@@ -122,12 +133,13 @@ function ExportBotones({ run }: { run: RunDetail }) {
         disabled={pdf === "loading"}
         onClick={descargarPdf}
       >
-        {pdf === "loading"
-          ? "Generando…"
-          : pdf === "error"
-            ? "Error, reintenta"
-            : "Descargar PDF"}
+        {pdf === "loading" ? "Generando PDF…" : "Descargar PDF"}
       </button>
+      {pdfError && (
+        <span role="alert" style={{ flexBasis: "100%", color: "var(--danger, #b42318)", fontSize: 13 }}>
+          No se pudo generar el PDF: {pdfError}
+        </span>
+      )}
     </div>
   );
 }

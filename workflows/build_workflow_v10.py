@@ -4,7 +4,8 @@ Datos de repositorios reales (HTTP, KG, Wikidata, validator, citations) contrast
 import json
 import os
 
-UA_CHROME = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+import navegador as nav  # identidad + ritmo de las peticiones a la web (ver navegador.py)
+UA_CHROME = nav.UA_NAVEGADOR
 
 # ============================================================
 # VERSIONADO DEL ANALISIS  (funcion E2 del catalogo)
@@ -969,13 +970,13 @@ return paginas.map(url => ({ json: { url, _paginas_encontradas: todas.length, _c
 
 CODE_EXTRAER_ENLACES = r"""// Extrae los enlaces <a href> de TODAS las paginas crawleadas ('GET Pagina'),
 // resolviendo cada uno contra la URL de SU pagina. Clasifica interno/externo, dedup
-// entre paginas y CAPA a 120 (avisado). Un item por enlace; centinela si no hay.
+// entre paginas y CAPA a __CAP_ENLACES__ (avisado; navegador.CAP_ENLACES). Un item por enlace; centinela si no hay.
 """ + _HE + r"""const paginasIn = $('Paginas a Revisar').all().map(i => i.json);
 const htmls = $('GET Pagina').all().map(i => i.json);
 const base = $('Normalizar Input').first().json;
 const homeUrl = base.home_url || base.domain || ('https://' + (base.host || ''));
 const site = hostOf(homeUrl);
-const CAP = 120;
+const CAP = __CAP_ENLACES__;
 const seen = new Set(), todos = [];
 for (let pi = 0; pi < paginasIn.length; pi++) {
   const pageUrl = (paginasIn[pi] && paginasIn[pi].url) || homeUrl;
@@ -1013,7 +1014,7 @@ const entradas = $('Extraer Enlaces').all().map(i => i.json);
 const resp = $('Comprobar Enlace').all().map(i => i.json);
 const rotos = [];
 let revisados = 0, noVerif = 0;
-const cap = (entradas[0] && entradas[0]._cap) || 120;
+const cap = (entradas[0] && entradas[0]._cap) || __CAP_ENLACES__;
 const encontrados = (entradas[0] && entradas[0]._encontrados) || 0;
 const paginas = (entradas[0] && entradas[0]._paginas) || 0;
 for (let i = 0; i < entradas.length; i++) {
@@ -2459,7 +2460,7 @@ return [{ json: {
 # HELPERS
 # ============================================================
 
-def http_get(name, url_expr, pos, timeout=15000, on_error=None, ua=None):
+def http_get(name, url_expr, pos, timeout=15000, on_error=None, ua=None, lote=None, reintentos=0):
     # responseFormat text + outputPropertyName body: contrato explicito del campo de contenido
     # (n8n 2.x con autodeteccion pone el texto en `data`; asi queda siempre en `body`)
     params = {"url": url_expr, "options": {"timeout": timeout,
@@ -2467,11 +2468,23 @@ def http_get(name, url_expr, pos, timeout=15000, on_error=None, ua=None):
                                         "responseFormat": "text", "outputPropertyName": "body"}}}}
     if ua:
         params["sendHeaders"] = True
-        params["headerParameters"] = {"parameters": [{"name": "User-Agent", "value": ua}]}
+        if ua == UA_CHROME:
+            # Cabeceras completas de navegador, no solo el User-Agent (ver navegador.py).
+            params["headerParameters"] = {"parameters": nav.cabeceras()}
+        else:
+            # Prueba de bots IA: SU User-Agent, a proposito.
+            params["headerParameters"] = {"parameters": [{"name": "User-Agent", "value": ua}]}
+    if lote:
+        params["options"]["batching"] = lote
     node = {"parameters": params, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2,
             "position": pos, "name": name}
     if on_error:
         node["onError"] = on_error
+    if reintentos:
+        # Un rate-limit puntual o un timeout aislado no debe tumbar el analisis.
+        node["retryOnFail"] = True
+        node["maxTries"] = reintentos
+        node["waitBetweenTries"] = 5000
     return node
 
 def code(name, js, pos):
@@ -2594,10 +2607,12 @@ nodes.append(http_get("GET robots.txt", "={{ " + N + ".urls.robots_txt }}", [440
                       on_error="continueRegularOutput", ua=UA_CHROME))
 nodes.append(http_get("GET sitemap.xml", "={{ " + N + ".urls.sitemap }}", [660, 300],
                       on_error="continueRegularOutput", ua=UA_CHROME))
-nodes.append(http_get("GET Home", "={{ " + N + ".home_url }}", [880, 300], timeout=20000, ua=UA_CHROME))
+nodes.append(http_get("GET Home", "={{ " + N + ".home_url }}", [880, 300], timeout=30000,
+                      reintentos=3, ua=UA_CHROME))
 nodes.append(code("Preparar Fetch Bots", CODE_PREPARAR_BOTS, [1100, 300]))
 nodes.append(http_get("Fetch como Bot IA", "={{ " + N + ".home_url }}", [1320, 300],
-                      timeout=20000, on_error="continueRegularOutput", ua="={{ $json.ua }}"))
+                      timeout=20000, on_error="continueRegularOutput", ua="={{ $json.ua }}",
+                      lote=nav.lote(1500)))
 nodes.append(code("Analizar Acceso Edge", CODE_ANALIZAR_EDGE, [1540, 300]))
 nodes.append({"parameters": {
     "method": "POST", "url": "https://validator.schema.org/validate",
@@ -2613,7 +2628,7 @@ nodes.append(http_get("GET Sitemap Páginas", "={{ $json.sitemap_url }}", [2860,
                       on_error="continueRegularOutput", ua=UA_CHROME))
 nodes.append(code("Seleccionar Landings", CODE_SELECCIONAR_LANDINGS, [3080, 300]))
 nodes.append(http_get("GET Landing", "={{ $json.url }}", [3300, 300],
-                      on_error="continueRegularOutput", ua=UA_CHROME))
+                      on_error="continueRegularOutput", ua=UA_CHROME, lote=nav.lote()))
 nodes.append(code("Analizar Landings", CODE_ANALIZAR_LANDINGS, [3520, 300]))
 nodes.append(code("Consolidar Señales Web", CODE_CONSOLIDAR, [3740, 300]))
 
@@ -2677,21 +2692,21 @@ nodes.append(code("Parsear Ficha", CODE_PARSEAR_FICHA, [6580, 1300]))
 # --- Enlaces rotos (404) en TODO el sitio --- rama paralela; se sincroniza en Merge Bloques.
 nodes.append(code("Paginas a Revisar", CODE_PAGINAS, [6140, 1480]))
 nodes.append({"parameters": {"url": "={{ $json.url }}", "method": "GET",
-    "sendHeaders": True, "headerParameters": {"parameters": [{"name": "User-Agent", "value": UA_CHROME}]},
-    "options": {"timeout": 15000, "batching": {"batch": {"batchSize": 5, "batchInterval": 400}},
+    "sendHeaders": True, "headerParameters": {"parameters": nav.cabeceras()},
+    "options": {"timeout": 15000, "batching": nav.lote(),
         "response": {"response": {"fullResponse": True, "neverError": True,
         "responseFormat": "text", "outputPropertyName": "body"}}}},
     "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "onError": "continueRegularOutput",
     "position": [6260, 1560], "name": "GET Pagina"})
-nodes.append(code("Extraer Enlaces", CODE_EXTRAER_ENLACES, [6360, 1480]))
+nodes.append(code("Extraer Enlaces", CODE_EXTRAER_ENLACES.replace("__CAP_ENLACES__", str(nav.CAP_ENLACES)), [6360, 1480]))
 nodes.append({"parameters": {"url": "={{ $json.url }}", "method": "GET",
-    "sendHeaders": True, "headerParameters": {"parameters": [{"name": "User-Agent", "value": UA_CHROME}]},
-    "options": {"timeout": 12000, "batching": {"batch": {"batchSize": 5, "batchInterval": 400}},
+    "sendHeaders": True, "headerParameters": {"parameters": nav.cabeceras()},
+    "options": {"timeout": 12000, "batching": nav.lote(),
         "response": {"response": {"fullResponse": True, "neverError": True,
         "responseFormat": "text", "outputPropertyName": "body"}}}},
     "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "onError": "continueRegularOutput",
     "position": [6580, 1480], "name": "Comprobar Enlace"})
-nodes.append(code("Clasificar Enlaces", CODE_CLASIFICAR_ENLACES, [6800, 1480]))
+nodes.append(code("Clasificar Enlaces", CODE_CLASIFICAR_ENLACES.replace("__CAP_ENLACES__", str(nav.CAP_ENLACES)), [6800, 1480]))
 
 nodes.append(merge("Merge Bloques", 6, [6600, 300]))
 
